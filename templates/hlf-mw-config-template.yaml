@@ -1,0 +1,177 @@
+version: 1.0.0
+client:
+  organization: <orgName>
+  logging:
+    level: info
+  peer:
+    timeout:
+      connection: 3s
+      response: 40s
+      queryResponse: 45s
+      executeTxResponse: 60s
+      discovery:
+        greylistExpiry: 5s
+  eventService:
+    type: deliver
+    resolverStrategy: PreferOrg
+    balancer: RoundRobin
+    blockHeightLagThreshold: "2"
+    reconnectBlockHeightLagThreshold: "2"
+    blockHeightMonitorPeriod: 3s
+    timeout:
+      connection: 3s
+      registrationResponse: 10s
+  orderer:
+    timeout:
+      connection: 3s
+      response: 5s
+  global:
+    timeout:
+      query: 45s
+      execute: 60s
+      resmgmt: 60s
+    cache:
+      connectionIdle: 30s
+      eventServiceIdle: 2m
+      channelConfig: 60s
+      channelMembership: 30s
+  cryptoconfig:
+    path: /var/hyperledger/crypto
+  credentialStore:
+    path: /var/hyperledger/crypto
+    cryptoStore:
+      path: /var/hyperledger/crypto
+  BCCSP:
+    security:
+      enabled: true
+      default:
+        provider: SW
+      hashAlgorithm: SHA2
+      softVerify: true
+      ephemeral: false
+      level: 256
+  tlsCerts:
+    systemCertPool: false
+    client:
+      key:
+        path: ""
+      cert:
+        path: ""
+channels:
+  _default:
+    peers:
+      peer0.<orgDomain>:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.<orgDomain>:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+    policies:
+      discovery:
+        maxTargets: 2
+        retryOpts:
+          attempts: 4
+          initialBackoff: 500ms
+          maxBackoff: 5s
+          backoffFactor: 2
+      selection:
+        SortingStrategy: BlockHeightPriority
+        Balancer: RoundRobin
+        BlockHeightLagThreshold: 5
+      queryChannelConfig:
+        minResponses: 1
+        maxTargets: 1
+        retryOpts:
+          attempts: 5
+          initialBackoff: 500ms
+          maxBackoff: 5s
+          backoffFactor: 2
+organizations:
+  <orgName>:
+    mspid: <orgName>
+    cryptoPath: peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp
+    peers:
+    - peer0.<orgDomain>
+    - peer1.<orgDomain>
+    certificateAuthorities:
+    - ca.<orgDomain>
+peers:
+  peer0.<orgDomain>:
+    url: peer0.<orgDomain>:7051
+    eventUrl: peer0.<orgDomain>:7051
+    grpcOptions:
+      ssl-target-name-override: peer0.<orgDomain>
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+    tlsCACerts:
+      path: /var/hyperledger/crypto/peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp/tlscacerts/tlscacert.pem
+  peer1.<orgDomain>:
+    url: peer1.<orgDomain>:8051
+    eventUrl: peer1.<orgDomain>:8053
+    grpcOptions:
+      ssl-target-name-override: peer1.<orgDomain>
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+    tlsCACerts:
+      path: /var/hyperledger/crypto/peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp/tlscacerts/tlscacert.pem
+certificateAuthorities:
+  ca.<orgDomain>:
+    url: https://ca.<orgDomain>:7054
+    httpOptions:
+      verify: true
+    tlsCACerts:
+      path: /var/hyperledger/crypto/peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp/tlscacerts/tlscacert.pem
+      client:
+        keyfile: /test/peerOrganizations/<orgDomain>/users/User1@<orgName>.com/tls/client.crt
+        certfile: /test/peerOrganizations/<orgDomain>/users/User1@<orgName>.com/tls/client.key
+    registrar:
+      enrollId: admin
+      enrollSecret: adminpw
+    caName: ca.<orgDomain>
+ishareConfig:
+  middlewareConfig:
+    type: satellite
+    postgres_connection_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
+    auth_audience: https://ishare-core-middleware
+    auth_domain: https://ishare.eu.auth0.com/
+    blockchain_middleware_url: "http://ishare-hlf-mw:21001/api/invoke"
+    blockchain_details:
+      admin: Admin
+      channel_id: <CHANNEL_NAME>
+      chaincode_id: <CHAINCODE_NAME>
+      msp_id: <orgName>
+      orgName: <orgName>
+  platformURL: ""
+  keyCloakConfig:
+    domain: https://<KeycloakHostName>:8443
+    clientId: frontend
+    clientSecret: 3e3d5f29-ae21-437f-ad38-ecee12d88d9e
+    adminId: admin
+    adminSecret: admin
+    adminRealmName: master
+    realmName: test
+  cookieInfo:
+    secrets:
+      - super-secret-key-explorer-<orgName>
+    cookieName: cookie-name-explorer-<orgName>
+  listenAddr: ":21001"
+  sslConfig:
+    enable: false
+    sslCertPath: "/test/sslcert/krypc.pem"
+    sslKeyPath: "/test/sslcert/krypc.key"
+  bootChannelConfigs:
+    <CHANNEL_NAME>:
+      channelId: <CHANNEL_NAME>
+      configTxFile: /tmp/channel/isharechannel.tx
+      genesisBlockFile: /tmp/channel/genesis.block
+      isEnabled: true

@@ -1,0 +1,51 @@
+version: "3.7"
+
+networks:
+  net:
+    name: fabric_network
+services:
+ app-postgres:
+    image: postgres:9
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpw
+      POSTGRES_DB: ishare  
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    restart: always      
+    ports:
+      - 7432:5432
+    networks:
+      - net       
+
+ ishare_mw:
+    image: isharefoundation/ishare-satellite-app-mw:v1.74
+    ports:
+      - 5001:21001
+    volumes:
+      - ./app-mw-config.yaml:/test/config/app-mw-config.yaml
+    restart: always      
+    environment:
+      - CONFIG_FILE_PATH=/test/config/app-mw-config.yaml
+      - ../jwt-rsa/jwtRSA256-private.pem:/jwtRSA256-private.pem
+      - ../jwt-rsa/jwtRSA256-public.pem:/jwtRSA256-public.pem
+#      - GODEBUG=x509ignoreCN=0
+    networks:
+      - net 
+
+ ishare_hlf:
+    image: isharefoundation/ishare-satellite-hlf-mw:v1.6
+    ports:
+      - 4001:21001
+    volumes:
+      -  <path-to-crypto>:/var/hyperledger/crypto
+      - ./hlf-mw-config.yaml:/config/hlf-mw-config.yaml
+      - ./genesis.block:/tmp/channel/genesis.block
+      - ./isharechannel.tx:/tmp/channel/channel.tx
+    environment:
+      - CONFIG_FILE_PATH=/config/hlf-mw-config.yaml
+      - GODEBUG=x509ignoreCN=0
+    restart: always      
+    networks:
+      - net       

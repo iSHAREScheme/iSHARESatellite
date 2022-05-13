@@ -1,0 +1,151 @@
+{
+  "id": "<UIHostName>",
+  "realm": "<UIHostName>",
+  "enabled": true,
+  "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": true,
+  "loginTheme": "myTheme",
+  "roles": {
+  "client": {
+  "frontend": [
+  {
+  "id": "33e416e8-a1c6-46ab-a1aa-b6457291da4e",
+  "name": "SatelliteAdmin",
+  "description": "SatelliteAdmin",
+  "composite": false,
+  "clientRole": true,
+  "containerId": "e6fb9897-b209-4eed-b88b-900c360816e1"
+  },
+  {
+  "id": "73a08bcb-7821-4e0f-9ef2-09aac5fe79c0",
+  "name": "User",
+  "description": "User",
+  "composite": false,
+  "clientRole": true,
+  "containerId": "e6fb9897-b209-4eed-b88b-900c360816e1"
+  },
+  {
+  "id": "44e09e19-59f4-4ef1-9cc5-973eba0c54f2",
+  "name": "PartyAdmin",
+  "description": "PartyAdmin",
+  "composite": false,
+  "clientRole": true,
+  "containerId": "e6fb9897-b209-4eed-b88b-900c360816e1"
+  }
+  ]
+  }
+  },
+  "groups": [],
+  "requiredCredentials": [
+  "password"
+  ],
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyInitialCounter": 0,
+  "otpPolicyDigits": 6,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyPeriod": 30,
+  "otpSupportedApplications": [
+  "FreeOTP",
+  "Google Authenticator"
+  ],
+  "webAuthnPolicyRpEntityName": "keycloak",
+  "webAuthnPolicySignatureAlgorithms": [
+  "ES256"
+  ],
+  "clients": [
+  {
+  "id": "e6fb9897-b209-4eed-b88b-900c360816e1",
+  "clientId": "frontend",
+  "rootUrl": "https://<KEY_CLOAK_HOST_NAME>:8443",
+  "enabled": true,
+  "clientAuthenticatorType": "client-secret",
+  "secret": "",
+  "redirectUris": [
+  "*"
+  ],
+  "webOrigins": [
+  "+"
+  ],
+  "notBefore": 0,
+  "standardFlowEnabled": true,
+  "serviceAccountsEnabled": true,
+  "publicClient": true,
+  "protocol": "openid-connect",
+  "attributes": {
+  "access.token.lifespan": "1800",
+  "login_theme": "myTheme"
+  },
+  "fullScopeAllowed": true,
+  "nodeReRegistrationTimeout": -1,
+  "defaultClientScopes": [
+  "web-origins",
+  "role_list",
+  "roles",
+  "profile",
+  "email"
+  ]
+  }
+  ],
+  "smtpServer": {
+  "password": "",
+  "starttls": "true",
+  "auth": "true",
+  "port": "",
+  "host": "",
+  "from": "",
+  "fromDisplayName": "ishareNotification",
+  "ssl": "true",
+  "user": ""
+  },
+  "emailTheme": "myTheme",
+  "eventsListeners": [
+  "jboss-logging"
+  ],
+  "requiredActions": [
+  {
+  "alias": "CONFIGURE_TOTP",
+  "name": "Configure OTP",
+  "providerId": "CONFIGURE_TOTP",
+  "enabled": true,
+  "priority": 10
+  },
+  {
+  "alias": "UPDATE_PASSWORD",
+  "name": "Update Password",
+  "providerId": "UPDATE_PASSWORD",
+  "enabled": true,
+  "priority": 30
+  },
+  {
+  "alias": "UPDATE_PROFILE",
+  "name": "Update Profile",
+  "providerId": "UPDATE_PROFILE",
+  "enabled": true,
+  "priority": 40
+  },
+  {
+  "alias": "VERIFY_EMAIL",
+  "name": "Verify Email",
+  "providerId": "VERIFY_EMAIL",
+  "enabled": true,
+  "priority": 50
+  },
+  {
+  "alias": "update_user_locale",
+  "name": "Update User Locale",
+  "providerId": "update_user_locale",
+  "enabled": true,
+  "priority": 1000
+  }
+  ],
+  "browserFlow": "browser",
+  "registrationFlow": "registration",
+  "directGrantFlow": "direct grant",
+  "resetCredentialsFlow": "reset credentials",
+  "clientAuthenticationFlow": "clients",
+  "dockerAuthenticationFlow": "docker auth",
+  "keycloakVersion": "11.0.2",
+  "userManagedAccessAllowed": false
+  }
+  

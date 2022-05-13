@@ -1,0 +1,30 @@
+version: "3.7"
+
+networks:
+  net:
+    name: fabric_network
+
+services:
+  ca.<orgDomain>:
+    container_name: ca.<orgDomain>
+    image: hyperledger/fabric-ca:1.4.8
+    environment:
+    - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+    - FABRIC_CA_SERVER_CA_NAME=ca.<orgDomain>
+    - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config1/certs/ca.<orgDomain>-cert.pem
+    - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config1/certs/priv_sk
+    - FABRIC_CA_SERVER_TLS_ENABLED=true
+    - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config1/certs/ca.<orgDomain>-cert.pem
+    - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config1/certs/priv_sk
+    - FABRIC_CA_SERVER_SIGNING_DEFAULT_EXPIRY=43800h
+    - FABRIC_CA_SERVER_PROFILES_TLS_EXPIRY=43800h
+    ports:
+    - 7054:7054
+    command: sh -c 'fabric-ca-server start -b admin:<ENROLLMENT_SECRET> -d'
+    restart: always
+    volumes:
+    - ./certs:/etc/hyperledger/fabric-ca-server-config1/certs
+    - ./docker_data/ca.<orgDomain>:/etc/hyperledger/fabric-ca-server
+    - ./fabric-ca-server-config.yaml:/etc/hyperledger/fabric-ca-server/fabric-ca-server-config.yaml
+    networks:
+    - net   

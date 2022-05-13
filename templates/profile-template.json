@@ -1,0 +1,55 @@
+{
+	"name": "fabric_network",
+	"version": "1.0.0",
+	"client": {
+		"tlsEnable": true,
+		"adminCredential": {
+			"id": "exploreradmin",
+			"password": "exploreradminpw"
+		},
+		"enableAuthentication": true,
+		"organization": "<orgName>",
+		"connection": {
+			"timeout": {
+				"peer": {
+					"endorser": "300"
+				},
+				"orderer": "300"
+			}
+		}
+	},
+	"channels": {
+		"<CHANNEL_NAME>": {
+			"peers": {
+				"peer0.<orgDomain>": {},
+                "peer1.<orgDomain>": {}
+			}
+		}
+	},
+	"organizations": {
+		"<orgName>": {
+			"mspid": "<orgName>",
+			"adminPrivateKey": {
+				"path": "<adminPrivateKey>"
+			},
+			"peers": ["peer0.<orgDomain>","peer1.<orgDomain>"],
+			"signedCert": {
+				"path": "<adminCertFile>"
+			}
+		}
+	},
+	"peers": {
+		"peer0.<orgDomain>": {
+			"tlsCACerts": {
+				"path": "<tlscaCertFile>"
+			},
+			"url": "grpcs://peer0.<orgDomain>:7051"
+		},
+        "peer1.<orgDomain>": {
+			"tlsCACerts": {
+				"path": "<tlscaCertFile>"
+			},
+			"url": "grpcs://peer1.<orgDomain>:8051"
+		}
+	}
+}

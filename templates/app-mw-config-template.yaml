@@ -1,0 +1,41 @@
+version: 1.0.0
+ishareConfig:
+  middlewareConfig:
+    postgres_connection_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
+    auth_audience: https://taxchain-core-middleware
+    auth_domain: https://taxchain.us.auth0.com/
+    blockchain_middleware_url: "http://ishare_hlf:21001/api"
+    explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
+    blockchain_details:
+      admin: Admin
+      channel_id: <CHANNEL_NAME>
+      chaincode_id: <CHAINCODE_NAME>
+      msp_id: <orgName>
+      orgName: <orgName>
+    emailID: "notification.krypc@gmail.com"
+    emailSecret: "otrsuqrbsdhzopdi"
+    emailPort: "587"
+    forgotPasswordLink: "https://<UIHostName>/admin/account/reset-password"
+    resetPasswordLink: ""
+    partyId: <PartyId>
+    partyName: <PartyName>
+  platformURL: ""
+  keyCloakConfig:
+    domain: https://<KeycloakHostName>:8443
+    clientId: frontend
+#    clientSecret: 8ebfc90a-cc20-43b1-b998-f87c75c7f217
+    clientSecret: 8ebfc90a-cc20-43b1-b998-f87c75c7f217
+    adminId: admin
+    adminSecret: admin
+    adminRealmName: master
+    realmName: test
+  cookieInfo:
+    secrets:
+      - super-secret-key-explorer-<orgName>
+    cookieName: cookie-name-explorer-<orgName>
+  listenAddr: ":21001"
+  sslConfig:
+    enable: false
+    sslCertPath: "/test/<orgName>/sslcert/krypc.pem"
+    sslKeyPath: "/test/<orgName>/sslcert/krypc.key"
+

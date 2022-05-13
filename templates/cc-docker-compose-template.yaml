@@ -1,0 +1,22 @@
+version: "3.7"
+
+networks:
+  net:
+    name: fabric_network
+
+services:
+
+ ishare-cc.hlf:
+    image: isharefoundation/ishare-satellite-cc:v1.6
+    restart: always
+    environment:
+      CHAINCODE_ID: isharecc_1.0:4094fd1d66b8d3878f8e94ccc4b8a926485003a867f41aebba477459ebcfaad5
+      CHAINCODE_SERVER_ADDRESS: 0.0.0.0:9999
+      CHAINCODE_TLS_DISABLED: "true"  
+      CORE_PEER_LOCALMSPID: <orgName>
+    command: "./out/is-chaincode"
+    restart: always
+    ports:
+      - 9999:9999
+    networks:
+      - net  
