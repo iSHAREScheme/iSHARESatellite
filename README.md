@@ -6,6 +6,7 @@ Follow this [ guide ]( Satellite%20VM%20model%20deployment%20guide_pub.pdf ) for
 
 All the files contianed in this repository are by default copyright of iSHARE Foundation unless stated otherwise.
 All the files contianed in this repository are by default subject to AGPL-3.0 License unless stated otherwise.
+
     Copyright (C) 2022  iSHARE Foundation
 
     This program is free software: you can redistribute it and/or modify
