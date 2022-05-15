@@ -152,14 +152,6 @@ ishareConfig:
       msp_id: <orgName>
       orgName: <orgName>
   platformURL: ""
-  keyCloakConfig:
-    domain: https://<KeycloakHostName>:8443
-    clientId: frontend
-    clientSecret: 3e3d5f29-ae21-437f-ad38-ecee12d88d9e
-    adminId: admin
-    adminSecret: admin
-    adminRealmName: master
-    realmName: test
   cookieInfo:
     secrets:
       - super-secret-key-explorer-<orgName>
@@ -167,8 +159,8 @@ ishareConfig:
   listenAddr: ":21001"
   sslConfig:
     enable: false
-    sslCertPath: "/test/sslcert/krypc.pem"
-    sslKeyPath: "/test/sslcert/krypc.key"
+    sslCertPath: ""
+    sslKeyPath: ""
   bootChannelConfigs:
     <CHANNEL_NAME>:
       channelId: <CHANNEL_NAME>
