@@ -7,7 +7,7 @@ networks:
 services:
 
  ishare-cc.hlf:
-    image: isharefoundation/ishare-satellite-cc:v1.6
+    image: isharefoundation/ishare-satellite-cc:v1.13
     restart: always
     environment:
       CHAINCODE_ID: isharecc_1.0:4094fd1d66b8d3878f8e94ccc4b8a926485003a867f41aebba477459ebcfaad5
