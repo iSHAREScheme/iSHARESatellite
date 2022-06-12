@@ -25,11 +25,11 @@ services:
       - 5001:21001
     volumes:
       - ./app-mw-config.yaml:/test/config/app-mw-config.yaml
+      - ../jwt-rsa/jwtRSA256-private.pem:/jwtRSA256-private.pem
+      - ../jwt-rsa/jwtRSA256-public.pem:/jwtRSA256-public.pem      
     restart: always      
     environment:
       - CONFIG_FILE_PATH=/test/config/app-mw-config.yaml
-      - ../jwt-rsa/jwtRSA256-private.pem:/jwtRSA256-private.pem
-      - ../jwt-rsa/jwtRSA256-public.pem:/jwtRSA256-public.pem
 #      - GODEBUG=x509ignoreCN=0
     networks:
       - net 

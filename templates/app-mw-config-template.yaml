@@ -2,6 +2,7 @@ version: 1.0.0
 ishareConfig:
   middlewareConfig:
     type: satellite
+    mode: uat
     blockchain_middleware_url: "http://ishare_hlf:21001/api"
     explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
     blockchain_details:
