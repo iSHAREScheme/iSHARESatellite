@@ -6,7 +6,7 @@ networks:
 
 services:
  ishare_ui:
-    image: isharefoundation/ishare-satellite-ui:v2.16
+    image: isharefoundation/ishare-satellite-ui:v2.25
     container_name: ishare_ui
     ports:
     - 4200:80

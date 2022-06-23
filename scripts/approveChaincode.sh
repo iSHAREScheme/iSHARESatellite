@@ -83,16 +83,16 @@ if [ $res -ne 0 ]; then
    exit 1
 fi
 
-infoln "Performing Chaincode checkcommitreadiness "
+# infoln "Performing Chaincode checkcommitreadiness "
 
-set -x
-peer lifecycle chaincode checkcommitreadiness -o $ORDERER_ENDPOINT --channelID $CH_NAME --tls --cafile $ORDERER_TLS_CA_FILE --name $CC_NAME --version ${CHAINCODE_VERSION}  --sequence $CC_SEQUENCE --signature-policy "${CC_POLICY}" --output json
-res=$?
-set +x
-if [ $res -ne 0 ]; then 
-   errorln " Error while performing checkcommitreadiness in Chaincode "
-   exit 1
-fi
+# set -x
+# peer lifecycle chaincode checkcommitreadiness -o $ORDERER_ENDPOINT --channelID $CH_NAME --tls --cafile $ORDERER_TLS_CA_FILE --name $CC_NAME --version ${CHAINCODE_VERSION}  --sequence $CC_SEQUENCE --signature-policy "${CC_POLICY}" --output json
+# res=$?
+# set +x
+# if [ $res -ne 0 ]; then 
+#    errorln " Error while performing checkcommitreadiness in Chaincode "
+#    exit 1
+# fi
 
 } 
 

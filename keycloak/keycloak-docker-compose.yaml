@@ -6,7 +6,8 @@ networks:
 
 services:
   keycloak:
-    image: jboss/keycloak:11.0.2
+#     image: jboss/keycloak:11.0.2
+    image: isharefoundation/ishare-satellite-keycloak:v11.0.2
     container_name: keycloak
     ports:
       - 8443:8443
@@ -25,7 +26,7 @@ services:
       - ./realm-test.json:/tmp/realm-test.json
       - ../ssl/tls.crt:/etc/x509/https/tls.crt
       - ../ssl/tls.key:/etc/x509/https/tls.key
-      - ./myTheme:/opt/jboss/keycloak/themes/myTheme
+#      - ./myTheme:/opt/jboss/keycloak/themes/myTheme
 #      - ./scripts/disable-theme-cache.cli:/opt/jboss/startup-scripts/disable-theme-cache.cli
     command: ["-Dkeycloak.profile.feature.upload_scripts=enabled"]
     restart: always
