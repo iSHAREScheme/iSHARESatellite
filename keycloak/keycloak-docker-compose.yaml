@@ -7,7 +7,7 @@ networks:
 services:
   keycloak:
 #     image: jboss/keycloak:11.0.2
-    image: isharefoundation/ishare-satellite-keycloak:v11.0.2
+    image: isharefoundation/ishare-satellite-keycloak:v16.1.1
     container_name: keycloak
     ports:
       - 8443:8443

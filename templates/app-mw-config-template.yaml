@@ -5,6 +5,7 @@ ishareConfig:
     mode: uat
     blockchain_middleware_url: "http://ishare_hlf:21001/api"
     explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
+    offchainDb: postgresql://postgres:postgres@offchain_sat:5432/offchaindata?sslmode=disable
     blockchain_details:
       admin: Admin
       channel_id: <CHANNEL_NAME>
