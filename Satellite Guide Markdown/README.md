@@ -79,10 +79,10 @@ Virtual Machine with 4 CPU’s and 16 GB Memory.
 # <a id="network-req"> 3. &nbsp; Network Requirements </a>
 Following ports are used by following applications, so make sure that you configure your firewall and network settings to allow access via these ports
 
-- <span style="color:grey"> 443/TCP,80/TCP for Application middleware and UI. </span>
--  <span style="color:grey"> 7051/TCP and 8051/TCP for HLF Peers. </span>
-- <span style="color:grey"> 8443/TCP for keyCloak instance (user management backend) 
-- <span style="color:grey"> Optionally, 8081/TCP for explorer instance (hyperledger explorer) – open to outside only if require access from outside your own network, maybe necessary when hosted on cloud </span>.
+- 443/TCP,80/TCP for Application middleware and UI. </span>
+- 7051/TCP and 8051/TCP for HLF Peers. </span>
+- 8443/TCP for keyCloak instance (user management backend) 
+- Optionally, 8081/TCP for explorer instance (hyperledger explorer) – open to outside only if require access from outside your own network, maybe necessary when hosted on cloud.
 
 <br>
 
@@ -113,18 +113,18 @@ To install iSHARE satellite and configure it to run follow the steps:
  # <a id="configure"> 4.1. &nbsp; Configure Passwords for the Services </a>
 
 Download the scripts from GitHub
-
-|<p>git clone [https://github.com/iSHAREScheme/iSHARESatellite.git](https://github.com/iSHAREScheme/VM-Model-iSHARE-Satellites.git)</p><p>cd iSHARESatellite </p>|
-| :- |
+```
+git clone [https://github.com/iSHAREScheme/iSHARESatellite.git](https://github.com/iSHAREScheme/VM-Model-iSHARE-Satellites.git)</p><p>cd iSHARESatellite
+```
 
 
 If you want to change the default passwords (recommended and mandatory for production environments) please follow these steps, else skip this chapter.
 
 Following are the services which uses username and password as credentials for authentication:
 
-- <span style="color:grey"> Postgres DB for Application </span>
-- <span style="color:grey"> Explorer DB for Explorer </span>
-- <span style="color:grey"> Postgres DB for Keycloak </span>
+- Postgres DB for Application
+- Explorer DB for Explorer
+- Postgres DB for Keycloak
 
 <br>
 
@@ -132,40 +132,49 @@ Following are the services which uses username and password as credentials for a
 
 <br>
 
-|<p> cd iSHARESatellite/templates </p>|
-| :- |
+```
+cd iSHARESatellite/templates
+```
 
  Open explorer-docker-compose-template.yaml in the text editor. <br>
 Under *services* section, change the password for explorerdb by referring below snippet under environment: <br> <br>
-explorerdb: <br>
- &nbsp;  &nbsp; image: hyperledger/explorer-db:latest <br>
- &nbsp;  &nbsp; container\_name: explorerdb <br>
- &nbsp;  &nbsp; hostname: explorerdb <br>
- &nbsp;  &nbsp; environment: <br>
- &nbsp;  &nbsp;  &nbsp;  &nbsp; - DATABASE\_DATABASE=fabricexplorer <br>
- &nbsp;  &nbsp;  &nbsp;  &nbsp; - DATABASE\_USERNAME=hppoc <br>
- &nbsp;  &nbsp;  &nbsp;  &nbsp; - DATABASE\_PASSWORD=password
 
+```
+explorerdb:
+    image: hyperledger/explorer-db:latest
+    container\_name: explorerdb
+    hostname: explorerdb
+    environment:
+      - DATABASE\_DATABASE=fabricexplorer <br>
+      - DATABASE\_USERNAME=hppoc <br>
+      - DATABASE\_PASSWORD=password
+```
 <br>
 
 Same Password has be configured for explorer service under environment, refer below snippet:
 
 <br>
 
-explorer: <br>
-&nbsp;  &nbsp; image: hyperledger/explorer:latest <br>
-&nbsp;  &nbsp; container\_name: explorer <br>
-&nbsp;  &nbsp; hostname: explorer <br>
-&nbsp;  &nbsp; environment: <br>
-&nbsp;  &nbsp; &nbsp;  &nbsp;- DATABASE\_HOST=explorerdb <br>
-&nbsp;  &nbsp; &nbsp;  &nbsp;- DATABASE\_DATABASE=fabricexplorer <br>
-&nbsp;  &nbsp; &nbsp;  &nbsp;- DATABASE\_USERNAME=hppoc <br>
-&nbsp;  &nbsp; &nbsp;  &nbsp;- DATABASE\_PASSWD=password <br> <br>
+```
+explorer:
+    image: hyperledger/explorer:latest
+    container\_name: explorer 
+    hostname: explorer 
+    environment: 
+      - DATABASE\_HOST=explorerdb
+      - DATABASE\_DATABASE=fabricexplorer
+      - DATABASE\_USERNAME=hppoc
+      - DATABASE\_PASSWD=password
+```
+<br>
 
 Open app-mw-config-template.yaml in the text editor, configure password in explorer db connection string. Check below:
 
-|<p>explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable </p>|
-| :- |
+<br>
+
+```
+explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
+```
 
 <br> <br>
 
@@ -173,77 +182,89 @@ Open app-mw-config-template.yaml in the text editor, configure password in explo
 
 <br>
 
-|<p> cd iSHARESatellite/templates </p>|
-|:-|
+```
+ cd iSHARESatellite/templates
+```
 
 <br>
 
 Open docker-compose-mw-template.yaml in a text editor and look for below snippet : <br>
 
-**app-postgres: <br>
-&nbsp;  &nbsp; image: postgres:9 <br>
-&nbsp;  &nbsp; restart: always <br>
-&nbsp;  &nbsp; environment: <br>
-&nbsp;  &nbsp; &nbsp;  &nbsp; POSTGRES\_USER: admin <br>
-&nbsp;  &nbsp; &nbsp;  &nbsp; POSTGRES\_PASSWORD: adminpw** <br>
+```
+app-postgres:
+  image: postgres:9
+  restart: always
+  environment:
+    POSTGRES\_USER: admin 
+    POSTGRES\_PASSWORD: adminpw
+```
 
-Change password for admin user under environment section and save. <br> <br> <br>
+Change password for admin user under environment section and save. <br> <br> 
 
 
 
-Open hlf-mw-config-template.yaml file in a text editor and look for the below snippet and lower end of the file: <br>
+Open hlf-mw-config-template.yaml file in a text editor and look for the below snippet and lower end of the file:
 
-**ishareConfig: <br> 
-&nbsp;  &nbsp; middlewareConfig: <br>
-&nbsp;  &nbsp; postgres\_connection\_url: postgresql:// <br> admin:adminpw@app-postgres:5432/ishare?sslmode=disable** <br> 
+```
+ishareConfig: 
+    middlewareConfig:
+    postgres\_connection\_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
+```
 
 Change the password adminpw in connection string with password configured in docker-compose-mw.yaml. <br> <br> <br>
 
 Open app-mw-config-template.yaml file in a text editor and look for the below snippet: <br>
 
-**ishareConfig: <br>
-&nbsp;  &nbsp; middlewareConfig: <br>
-&nbsp;  &nbsp; postgres\_connection\_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable** <br> 
+```
+ishareConfig:
+    middlewareConfig: <br>
+     postgres\_connection\_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
+``` 
 
-Change the password adminpw in connection string with password configured in docker-compose-mw.yaml. <br> <br> <br>
+Change the password **adminpw** in connection string with password configured in docker-compose-mw.yaml. <br> <br> <br>
 
 
 <h3 align="center"> Steps to configure password for Application Keycloak service </h3>
 
 <br> 
 
-|<p> cd iSHARESatellite/keycloak/postgres </p>|
-|:-|
+``` 
+cd iSHARESatellite/keycloak/postgres
+```
 
 <br>
 
 Open init-db.sql in a text editor: <br>
 
-**CREATE USER keycloak WITH ENCRYPTED PASSWORD 'keycloak';**
+```
+CREATE USER keycloak WITH ENCRYPTED PASSWORD 'keycloak';
+```
 
 Change password from **keycloak** to desired password. Password should be under single quotes. <br> <br>
 
-|<p> cd iSHARESatellite/keycloak/p>|
-|:-|
+```
+cd iSHARESatellite/keycloak
+```
 
 <br>
 
 Open keycloak-docker-compose.yaml in a text editor,look for below snippet
 
-**keycloak:
-&nbsp;  &nbsp; image: jboss/keycloak:11.0.2 <br>
-&nbsp;  &nbsp; container\_name: keycloak <br>
-&nbsp;  &nbsp; ports: <br>
-&nbsp;  &nbsp; &nbsp; - 8443:8443 <br>
-environment: <br>
-&nbsp;  &nbsp; &nbsp; - KEYCLOAK\_USER=admin <br>
-&nbsp;  &nbsp; &nbsp; - KEYCLOAK\_PASSWORD=admin <br>
-&nbsp;  &nbsp; &nbsp; - DB\_VENDOR=postgres <br>
-&nbsp;  &nbsp; &nbsp; - DB\_ADDR=keycloakpostgres <br>
-&nbsp;  &nbsp; &nbsp; - DB\_DATABASE=keycloak <br>
-&nbsp;  &nbsp; &nbsp; - DB\_USER=keycloak <br>
-&nbsp;  &nbsp; &nbsp; - DB\_PASSWORD=keycloak**
-
+```
+keycloak:
+    image: jboss/keycloak:11.0.2
+    container\_name: keycloak
+    ports:
+      - 8443:8443
+environment:
+      - KEYCLOAK\_USER=admin
+      - KEYCLOAK\_PASSWORD=admin
+      - DB\_VENDOR=postgres
+      - DB\_ADDR=keycloakpostgres
+      - DB\_DATABASE=keycloak
+      - DB\_USER=keycloak
+      - DB\_PASSWORD=keycloak
+```
 Change **DB\_PASSWORD** value keycloak with desired password value.  
 
 <br> <br>
@@ -273,8 +294,11 @@ These components have to be pulled as images ,installed and initialized as per t
 
 Download the scripts from GitHub (if not done so already)
 
-|<p>git clone [https://github.com/iSHAREScheme/iSHARESatellite.git](https://github.com/iSHAREScheme/VM-Model-iSHARE-Satellites.git)</p><p>cd iSHARESatellite </p>|
-| :- |
+```
+git clone https://github.com/iSHAREScheme/iSHARESatellite.git
+
+cd iSHARESatellite 
+```
 
 <br>
 
@@ -282,38 +306,50 @@ To install and ensure all the necessary packages are available in the system, us
 
 <br>
 
-|bash prerequsites.sh|
-| :- |
+```
+bash prerequsites.sh
+```
 
 <br>
 
-|cd iSHARESatellite/scripts |
-| :- |
+```
+cd iSHARESatellite/scripts 
+```
 
 <br>
 
 Configure environment variables to initialize scripts. See env variables with example below:
 
-![](Environment_var_tab.PNG)
+| Environment | Description | 
+| ----------- | ----------- |
+|   ORG_NAME  | Satellite which is going to be a part of HLF network. It should be a word  without special characters (only alphanumeric) and max 17 characters. ex: mysatellite. |
+|  SUB_DOMAIN | Sub-domain reserved in DNS service for this satellite. No special characters. ex: uat.mydomain.com|
+| ENVIRONMENT | Name of the infra environment like uat, test, prod. No special characters. |
+
 
 <br>
 
-|<p>export ORG\_NAME=newsatellite<br>export SUB\_DOMAIN=test.example.com<br>export ENVIRONMENT=test</p>|
-| :- |
+```
+export ORG\_NAME=newsatellite
+export SUB\_DOMAIN=test.example.com 
+export ENVIRONMENT=test
+```
 
 <br>
 
 To generate HLF fabric ca certs, use the below command :
 
-|<p>bash fabric-ca-cert.sh </p><p></p>|
-| :- |
+```
+bash fabric-ca-cert.sh 
+```
 
 <br>
 
 Creating HLF Fabric CA instance:
 
-|bash fabric-ca.sh|
-| :- |
+```
+bash fabric-ca.sh
+```
 
 <br>
 
@@ -323,21 +359,25 @@ Navigate to *iSHARESatellite / hlf /\<Environment\>/\<orgName\>/ fabric-ca* dire
 Check the presence of the docker\_data folder. <br>
 To ensure all the HLF Fabric is running, use below commands and check the status.
 
-**docker-compose -f iSHARESatellite/hlf/\<Environment\>/\<orgName\>/fabric-ca/docker-compose-fabric-ca.yaml ps** 
+```
+docker-compose -f iSHARESatellite/hlf/\<Environment\>/\<orgName\>/fabric-ca/docker-compose-fabric-ca.yaml ps
+```
 
 <br>
 
 Register and Enroll users and peers
 
-|bash registerAndEnroll.sh|
-| :- |
+```
+bash registerAndEnroll.sh
+```
 
 <br> 
 
 Create HLF Peer instances, it will spun up instances of  HLF Peers and CouchDB 
 
-|bash peer.sh|
-| :- |
+```
+bash peer.sh
+```
 
 <br>
 
@@ -348,12 +388,13 @@ Navigate to *iSHARESatellite / hlf /\<Environment\>/\<orgName\>/ peers* director
 Check the presence of the docker\_data folder. <br>
 To ensure all the HLF Peer is running, use below commands to check the status. 
 
-
-**docker-compose -f iSHARESatellite/hlf/\<Environment\>/\<orgName\>/peers/docker-compose-hlf.yaml ps**
+```
+docker-compose -f iSHARESatellite/hlf/\<Environment\>/\<orgName\>/peers/docker-compose-hlf.yaml ps
+```
 
 <br>
 
-HLF Peer instances needs to be a part of  iSHARE Foundation HLF network, for that HLF peers needs to reachable over the internet. Previous script peer.sh creates two HLF peer instance with hostname peer<num>.<ORG\_NAME>.<SUB\_DOMAIN> and they listen at port 7051 and 8051 TCP. Make sure that necessary firewall settings are updated to allow access to these peers over internet . Map dns entries for Peers hostname with server IP address ex:
+HLF Peer instances needs to be a part of  iSHARE Foundation HLF network, for that HLF peers needs to reachable over the internet. Previous script peer.sh creates two HLF peer instance with hostname peer\<num\>.\<ORG\_NAME\>.\<SUB\_DOMAIN\> and they listen at port 7051 and 8051 TCP. Make sure that necessary firewall settings are updated to allow access to these peers over internet. Map dns entries for Peers hostname with server IP address ex:
 
 If  **ORG\_NAME=newsatellite** and **SUB\_DOMAIN=test.example.com**, then
 
@@ -363,7 +404,10 @@ If  **ORG\_NAME=newsatellite** and **SUB\_DOMAIN=test.example.com**, then
 
 <br>
 
-![](peer_names.PNG)
+|Full Record Name|Record Type|Value|TTL|
+|----------------|-----------|-----|---|
+|peer0.\<orgname\>.\<subdomain\>|A|12.9.7.6.5|1 min|
+|peer1.\<orgname>.\<subdomain>|A|12.9.7.6.5|1 min|
 
 <br>
 
@@ -377,21 +421,20 @@ The Hyperledger fabric node is deployed, now follow next chapter to register you
 Share details with iSHARE foundation to register your node on iSHARE network
 Now generate the organization definition file which iSHARE Foundation (HLF Channel Admin) would require inorder to onboard your new satellite. Use the below command to create an org definition.
 
-
-
-|bash orgDefinition.sh|
-| :- |
+```
+bash orgDefinition.sh
+```
 
 <br>
 
-Find the <orgName>.json at *hlf /\<ENVIRONMENT\>/\<ORG\_NAME\>* folder. <br>
+Find the \<orgName\>.json at *hlf /\<ENVIRONMENT\>/\<ORG\_NAME\>* folder. <br>
 Note: <orgName>.json file has to be shared securely, as it contains x509 certificates of the new satellite. <br>
 Send this file as well as following details to iSHARE foundation.
 
 <br><br>
 
 
-1. # 4.4. &nbsp; <a id="join_net"> Join the network </a>
+# 4.4. &nbsp; <a id="join_net"> Join the network </a>
 
 <br>
 
@@ -415,48 +458,81 @@ Note: you need to copy Genesis.block and channel .tx file to the same folder whi
 - CHAINCODE\_POLICY - chaincode policy string used while commiting chaincode definition in the HLF network
 
 Once the above details is known, move the copy of ORDERER\_TLS\_CA\_CERT file in the VM and follow below steps. <br>
-Export these Environment variables:.
+Export these environment variables:.
 
-![](Environment_var_tab_2.png)
+| Environment Variables | Description |
+|-----------------------|-------------|
+|ORG_NAME|Satellite which is going to be a part of HLF network. ex:mysatellite. You already set this value in chapter 4.2, make sure to use the same value here.|
+|SUB_DOMAIN|Sub-domain reserved in DNS service for this satellite.ex: uat.mydomain.com. You already set this value in chapter 4.2, make sure to use the same value here.|
+|PEER_COUNT|Number of HLF Peer nodes in a satellite. Default = 2.| 
+|ENVIRONMENT|Name of the infra environment like uat, test, prod. You already set this value in chapter 4.2, make sure to use the same value here.|
+|ORDERER_TLS_CA_CERT|Path to ca cert file of ordering service which you received from iSHARE Foundation and copied to your VM|
+|ORDERER_ADDRESS|Ordering service hostname with port ex: orderer1.example.aks.io:443|
+|CHANNEL_NAME|Name of the channel in which new satellite is onboarded.|
+|ANCHOR_PEER_HOSTNAME|HLF peer node hostname of a new satellite. ex: peer0.example.com. The peer name from chapter 4.2|
+|ANCHOR_PEER_PORT_NUMBER|HLF peer node listening port ex: 7051, corresponding port of the peer set in ANCHOR_PEER_HOSTNAME|
+|CHAINCODE_NAME|Chaincode (smart contract) name defined in chaincode definition comitted|
+|CHAINCODE_VERSION|Chaincode version defined in chaincode definition comitted.|
+|CHAINCODE_POLICY|Chaincode policy defined in chaincode definition comitted.|
+|PEER_ADMIN_MSP_DIR|Admin user msp directory of satellite ex: app/\<ENVIRONMENT>/crypto/peerOrganization/\<subdomain>/users/Admin@subdomain/msp|
 
 
 
-|<p>export ORG\_NAME=\<orgname\> <br>export SUB\_DOMAIN=\<sub-domain\> <br> export PEER\_COUNT=2 <br> export ORDERER\_COUNT=0 <br> export ENVIRONMENT=test<br> export ORDERER\_TLS\_CA\_CERT=\<path-to-orderer-ca-cert\> <br> export ORDERER\_ADDRESS=\<orderer-hostname-with-port\> <br> export CHANNEL\_NAME=\<channelname\> <br> export ANCHOR\_PEER\_HOSTNAME=\<hostname-of-one-the-hlf-peer\> <br> export ANCHOR\_PEER\_PORT\_NUMBER=\<port-number-of-one-the-hlf-peer\><br> export CHAINCODE\_NAME=\<chaincode-name\> <br> export CHAINCODE\_SEQUENCE=\<chaincode-version\> <br> export CHAINCODE\_VERSION=\<chaincode-version\> <br> export CHAINCODE\_POLICY=\<chaincode-policy\> export PEER\_ADMIN\_MSP\_DIR=/\<path\>/app/\<orgname\>/users /Admin/msp </p>|
-| :- |
+```
+export ORG\_NAME=<orgname> 
+export SUB\_DOMAIN=<sub-domain>
+export PEER\_COUNT=2
+export ORDERER\_COUNT=0 
+export ENVIRONMENT=test
+export ORDERER\_TLS\_CA\_CERT=<path-to-orderer-ca-cert>
+export ORDERER\_ADDRESS=<orderer-hostname-with-port> 
+export CHANNEL\_NAME=<channelname>
+export ANCHOR\_PEER\_HOSTNAME=<hostname-of-one-the-hlf-peer> 
+export ANCHOR\_PEER\_PORT\_NUMBER=\<port-number-of-one-the-hlf-peer\>
+export CHAINCODE\_NAME=\<chaincode-name\>
+export CHAINCODE\_SEQUENCE=\<chaincode-version\>
+export CHAINCODE\_VERSION=\<chaincode-version\>
+export CHAINCODE\_POLICY=\<chaincode-policy\>
+export PEER\_ADMIN\_MSP\_DIR=/<path>/app/<orgname>/users/Admin/msp
+```
 
 <br>
 
 Join the HLF channel using below script:
-|<p>cd iSHARESatellite/scripts</p><p>bash joinchannel.sh</p>|
-| :- |
+```
+cd iSHARESatellite/scripts</p><p>bash joinchannel.sh
+```
 
 <br>
 
 Anchor peer for new satellite:
-|<p>bash anchorPeer.sh</p>|
-| :- |
-
-<br>
+```
+bash anchorPeer.sh
+```
 
 Install chaincode in new satellite peer
-|<p>bash installChaincode.sh</p>|
-| :- |
+```
+bash installChaincode.sh
+```
 
 <br>
 
 Approve the chaincode for new satellite peer
-|<p>bash approveChaincode.sh</p>|
-| :- |
+```
+bash approveChaincode.sh
+```
 
 <br>
 
 Create chaincode instance
-|<p>bash chaincode.sh</p>|
-| :- |
+```
+bash chaincode.sh
+```
 
 Create HLF explorer instance:
-|<p>bash explorer.sh</p>|
-| :- |
+```
+bash explorer.sh
+```
 
 Your node is now on network!
 
@@ -465,96 +541,118 @@ Your node is now on network!
 
 # 4.5. &nbsp; <a id="deploy"> Deploy the UI and middleware applications </a>
 
-
-|<p>**Note: Steps to configure Private key (of the eIDAS) certificate in production environment could differ to accommodate your organizations policies. <br> For test environments currently we configure the private keys in VM itself which is not very secure. But since we issue you test eIDAS certificates it is usually no issue.Please contact us if you wish to configure private keys differently.**</p>|
-| :- |
+**Note: Steps to configure Private key (of the eIDAS) certificate in production environment could differ to accommodate your organizations policies. <br> For test environments currently we configure the private keys in VM itself which is not very secure. But since we issue you test eIDAS certificates it is usually no issue. Please contact us if you wish to configure private keys differently.**
 
 Export these environment variables to initialize scripts:
 
 <br>
 
-![](Environment_var_tab_3.PNG)
+|Environment Variables|Description|
+|---------------------|-----------|
+|ORG_NAME|Satellite which is going to be a part of HLF network. ex:mysatellite. You already set this value in chapter 4.2, make sure to use the same value here.|
+|SUB_DOMAIN|Sub-domain reserved in DNS service for this satellite.ex: uat.mydomain.com. You already set this value in chapter 4.2, make sure to use the same value here.|
+|CHANNEL_NAME|Name of the channel in which new satellite is onboarded. Same value as used in previous chapter.|
+|CHAINCODE_NAME|Chaincode (smart contract) name defined in chaincode definition comitted. Same value as used in previous chapter.|
+|UIHostName|DNS name of Application UI. Ex: mysatellite.example.com. Base URL of your satellite application.|
+|MiddlewareHostName|DNS name for application middleware. Ex: mysatellite-mw.example.com. Base URL of your satellite APIs.|
+|KeycloakHostName|DNS name for application keycloak service. Ex: mysatellite-keycloak.example.com. Base URL of your keycloak for user administration. Internal use only.|
 
+<br> 
 
-
-|<p>export ORG\_NAME=\<myorg\><br>export SUB\_DOMAIN=\<test.example.com\><br>export KeycloakHostName=\<myorg-keycloak-test.example.com\><br>export CHANNEL\_NAME=\<mychannel\><br>export CHAINCODE\_NAME=\<ccname\><br>export UIHostName=\<myorg-test.example.com\><br>export MiddlwareHostName=\<myorg-mw-test.example.com\><br>export ENVIRONMENT=\<test\> export PARTY\_ID=\<party\_id\><br>export PARTY\_NAME=\<party\_name\>|
-| :- |
+```
+export ORG_NAME=<myorg> 
+export SUB_DOMAIN=<test.example.com>
+export KeycloakHostName=<myorg-keycloak-test.example.com>
+export CHANNEL_NAME=<mychannel>
+export CHAINCODE_NAME=<ccname>
+export UIHostName=<myorg-test.example.com>
+export MiddlwareHostName=<myorg-mw-test.example.com>
+export ENVIRONMENT=<test> 
+export PARTY_ID=<party_id>
+export PARTY_NAME=<party_name>
+```
 
 <br>
 
 *Configure HTTPS (SSL/TLS):* <br>
 
-To configure SSL (HTTPS) you would need the certificate and private key file from your CA. <br>
-Copy SSL certs for the application inside “ssl” directory with a cert file named tls.crt and a private key file named tls.key.
+To configure SSL (HTTPS) you need the certificate chain file and private key file from your CA. 
+<br>
+Copy/move the full certificate full chain file and private key file into the "ssl" directory. The files should have the given names and format shown below: 
 
-Copy the public certificate (pem file) to {base\_dir}/ssl/tls.crt
-Copy the private key (key file) to {base\_dir}/ssl/tls.key
+- The full chain certificate file should be named "tls.crt". 
+    - The certificate keys should begin with "----BEGIN CERTIFICATE-----" and end with "----END CERTIFICATE-----".
+
+- The private key file should be named "tls.key". 
+  - The certificate key should begin with "----BEGIN PRIVATE KEY----" and end with "----END PRIVATE KEY----", or begin with "----BEGIN RSA PRIVATE KEY----" and end with "----END RSA PRIVATE KEY----".
 
 Note: SSL certs should be a wild card certificate of your domain name like \*.example.com.
 
 <br>
 
-*Configure Signing certificate (e.g. your eIDAS certificate):*
+*Configure Signing Certificate (e.g. your eIDAS certificate):*
 
-Copy/Move RSA public cert and private key (e.g. your eIDAS certificate) in jwt-rsa folder. Jwt-rsa folder should contain following files with given names below:
 
-- jwtRSA256-private.pem – RSA private key (unecrypted) file for jwt signing  
-  - The certificate file should begin with "-----BEGIN RSA PRIVATE KEY-----"  and end with "-----END RSA PRIVATE KEY-----"
-- jwtRSA256-public.pem - public cert for jwt signing
-  - The certificate file should contain the whole chain of certificate and begin with "-----BEGIN CERTIFICATE-----" and end with "-----END CERTIFICATE-----"
+**Note: For production environments you should have received your Qualified Seal digital certificate as specified in iSHARE, from your chosen Certificate Authority. When requesting you can request the certificate in p12 file format. For test environments you can request your certificates using following link:<a> https://ca7.isharetest.net:8442/ejbca/ra </a>. Use "postpone" option during request. Once your request is approved you will get a link via email to download the certificate.**
 
-Note: For production environments you should have received your Qualified Seal digital certificate as specified in iSHARE, from your chosen Certificate Authority. When requesting you can request the certificate in p12 file format.
-
-For test environments you can request your certificates using following link:<a> https://ca7.isharetest.net:8442/ejbca/ra </a>. <br>
-Please note: use "postpone" option during request. Once your request is approved you will get a link via email to download the certificate.
-
-*Instructions to convert your p12 file on linux using openssl:*
-
-  
-To extract the public certificate from p12 compatible with required format<br>openssl pkcs12 -in <p12 file> -nokeys -passin <p12 password> | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > \<output filename\>(hint: jwtRSA256-public.pem). <br>
+To extract the public certificate from p12 compatible with required format: <br> 
+openssl pkcs12 -in <p12 file> -nokeys -passin <p12 password> | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > \<output filename\>(hint: jwtRSA256-public.pem). <br>
 
 To extract the unencrypted private key from p12 compatible with required format:  <br> 
 openssl pkcs12 -in <p12 file> -nocerts -nodes -passin <p12 password> | openssl rsa > <output filename>(hint: jwtRSA256-private.pem).
 
-
 You can also use following script to automate above and extract certificate in various formats: <br> 
 <https://github.com/iSHAREScheme/code-snippets/tree/master/Cert_Key_Extractor>
 
+<br>
+
+
+Copy/move RSA public cert and private key (e.g. your eIDAS certificate) in jwt-rsa folder. Jwt-rsa folder should contain following files with given names below:
+
+- jwtRSA256-private.pem – RSA private key (unecrypted) file for jwt signing  
+  - The certificate file should begin with 
+   "-----BEGIN RSA PRIVATE KEY-----"  and end with "-----END RSA PRIVATE KEY-----". 
+
+<br>
+
+- jwtRSA256-public.pem - public cert for jwt signing
+  - The certificate file should contain the whole chain of certificate and begin with "-----BEGIN CERTIFICATE-----" and end with "-----END CERTIFICATE-----".
+  
+
 <br> <br>
 
-#### *Configure environment and deploy applications:*
+*Configure environment and deploy applications:* <br>
 
-<br>
-
-Copy “genesis.block” and “channel.tx” files in middleware folder. These files were shared by iSHARE foundation to you earlier.
-
-<br>
+Copy “genesis.block” and “isharechannel.tx” files into the "middleware" folder. These files were shared by iSHARE foundation to you earlier.
 
 Create Keycloak Instance using below command, It listens at port 8443.
 
-|<p> cd iSHARESatellite/scripts </p> <p> bash keycloak.sh </p>|
-| :- |
-
-<br>
+```
+cd iSHARESatellite/scripts 
+bash keycloak.sh
+```
 
 Create middleware instances using below command. 
 
-|<p> bash middleware.sh</p>|
-| :- |
+```
+bash middleware.sh
+```
 
 <br>
 
 Create UI and Nginx instances:
 
-|<p>bash deployUI.sh</p>| 
-| :- |
+```
+bash deployUI.sh
+```
 
 <br>
 
 *Configure DNS for your applications:* <br> 
+
 Map dns entries for application services with server IP address for these environment variables:
 
-**UIHostName** (ex: myorg-test.example.com A record 123.0.0.23, example.com is the domain name for the applications UI and 123.0.0.23 is the server’s public IP)
+**UIHostName** (ex: myorg-test.example.com, record type A, ip adress 123.0.0.23. Example.com is the domain name for the applications UI and 123.0.0.23 is the server’s public IP)
 
 **MiddlwareHostName** (ex: myorg-mw-test.example.com A record 123.0.0.23, example.com is the domain name for the applications middleware and 123.0.0.23 is the server’s public IP)
 
@@ -563,9 +661,9 @@ Map dns entries for application services with server IP address for these enviro
 
 |**Full Record Name**|**Record Type**|**Value**|**TTL**|
 | :- | :- | :- | :- |
-|<UIHostName>|A|12.9.7.6|1min|
-|<MiddlwareHostName>|A|12.9.7.6|1min|
-|<KeycloakHostName>|A|12.9.7.6|1min|
+|\<UIHostName+>|A|123.0.0.23|1min|
+|\<MiddlwareHostName\>|A|123.0.0.23|1min|
+|\<KeycloakHostName\>|A|123.0.0.23|1min|
 
 <br> 
 Now your satellite is deployed! Note finish next chapter to be able to use the application.
@@ -613,13 +711,13 @@ Steps for RedirectURL configuration in keycloak
 
 # 5. <a id="U_setup"> Initial user setup </a>
 
-Now that you have installed satellite, to access it first setup a Satellite admin user with following procedure
+The satellite is now installed. To access the satellite, first set up a satellite admin user for the keycloak identity provider with the procedure below.  Keycloak URL is accessible over the browser example -  <https://satellite.example.com:8443/auth>.
 
-NOTE: Once you have setup initial user, you can add your colleagues via satellite UI which is very straight forward, so you do not need to follow same procedure for adding other users. Also, make sure to secure keycloak environment as per your organization policy so only limited users can login into keycloak admin console. Additionally, you can set more stricter password and user policies via keycloak admin console.
+NOTE: Once you have set up an initial user, you can add your colleagues via satellite UI in a straightofrward manner. Therefore, you do not need repeat the keycloak user setup for other users. Also, make sure to secure keycloak environment based on your organization policy, to limited users that can log into the keycloak admin console. You can set stricter password and user policies via keycloak admin console.
 
-Keycloak URL is accessible over the browser example -  <https://satellite.example.com:8443/auth>.
 
-Steps for Keycloak user creation
+
+St
 
 1. Click on administrator console and login with seeded admin user refer to below screenshots.
 
