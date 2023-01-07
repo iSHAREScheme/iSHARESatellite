@@ -34,11 +34,13 @@ VM-Docker based model
 
 [***4.5. &nbsp; &nbsp; Deploy the UI and middleware applications***](#_Toc106354337)
 
-[***? &nbsp; &nbsp; Keycloak setup -Application settings***](#_Toc106354338)
+
+[***5. &nbsp; &nbsp; Initial user setup***](#user_setup)
+
 
 [***? &nbsp; &nbsp; Configure keycloak***](#_Toc106354339)
 
-[***5. &nbsp; &nbsp; Initial user setup***](#user_setup)
+
 
 [***5.3. &nbsp; &nbsp; Set up email notifications***](#_Toc106354341)
 
@@ -758,27 +760,23 @@ Steps for RedirectURL configuration in keycloak
 `                                                                                                                                                                             `![](keycloakurl1.png)
 
 3. In the "frontend" settings form, find *RootURL*, *valid RedirectURLs, Web Origins* and add the entries as follows:
-
-`            `*RootURL* – the values to this input should be UI application URL
-
-`            `example: <https://satelliteone-demo.example.com>
+ 
+ *RootURL* – the values to this input should be UI application URL. Example: <https://satelliteone-demo.example.com>
 
 `            `*Valid Redirect URLs* – it includes multiple values as URLs.
 
-1. UI application URL with \* as route example - [https://satelliteone-demo.example.com/](https://satelliteone-demo.krypc.com/)\*
-1. Keycloak URL with \* as route example - <https://satelliteone-demo.exapmle.com:8443/>\*
+-  UI application URL with \* as route. Example: <https://satelliteone-demo.krypc.com/>\*
+- Keycloak URL with \* as route. Example: <https://satelliteone-demo.exapmle.com:8443/>\*
 
-`            `*Web Origins -* the values to this input should be keycloak URL with \* as route example -
+*Web Origins -* the values to this input should be keycloak URL with \* as route. Example: <https://satelliteone-demo.krypc.com:8443/>\*
 
-`           `[https://satelliteone-demo.example.com:8443/](https://satelliteone-demo.krypc.com:8443/)\*
-
-`            `Find below Image as reference
+Find below image as reference:
 
 `           `![](keycloakurl2.png)
 
 
 
-1. ` `Match all the settings as below image and save it. Redirection settings has been changed successfully.
+4. Match all the settings as below image and save it. Redirection settings has been changed successfully.
 
 ![](keycloakurl3.png)
 
@@ -790,7 +788,7 @@ Steps for RedirectURL configuration in keycloak
 
 
 
- # 7.  <a> Enable 2FA for users </a> 
+ # 8.  <a> Enable 2FA for users </a> 
 
 The steps below explain how to set up the 2FA for new devices (configured device lost/new device to configure with existing users). The keycloak administrator has the provision to enable this feature. 
 
@@ -814,37 +812,38 @@ You are now ready with your Satellite. Login with the user you created in step 5
 
 <br> <br> <br>
 
-# ? <a> Commands for managing Docker services </a>
+# 9. <a> Commands for managing Docker services </a>
 
 To check the status of docker containers:
-
-|docker-compose -f <docker-compose-file> ps|
-| :- |
+```
+docker-compose -f <docker-compose-file> ps
+```
 To stop the container
 
-|docker-compose -f <docker-compose-file> down|
-| :- |
+```
+docker-compose -f <docker-compose-file> down
+```
 To restart containers 
-
-|docker-compose -f <docker-compose-file> restart|
-| :- |
+```
+docker-compose -f <docker-compose-file> restart
+```
 To bring containers up and running
-
-|docker-compose -f <docker-compose-file> up -d|
-| :- |
+```
+docker-compose -f <docker-compose-file> up -d
+```
 To get the logs of containers
-
-|docker-compose -f <docker-compose-file> logs <service-name-in-compose-file>|
-| :- |
+```
+docker-compose -f <docker-compose-file> logs <service-name-in-compose-file>
+```
 
 
 <br> <br> <br>
 
-# ? <a> Reference updates deployment procedure </a>
+# 10. <a> Reference updates deployment procedure </a>
 
-Following is general procedure for updates deployment. When new updates are available to be deployed iSHARE foundation will inform you with additional details about the deployment.
+Following is general procedure for updates deployment. When new updates are available to be deployed, iSHARE Foundation will inform you with additional details about the deployment.
 
-You will find docker-compose files in following path in project directory. Using these docker-compose files all the docker services will be managed. 
+You will find docker-compose files in following path in project directory. All the docker services will be managed using these docker-compose files. 
 
 - iSHARESatellite/hlf/<Environment>/<orgName>/peers/ docker-compose-hlf.yaml
 - iSHARESatellite/hlf/<Environment>/<orgName>/fabric-ca/ docker-compose-fabric-ca.yaml
