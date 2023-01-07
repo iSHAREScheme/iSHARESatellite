@@ -666,21 +666,98 @@ Map dns entries for application services with server IP address for these enviro
 |\<KeycloakHostName\>|A|123.0.0.23|1min|
 
 <br> 
-Now your satellite is deployed! Note finish next chapter to be able to use the application.
+Now your satellite is deployed! Finish the next chapter to use the application.
 
 <br> <br> <br>
 
+# 5. <a id="U_setup"> Initial user setup </a>
 
-# ? <a>Configure Keycloak </a>
+The satellite is now installed. To access the satellite, first set up a satellite admin user for the keycloak identity provider with the procedure below.  Keycloak URL is accessible over the browser. Example:  <https://satellite.example.com:8443/auth>.
+
+NOTE: Once you have set up an initial user, you can add your colleagues via satellite UI in a straightforward manner. Therefore, you do not need repeat the keycloak user setup for other users. Also, make sure to secure keycloak environment based on your organization policy to limit users that can log into the keycloak admin console. You can set stricter password and user policies via keycloak admin console. 
+
+<br>
+
+1. Click on administrator console and login with seeded admin user refer to below screenshots.
+
+![](keycloakuser1.png)
+
+`           `![](keycloakuser2.png)
+
+Note: username and password for admin can be found in keycloak-docker-compose.yaml inside "keycloak" directory of the project folder.
+
+2. Once logged in successfully, click on users in left menu
+
+![](keycloakuser3.png)
+
+3. Click on Add User button on right side of it
+
+![](keycloakuser4.png)
+
+4. Fill all the details in "Add user" form. Refer to the below image and click save.
+
+Note : username and email should be email id.
+
+` `![](keycloakuser5.png)
+
+5. Click on the "Attribute" tab and add the attributes shown in the table below. Then click save. 
+
+Note: Attributes are mandatory. 
+
+|**Attribute Name**|**Attribute Value**|
+| :- | :- |
+|**partyId**|ID of the participant that this user belongs. Usually, the satellite ID|
+|**partyName**|Name of the participant corresponding to the partyId|
+
+![](keycloakuser6.png)
+
+6. Click on the "Credentials tab and set the password for the user that is being created. 
+
+![](keycloakuser7.png)
+
+7. Click on "Role Mappings" tab and find "Client Roles "dropdown. Select "frontend". 
+
+![](keycloakuser8.png)
+
+8. Under "Available Roles", select "satelliteAdmin" and click on the "Add Selected" button.
+
+![](keycloakuser9.png)
+
+Your user is now created, and you can proceed to use the satellite the UI with newly created user. In the UI you can start registering satellite participants.
+
+<br> <br> <br>
+
+# 6. <a> Set up email notifications </a>
+
+You need an email account so that notifications can be sent to users. The steps below explain how to set up notifications with google email. Make to create an app password in the google account, as this is needed for the notification configuration. 
+
+If you wish to use other email providers, please refer specifically to their values and settings for setup.
+
+Steps for Email Notification under keycloak administrator login:
+
+1. Login as administrator user 
+2. Click on "Realm Settings" under the left menu bar. 
+
+`         `![](keycloakemail1.png)
+
+3. Click on the "Email" tab and fill out the necessary details shown below. Remember to click save. Email notification will be enabled.
+
+`         `![](keycloakemail2.png)
+
+Note: Form inputs for *From* and *username* should be valid email id's. Password should be the app password configured in the mail account.
+
+ <br> <br> <br>
+
+# 7. <a>Configure Keycloak </a>
 
 Steps for RedirectURL configuration in keycloak
 
 1. Login as administrator user
-1. ` `Click on *Clients* under left menu bar and select *frontend* as ClientID
+2. ` `Click on "Clients" under left menu bar and select "frontend" from the "ClientID" options.
 
 `                                                                                                                                                                             `![](keycloakurl1.png)
 
-1. In *frontend* settings form, find *RootURL*, *valid RedirectURLs, Web Origins* and add the entries as follows:
+3. In the "frontend" settings form, find *RootURL*, *valid RedirectURLs, Web Origins* and add the entries as follows:
 
 `            `*RootURL* – the values to this input should be UI application URL
 
@@ -709,108 +786,29 @@ Steps for RedirectURL configuration in keycloak
 
 <br> <br>
 
-# 5. <a id="U_setup"> Initial user setup </a>
-
-The satellite is now installed. To access the satellite, first set up a satellite admin user for the keycloak identity provider with the procedure below.  Keycloak URL is accessible over the browser example -  <https://satellite.example.com:8443/auth>.
-
-NOTE: Once you have set up an initial user, you can add your colleagues via satellite UI in a straightofrward manner. Therefore, you do not need repeat the keycloak user setup for other users. Also, make sure to secure keycloak environment based on your organization policy, to limited users that can log into the keycloak admin console. You can set stricter password and user policies via keycloak admin console.
 
 
 
-St
 
-1. Click on administrator console and login with seeded admin user refer to below screenshots.
+ # 7.  <a> Enable 2FA for users </a> 
 
-![](keycloakuser1.png)
+The steps below explain how to set up the 2FA for new devices (configured device lost/new device to configure with existing users). The keycloak administrator has the provision to enable this feature. 
 
-`           `![](keycloakuser2.png)
+1. Log in with the Keycloak admin credentials, and goto "Manage" in the left option bar, then click "Users". Select the user to reset 2FA.
 
-Note: username and password for admin could be found in keycloak-docker-compose.yaml inside keycloak directory for project folder.
-
-1. Once logged in successfully, click on users in left menu
-
-![](keycloakuser3.png)
-
-1. Click on Add User button on right side of it
-
-![](keycloakuser4.png)
-
-1. Fill all the details in Add user form, refer below image and click save.
-
-Note : username and email should be email id.
-
-` `![](keycloakuser5.png)
-
-1. Click on Attribute tab, add the following attributes with values and save.
-
-Note: Attributes are mandatory. 
-
-|**Attribute Name**|**Attribute Value**|
-| :- | :- |
-|**partyId**|ID of the participant that this user belongs. Usually, the satellite ID|
-|**partyName**|Name of the participant corresponding to the partyId|
-
-![](keycloakuser6.png)
-
-1. Click on credentials tab, enter the password for the user created as follows and set the password
-
-![](keycloakuser7.png)
-
-1. ` `Click on Role Mapping tab, find Client Roles dropdown and select frontend
-
-![](keycloakuser8.png)
-
-1. Under Available Roles, select satelliteAdmin and click on Add Selected button
-
-![](keycloakuser9.png)
-
-User is created, and you can proceed to use satellite UI with newly created User and start registering participants.
-
-<br> <br> <br>
-
-# ? <a> Set up email notifications </a>
-
-Note: you need an email account using which notifications can be sent to users. Following steps explain setting up notifications using google email. Make sure you created app password in the google account as you would need that to configure it here.
-
-For other providers please refer to values and settings from that provider.
-
-Steps for Email Notification under keycloak administrator login:
-
-1. Login as administrator user 
-1. Click on Realm Settings under left menu bar
-
-`         `![](keycloakemail1.png)
-
-1. Click on Email tab, fill all the necessary details as below image and save it. Email notification will be enabled.
-
-`         `![](keycloakemail2.png)
-
-`    `Note: Form inputs for *From* and *username* should be valid emailID. Password should be app password configured in the mail account.
-
- <br> <br> <br>
-
- # ? <a> Enable 2FA for users </a> 
-
-Setting up the 2FA for new devices(configured device lost/new device to configure with existing users)
-
-Keycloak administrator is having the provision to enable this feature
-
-Login with the Keycloak admin credential and goto **Manage --> Users -->** select the User to reset 2FA.
-
-Goto **Credentials** tab and delete the **“otp”** type and confirm
+2. Go to the "Credentials" tab and delete the "otp” type. Then click "confirm". 
 
 ![](keycloak2fa1.png)
 
-Goto Details tab and select the **"Required user action"** as **Configure OTP** and save.
+3. Go to the "Details" tab. Click on the "Required user action" dropdown bar, and select "Configure OTP". Click on save.
 
 ![](keycloak2fa2.png)
 
 ![](keycloak2fa3.png)
 
-Inform the user to login with existing credentials and configure the new 2FA in the new device.
+4. Inform the user to login with existing credentials and configure the 2FA on the new device.
 
-Application will allow to use the existing credentials with new 2FA.
-
+The application will allow to use the existing credentials with new 2FA.
 
 You are now ready with your Satellite. Login with the user you created in step 5.2 using the application link <UIHostName> setup in previous chapter.
 
