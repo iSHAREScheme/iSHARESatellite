@@ -32,23 +32,21 @@ VM-Docker based model
 
 [***4.4. &nbsp; &nbsp; Join the network***](#join_net)
 
-[***4.5. &nbsp; &nbsp; Deploy the UI and middleware applications***](#_Toc106354337)
+[***4.5. &nbsp; &nbsp; Deploy the UI and middleware applications***](#deploy)
+
+[***5. &nbsp; &nbsp; Initial user setup***](#U_setup)
 
 
-[***5. &nbsp; &nbsp; Initial user setup***](#user_setup)
+[***6. &nbsp; &nbsp; Configure keycloak***](#configure_keycloak)
 
 
-[***? &nbsp; &nbsp; Configure keycloak***](#_Toc106354339)
+[***7.. &nbsp; &nbsp; Set up email notifications***](#email)
 
+[***8. &nbsp; &nbsp; Enable 2FA for users***](#2FA)
 
+[***9. &nbsp; &nbsp; Commands for managing Docker services***](#docker_service)
 
-[***5.3. &nbsp; &nbsp; Set up email notifications***](#_Toc106354341)
-
-[***5.4. &nbsp; &nbsp; Enable 2FA for users***](#_Toc106354342)
-
-[***6. &nbsp; &nbsp; Commands for managing Docker services***](#_Toc106354343)
-
-[***7. &nbsp; &nbsp; Reference updates deployment procedure***](#_Toc106354344)
+[***10. &nbsp; &nbsp; Reference updates deployment procedure***](#ref_update)
 
 <br> <br> <br>
 
@@ -729,7 +727,7 @@ Your user is now created, and you can proceed to use the satellite the UI with n
 
 <br> <br> <br>
 
-# 6. <a> Set up email notifications </a>
+# 6. <a id="email"> Set up email notifications </a>
 
 You need an email account so that notifications can be sent to users. The steps below explain how to set up notifications with google email. Make to create an app password in the google account, as this is needed for the notification configuration. 
 
@@ -750,7 +748,7 @@ Note: Form inputs for *From* and *username* should be valid email id's. Password
 
  <br> <br> <br>
 
-# 7. <a>Configure Keycloak </a>
+# 7. <a id="configure_keycloak"> Configure Keycloak </a>
 
 Steps for RedirectURL configuration in keycloak
 
@@ -788,7 +786,7 @@ Find below image as reference:
 
 
 
- # 8.  <a> Enable 2FA for users </a> 
+ # 8.  <a id="2FA"> Enable 2FA for users </a> 
 
 The steps below explain how to set up the 2FA for new devices (configured device lost/new device to configure with existing users). The keycloak administrator has the provision to enable this feature. 
 
@@ -812,7 +810,7 @@ You are now ready with your Satellite. Login with the user you created in step 5
 
 <br> <br> <br>
 
-# 9. <a> Commands for managing Docker services </a>
+# 9. <a id="docker_service"> Commands for managing Docker services </a>
 
 To check the status of docker containers:
 ```
@@ -839,7 +837,7 @@ docker-compose -f <docker-compose-file> logs <service-name-in-compose-file>
 
 <br> <br> <br>
 
-# 10. <a> Reference updates deployment procedure </a>
+# 10. <a id="ref_update"> Reference updates deployment procedure </a>
 
 Following is general procedure for updates deployment. When new updates are available to be deployed, iSHARE Foundation will inform you with additional details about the deployment.
 
