@@ -753,7 +753,7 @@ Note: Form inputs for *From* and *username* should be valid email id's. Password
 Steps for RedirectURL configuration in keycloak
 
 1. Login as administrator user
-2. ` `Click on "Clients" under left menu bar and select "frontend" from the "ClientID" options.
+2. Click on "Clients" under left menu bar and select "frontend" from the "ClientID" options.
 
 `                                                                                                                                                                             `![](keycloakurl1.png)
 
@@ -761,7 +761,7 @@ Steps for RedirectURL configuration in keycloak
  
  *RootURL* – the values to this input should be UI application URL. Example: <https://satelliteone-demo.example.com>
 
-`            `*Valid Redirect URLs* – it includes multiple values as URLs.
+Valid Redirect URLs* – it includes multiple values as URLs.
 
 -  UI application URL with \* as route. Example: <https://satelliteone-demo.krypc.com/>\*
 - Keycloak URL with \* as route. Example: <https://satelliteone-demo.exapmle.com:8443/>\*
@@ -770,7 +770,7 @@ Steps for RedirectURL configuration in keycloak
 
 Find below image as reference:
 
-`           `![](keycloakurl2.png)
+![](keycloakurl2.png)
 
 
 
@@ -867,7 +867,7 @@ Steps to deploy update/releases:
 - Under service name (ishare\_mw), look for image key eg:
   ishare\_mw:
 
-`             `image: isharefoundation/ishare-satellite-app-mw:<tag>
+image: isharefoundation/ishare-satellite-app-mw:<tag>
 
 - Change the tag of the image with new tag provided as an update/release eg: v1.50 and save it.
   Eg:
