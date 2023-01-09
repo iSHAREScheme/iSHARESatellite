@@ -1,5 +1,5 @@
 ﻿
-![](isharelogo.png)
+![](Images/isharelogo.png)
 
 APRIL 12, 2022
 
@@ -680,25 +680,25 @@ NOTE: Once you have set up an initial user, you can add your colleagues via sate
 
 1. Click on administrator console and login with seeded admin user refer to below screenshots.
 
-![](keycloakuser1.png)
+![](Images/keycloakuser1.png)
 
-`           `![](keycloakuser2.png)
+`           `![](Images/keycloakuser2.png)
 
 Note: username and password for admin can be found in keycloak-docker-compose.yaml inside "keycloak" directory of the project folder.
 
 2. Once logged in successfully, click on users in left menu
 
-![](keycloakuser3.png)
+![](Images/keycloakuser3.png)
 
 3. Click on Add User button on right side of it
 
-![](keycloakuser4.png)
+![](Images/keycloakuser4.png)
 
 4. Fill all the details in "Add user" form. Refer to the below image and click save.
 
 Note : username and email should be email id.
 
-` `![](keycloakuser5.png)
+` `![](Images/keycloakuser5.png)
 
 5. Click on the "Attribute" tab and add the attributes shown in the table below. Then click save. 
 
@@ -709,19 +709,19 @@ Note: Attributes are mandatory.
 |**partyId**|ID of the participant that this user belongs. Usually, the satellite ID|
 |**partyName**|Name of the participant corresponding to the partyId|
 
-![](keycloakuser6.png)
+![](Images/keycloakuser6.png)
 
 6. Click on the "Credentials tab and set the password for the user that is being created. 
 
-![](keycloakuser7.png)
+![](Images/keycloakuser7.png)
 
 7. Click on "Role Mappings" tab and find "Client Roles "dropdown. Select "frontend". 
 
-![](keycloakuser8.png)
+![](Images/keycloakuser8.png)
 
 8. Under "Available Roles", select "satelliteAdmin" and click on the "Add Selected" button.
 
-![](keycloakuser9.png)
+![](Images/keycloakuser9.png)
 
 Your user is now created, and you can proceed to use the satellite the UI with newly created user. In the UI you can start registering satellite participants.
 
@@ -738,11 +738,11 @@ Steps for Email Notification under keycloak administrator login:
 1. Login as administrator user 
 2. Click on "Realm Settings" under the left menu bar. 
 
-`         `![](keycloakemail1.png)
+`         `![](Images/keycloakemail1.png)
 
 3. Click on the "Email" tab and fill out the necessary details shown below. Remember to click save. Email notification will be enabled.
 
-`         `![](keycloakemail2.png)
+`         `![](Images/keycloakemail2.png)
 
 Note: Form inputs for *From* and *username* should be valid email id's. Password should be the app password configured in the mail account.
 
@@ -755,7 +755,7 @@ Steps for RedirectURL configuration in keycloak
 1. Login as administrator user
 2. Click on "Clients" under left menu bar and select "frontend" from the "ClientID" options.
 
-`                                                                                                                                                                             `![](keycloakurl1.png)
+`                                                                                                                                                                             `![](Images/keycloakurl1.png)
 
 3. In the "frontend" settings form, find *RootURL*, *valid RedirectURLs, Web Origins* and add the entries as follows:
  
@@ -770,15 +770,15 @@ Valid Redirect URLs* – it includes multiple values as URLs.
 
 Find below image as reference:
 
-![](keycloakurl2.png)
+![](Images/keycloakurl2.png)
 
 
 
 4. Match all the settings as below image and save it. Redirection settings has been changed successfully.
 
-![](keycloakurl3.png)
+![](Images/keycloakurl3.png)
 
-![](keycloakurl4.png)
+![](Images/keycloakurl4.png)
 
 <br> <br>
 
@@ -794,13 +794,13 @@ The steps below explain how to set up the 2FA for new devices (configured device
 
 2. Go to the "Credentials" tab and delete the "otp” type. Then click "confirm". 
 
-![](keycloak2fa1.png)
+![](Images/keycloak2fa1.png)
 
 3. Go to the "Details" tab. Click on the "Required user action" dropdown bar, and select "Configure OTP". Click on save.
 
-![](keycloak2fa2.png)
+![](Images/keycloak2fa2.png)
 
-![](keycloak2fa3.png)
+![](Images/keycloak2fa3.png)
 
 4. Inform the user to login with existing credentials and configure the 2FA on the new device.
 
