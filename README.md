@@ -1,6 +1,6 @@
 # iSHARE Satellite
 ## Deployment Guide
-The up-to-date version of the satellite guide is the README.md file in the "Satellite guide" folder. The markdown file will be updated periodically to the offical pdf format. The current pdf version of the satellite guide is an older version, and be found[ here ]( Satellite%20VM%20model%20deployment%20guide_pub.pdf ). 
+The up-to-date version of the satellite guide is the README.md file in the "Satellite Guide Documents" folder. The markdown file will be updated periodically to the offical pdf format. The current pdf version of the satellite guide is an older version, and be found[ here ]( Satellite%20VM%20model%20deployment%20guide_pub.pdf ). 
 
 ## License Notice and Copyright
 
