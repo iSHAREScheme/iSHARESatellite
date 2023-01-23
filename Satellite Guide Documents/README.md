@@ -469,7 +469,7 @@ Export these environment variables:.
 |SUB_DOMAIN|Sub-domain reserved in DNS service for this satellite.ex: uat.mydomain.com. You already set this value in chapter 4.2, make sure to use the same value here.|
 |PEER_COUNT|Number of HLF Peer nodes in a satellite. Default = 2.| 
 |ENVIRONMENT|Name of the infra environment like uat, test, prod. You already set this value in chapter 4.2, make sure to use the same value here.|
-|ORDERER_TLS_CA_CERT|Path to ca cert file of ordering service which you received from iSHARE Foundation and copied to your VM|
+|ORDERER_TLS_CA_CERT|Path to CA cert file (ca-ishareord.pem) of ordering service which you received from iSHARE Foundation and copied to your VM|
 |ORDERER_ADDRESS|Ordering service hostname with port ex: orderer1.example.aks.io:443|
 |CHANNEL_NAME|Name of the channel in which new satellite is onboarded.|
 |ANCHOR_PEER_HOSTNAME|HLF peer node hostname of a new satellite. ex: peer0.example.com. The peer name from chapter 4.2|
@@ -504,7 +504,8 @@ export PEER\_ADMIN\_MSP\_DIR=/<path>/app/<orgname>/users/Admin/msp
 
 Join the HLF channel using below script:
 ```
-cd iSHARESatellite/scripts</p><p>bash joinchannel.sh
+cd iSHARESatellite/scripts 
+bash joinchannel.sh
 ```
 
 <br>
