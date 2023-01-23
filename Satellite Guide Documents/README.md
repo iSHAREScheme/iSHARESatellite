@@ -176,7 +176,7 @@ Open app-mw-config-template.yaml in the text editor, configure password in explo
 explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
 ```
 
-<br> <br>
+<br> <br> <br>
 
 <h3 align="center">Steps to configure password for Application middleware postgres DB</h3>
 
@@ -199,9 +199,9 @@ app-postgres:
     POSTGRES\_PASSWORD: adminpw
 ```
 
-Change password for admin user under environment section and save. <br> <br> 
+Change password for admin user under environment section and save. 
 
-
+<br> 
 
 Open hlf-mw-config-template.yaml file in a text editor and look for the below snippet and lower end of the file:
 
