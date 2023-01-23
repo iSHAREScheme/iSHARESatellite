@@ -265,12 +265,7 @@ environment:
       - DB\_USER=keycloak
       - DB\_PASSWORD=keycloak
 ```
-Change **DB\_PASSWORD** value keycloak with desired password value.  
-
-<br> <br>
-
-
-
+Change **DB\_PASSWORD** value keycloak with desired password value.      
 # <a id="install_hyp"> 4.2. &nbsp; Installing Hyperledger Fabric node </a>
 
 <br>
@@ -589,12 +584,12 @@ To configure SSL (HTTPS) you need the certificate chain file and private key fil
 Copy/move the full certificate full chain file and private key file into the "ssl" directory. The files should have the given names and format shown below: 
 
 - The full chain certificate file should be named "tls.crt". 
-    - The certificate file should only contain the three keys, and begin with ```"----BEGIN CERTIFICATE-----"``` and end with ```"----END CERTIFICATE-----"```.
+    - The certificate file should only contain the three keys, and begin with ```---BEGIN CERTIFICATE---``` and end with ```---END CERTIFICATE----```.
 
 <br>
 
 - The private key file should be named "tls.key". 
-  - The file should only contain the private key, and begin with "```----BEGIN PRIVATE KEY----```" and end with "```----END PRIVATE KEY----```", or begin with "```----BEGIN RSA PRIVATE KEY----```" and end with "```----END RSA PRIVATE KEY----```".
+  - The file should only contain the private key, and begin with ```---BEGIN PRIVATE KEY---``` and end with "```---END PRIVATE KEY---```, or begin with ```---BEGIN RSA PRIVATE KEY---``` and end with "```---END RSA PRIVATE KEY---```.
 
 Note: SSL certs should be a wild card certificate of your domain name like \*.example.com.
 
