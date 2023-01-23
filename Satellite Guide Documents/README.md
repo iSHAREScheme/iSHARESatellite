@@ -350,6 +350,7 @@ Creating HLF Fabric CA instance:
 ```
 bash fabric-ca.sh
 ```
+Wait more than a minute after running the above command. Certificates are being generated. Running the next "bash" command too early will cause an error. 
 
 <br>
 
@@ -411,7 +412,7 @@ If  **ORG\_NAME=newsatellite** and **SUB\_DOMAIN=test.example.com**, then
 
 <br>
 
-The Hyperledger fabric node is deployed, now follow next chapter to register your node in the network.
+The Hyperledger fabric node is deployed. Now follow the next chapter to register your node in the network.
 
 <br> <br>
 
@@ -440,11 +441,11 @@ Send this file as well as following details to iSHARE foundation.
 
 Join the network with information received from iSHARE Foundation. You should receive following information and files from iSHARE Foundation:
 
-**Files: Copy these files in the VM** 
+**Files: copy these files in the VM** 
 
-- CA cert file of HLF ordering service (ORDERER\_TLS\_CA\_CERT)
+- CA cert file of HLF ordering service (ca-ishareord.pem)
 - Genesis.block file 
-- Channel .tx file 
+- Channel.tx file (isharechannel.tx)
 
 Note: you need to copy Genesis.block and channel .tx file to the same folder which contains the iSHARESatellite folder
 
@@ -456,8 +457,10 @@ Note: you need to copy Genesis.block and channel .tx file to the same folder whi
 - CHAINCODE\_VERSION -  chaincode version defined in chaincode definition committed
 - CHAINCODE\_SEQUENCE - sequence number associated with chaincode 
 - CHAINCODE\_POLICY - chaincode policy string used while commiting chaincode definition in the HLF network
+- PARTY_ID - EORI identifier that iSHARE has used to register you in the network.
+- PARTY_NAME - Name used by iSHARE to register you in the network.  
 
-Once the above details is known, move the copy of ORDERER\_TLS\_CA\_CERT file in the VM and follow below steps. <br>
+Once the above details is known, move the copy of the "ca-ishareord.pem" file in the VM and follow below steps. <br>
 Export these environment variables:.
 
 | Environment Variables | Description |
@@ -474,7 +477,8 @@ Export these environment variables:.
 |CHAINCODE_NAME|Chaincode (smart contract) name defined in chaincode definition comitted|
 |CHAINCODE_VERSION|Chaincode version defined in chaincode definition comitted.|
 |CHAINCODE_POLICY|Chaincode policy defined in chaincode definition comitted.|
-|PEER_ADMIN_MSP_DIR|Admin user msp directory of satellite ex: app/\<ENVIRONMENT>/crypto/peerOrganization/\<subdomain>/users/Admin@subdomain/msp|
+|PEER_ADMIN_MSP_DIR|Admin user msp directory of satellite ex: app/\<ENVIRONMENT>/crypto/peerOrganization/\<subdomain>/users/Admin@subdomain/msp| 
+
 
 
 
@@ -553,23 +557,26 @@ Export these environment variables to initialize scripts:
 |SUB_DOMAIN|Sub-domain reserved in DNS service for this satellite.ex: uat.mydomain.com. You already set this value in chapter 4.2, make sure to use the same value here.|
 |CHANNEL_NAME|Name of the channel in which new satellite is onboarded. Same value as used in previous chapter.|
 |CHAINCODE_NAME|Chaincode (smart contract) name defined in chaincode definition comitted. Same value as used in previous chapter.|
-|UIHostName|DNS name of Application UI. Ex: mysatellite.example.com. Base URL of your satellite application.|
-|MiddlewareHostName|DNS name for application middleware. Ex: mysatellite-mw.example.com. Base URL of your satellite APIs.|
-|KeycloakHostName|DNS name for application keycloak service. Ex: mysatellite-keycloak.example.com. Base URL of your keycloak for user administration. Internal use only.|
+|PARTY_ID|EORI identifier that iSHARE has used to register you in the network.|
+|PARTY_NAME|Name used by iSHARE to register you in the network.|
+|UIHostName|DNS name of Application UI. Ex: mysatellite.example.com. Base URL of your satellite application. This name should be unique.|
+|MiddlewareHostName|DNS name for application middleware. Ex: mysatellite-mw.example.com. Base URL of your satellite APIs. This name should be unique.|
+|KeycloakHostName|DNS name for application keycloak service. Ex: mysatellite-keycloak.example.com. Base URL of your keycloak for user administration. Internal use only. This name should be unique.|
+
 
 <br> 
 
 ```
 export ORG_NAME=<myorg> 
 export SUB_DOMAIN=<test.example.com>
-export KeycloakHostName=<myorg-keycloak-test.example.com>
+export ENVIRONMENT=<test> 
 export CHANNEL_NAME=<mychannel>
 export CHAINCODE_NAME=<ccname>
-export UIHostName=<myorg-test.example.com>
-export MiddlwareHostName=<myorg-mw-test.example.com>
-export ENVIRONMENT=<test> 
 export PARTY_ID=<party_id>
 export PARTY_NAME=<party_name>
+export UIHostName=<myorg-test.example.com>
+export MiddlwareHostName=<myorg-mw-test.example.com>
+export KeycloakHostName=<myorg-keycloak-test.example.com>
 ```
 
 <br>
@@ -581,10 +588,12 @@ To configure SSL (HTTPS) you need the certificate chain file and private key fil
 Copy/move the full certificate full chain file and private key file into the "ssl" directory. The files should have the given names and format shown below: 
 
 - The full chain certificate file should be named "tls.crt". 
-    - The certificate keys should begin with "----BEGIN CERTIFICATE-----" and end with "----END CERTIFICATE-----".
+    - The certificate file should only contain the three keys, and begin with ```"----BEGIN CERTIFICATE-----"``` and end with ```"----END CERTIFICATE-----"```.
+
+<br>
 
 - The private key file should be named "tls.key". 
-  - The certificate key should begin with "----BEGIN PRIVATE KEY----" and end with "----END PRIVATE KEY----", or begin with "----BEGIN RSA PRIVATE KEY----" and end with "----END RSA PRIVATE KEY----".
+  - The file should only contain the private key, and begin with "```----BEGIN PRIVATE KEY----```" and end with "```----END PRIVATE KEY----```", or begin with "```----BEGIN RSA PRIVATE KEY----```" and end with "```----END RSA PRIVATE KEY----```".
 
 Note: SSL certs should be a wild card certificate of your domain name like \*.example.com.
 
@@ -609,21 +618,25 @@ You can also use following script to automate above and extract certificate in v
 
 Copy/move RSA public cert and private key (e.g. your eIDAS certificate) in jwt-rsa folder. Jwt-rsa folder should contain following files with given names below:
 
-- jwtRSA256-private.pem – RSA private key (unecrypted) file for jwt signing  
-  - The certificate file should begin with 
-   "-----BEGIN RSA PRIVATE KEY-----"  and end with "-----END RSA PRIVATE KEY-----". 
+- jwtRSA256-public.pem - public full chain certificate for jwt signing. 
+  - The certificate file should contain three files, and begin with ```"-----BEGIN CERTIFICATE-----"``` and end with ```"-----END CERTIFICATE-----"```.
 
 <br>
 
-- jwtRSA256-public.pem - public cert for jwt signing
-  - The certificate file should contain the whole chain of certificate and begin with "-----BEGIN CERTIFICATE-----" and end with "-----END CERTIFICATE-----".
+- jwtRSA256-private.pem – RSA private key (unecrypted) file for jwt signing  
+  - The certificate file should begin with 
+   "```-----BEGIN RSA PRIVATE KEY-----```"  and end with ```"-----END RSA PRIVATE KEY-----"```. 
+
+<br>
+
+
   
 
 <br> <br>
 
 *Configure environment and deploy applications:* <br>
 
-Copy “genesis.block” and “isharechannel.tx” files into the "middleware" folder. These files were shared by iSHARE foundation to you earlier.
+Copy “genesis.block” and “isharechannel.tx” files into the "middleware" folder. These files were shared by iSHARE Foundation to you earlier.
 
 Create Keycloak Instance using below command, It listens at port 8443.
 
@@ -661,7 +674,7 @@ Map dns entries for application services with server IP address for these enviro
 
 |**Full Record Name**|**Record Type**|**Value**|**TTL**|
 | :- | :- | :- | :- |
-|\<UIHostName+>|A|123.0.0.23|1min|
+|\<UIHostName>|A|123.0.0.23|1min|
 |\<MiddlwareHostName\>|A|123.0.0.23|1min|
 |\<KeycloakHostName\>|A|123.0.0.23|1min|
 
@@ -684,7 +697,7 @@ NOTE: Once you have set up an initial user, you can add your colleagues via sate
 
 `           `![](Images/keycloakuser2.png)
 
-Note: username and password for admin can be found in keycloak-docker-compose.yaml inside "keycloak" directory of the project folder.
+Note: username and password for admin can be found in keycloak-docker-compose.yaml inside "keycloak" directory of the project folder. IMPORTANT NOTE: if you change the admin username and password in the keycloak ui, you also need to change these inside the keycloak-docker-compose.yaml file. 
 
 2. Once logged in successfully, click on users in left menu
 
