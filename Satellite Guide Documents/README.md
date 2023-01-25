@@ -302,7 +302,7 @@ To install and ensure all the necessary packages are available in the system, us
 <br>
 
 ```
-bash prerequsites.sh
+bash prerequisites.sh
 ```
 
 <br>
