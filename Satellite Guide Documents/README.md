@@ -110,11 +110,13 @@ To install iSHARE satellite and configure it to run follow the steps:
 
 <br> <br>
 
- # <a id="configure"> 4.1. &nbsp; Configure Passwords for the Services </a>
+# <a id="configure"> 4.1. &nbsp; Configure Passwords for the Services </a>
 
-Download the scripts from GitHub
-```
-git clone [https://github.com/iSHAREScheme/iSHARESatellite.git](https://github.com/iSHAREScheme/VM-Model-iSHARE-Satellites.git)</p><p>cd iSHARESatellite
+Download the scripts from GitHub:
+
+```sh
+git clone https://github.com/iSHAREScheme/iSHARESatellite.git
+cd iSHARESatellite
 ```
 
 
@@ -132,22 +134,22 @@ Following are the services which uses username and password as credentials for a
 
 <br>
 
-```
+```sh
 cd iSHARESatellite/templates
 ```
 
  Open explorer-docker-compose-template.yaml in the text editor. <br>
 Under *services* section, change the password for explorerdb by referring below snippet under environment: <br> <br>
 
-```
+```yaml
 explorerdb:
     image: hyperledger/explorer-db:latest
-    container\_name: explorerdb
+    container_name: explorerdb
     hostname: explorerdb
     environment:
-      - DATABASE\_DATABASE=fabricexplorer <br>
-      - DATABASE\_USERNAME=hppoc <br>
-      - DATABASE\_PASSWORD=password
+      - DATABASE_DATABASE=fabricexplorer
+      - DATABASE_USERNAME=hppoc
+      - DATABASE_PASSWORD=password
 ```
 <br>
 
@@ -155,16 +157,16 @@ Same Password has be configured for explorer service under environment, refer be
 
 <br>
 
-```
+```yaml
 explorer:
     image: hyperledger/explorer:latest
-    container\_name: explorer 
+    container_name: explorer 
     hostname: explorer 
     environment: 
-      - DATABASE\_HOST=explorerdb
-      - DATABASE\_DATABASE=fabricexplorer
-      - DATABASE\_USERNAME=hppoc
-      - DATABASE\_PASSWD=password
+      - DATABASE_HOST=explorerdb
+      - DATABASE_DATABASE=fabricexplorer
+      - DATABASE_USERNAME=hppoc
+      - DATABASE_PASSWD=password
 ```
 <br>
 
@@ -172,8 +174,9 @@ Open app-mw-config-template.yaml in the text editor, configure password in explo
 
 <br>
 
-```
-explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
+```yaml
+explorerDb:
+    postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
 ```
 
 <br> <br> <br>
@@ -182,7 +185,7 @@ explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=d
 
 <br>
 
-```
+```sh
  cd iSHARESatellite/templates
 ```
 
@@ -190,13 +193,13 @@ explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=d
 
 Open docker-compose-mw-template.yaml in a text editor and look for below snippet : <br>
 
-```
+```yaml
 app-postgres:
   image: postgres:9
   restart: always
   environment:
-    POSTGRES\_USER: admin 
-    POSTGRES\_PASSWORD: adminpw
+    POSTGRES_USER: admin 
+    POSTGRES_PASSWORD: adminpw
 ```
 
 Change password for admin user under environment section and save. 
@@ -205,20 +208,21 @@ Change password for admin user under environment section and save.
 
 Open hlf-mw-config-template.yaml file in a text editor and look for the below snippet and lower end of the file:
 
-```
+```yaml
 ishareConfig: 
     middlewareConfig:
-    postgres\_connection\_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
+    postgres_connection_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
 ```
 
 Change the password adminpw in connection string with password configured in docker-compose-mw.yaml. <br> <br> <br>
 
 Open app-mw-config-template.yaml file in a text editor and look for the below snippet: <br>
 
-```
+```yaml
 ishareConfig:
-    middlewareConfig: <br>
-     postgres\_connection\_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
+    middlewareConfig:
+        postgres_connection_url:
+            postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
 ``` 
 
 Change the password **adminpw** in connection string with password configured in docker-compose-mw.yaml. <br> <br> <br>
@@ -228,7 +232,7 @@ Change the password **adminpw** in connection string with password configured in
 
 <br> 
 
-``` 
+```sh 
 cd iSHARESatellite/keycloak/postgres
 ```
 
@@ -236,13 +240,13 @@ cd iSHARESatellite/keycloak/postgres
 
 Open init-db.sql in a text editor: <br>
 
-```
+```sql
 CREATE USER keycloak WITH ENCRYPTED PASSWORD 'keycloak';
 ```
 
 Change password from **keycloak** to desired password. Password should be under single quotes. <br> <br>
 
-```
+```sh
 cd iSHARESatellite/keycloak
 ```
 
@@ -250,21 +254,22 @@ cd iSHARESatellite/keycloak
 
 Open keycloak-docker-compose.yaml in a text editor,look for below snippet
 
-```
+```yaml
 keycloak:
     image: jboss/keycloak:11.0.2
-    container\_name: keycloak
+    container_name: keycloak
     ports:
       - 8443:8443
 environment:
-      - KEYCLOAK\_USER=admin
-      - KEYCLOAK\_PASSWORD=admin
-      - DB\_VENDOR=postgres
-      - DB\_ADDR=keycloakpostgres
-      - DB\_DATABASE=keycloak
-      - DB\_USER=keycloak
-      - DB\_PASSWORD=keycloak
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin
+      - DB_VENDOR=postgres
+      - DB_ADDR=keycloakpostgres
+      - DB_DATABASE=keycloak
+      - DB_USER=keycloak
+      - DB_PASSWORD=keycloak
 ```
+
 Change **DB\_PASSWORD** value keycloak with desired password value.      
 # <a id="install_hyp"> 4.2. &nbsp; Installing Hyperledger Fabric node </a>
 
@@ -289,7 +294,7 @@ These components have to be pulled as images ,installed and initialized as per t
 
 Download the scripts from GitHub (if not done so already)
 
-```
+```sh
 git clone https://github.com/iSHAREScheme/iSHARESatellite.git
 
 cd iSHARESatellite 
@@ -301,13 +306,13 @@ To install and ensure all the necessary packages are available in the system, us
 
 <br>
 
-```
+```sh
 bash prerequisites.sh
 ```
 
 <br>
 
-```
+```sh
 cd iSHARESatellite/scripts 
 ```
 
@@ -324,9 +329,9 @@ Configure environment variables to initialize scripts. See env variables with ex
 
 <br>
 
-```
-export ORG\_NAME=newsatellite
-export SUB\_DOMAIN=test.example.com 
+```sh
+export ORG_NAME=newsatellite
+export SUB_DOMAIN=test.example.com 
 export ENVIRONMENT=test
 ```
 
@@ -334,7 +339,7 @@ export ENVIRONMENT=test
 
 To generate HLF fabric ca certs, use the below command :
 
-```
+```sh
 bash fabric-ca-cert.sh 
 ```
 
@@ -342,9 +347,10 @@ bash fabric-ca-cert.sh
 
 Creating HLF Fabric CA instance:
 
-```
+```sh
 bash fabric-ca.sh
 ```
+
 Wait more than a minute after running the above command. Certificates are being generated. Running the next "bash" command too early will cause an error. 
 
 <br>
@@ -355,15 +361,15 @@ Navigate to *iSHARESatellite / hlf /\<Environment\>/\<orgName\>/ fabric-ca* dire
 Check the presence of the docker\_data folder. <br>
 To ensure all the HLF Fabric is running, use below commands and check the status.
 
-```
-docker-compose -f iSHARESatellite/hlf/\<Environment\>/\<orgName\>/fabric-ca/docker-compose-fabric-ca.yaml ps
+```sh
+docker-compose -f iSHARESatellite/hlf/<Environment>/<orgName>/fabric-ca/docker-compose-fabric-ca.yaml ps
 ```
 
 <br>
 
 Register and Enroll users and peers
 
-```
+```sh
 bash registerAndEnroll.sh
 ```
 
@@ -371,7 +377,7 @@ bash registerAndEnroll.sh
 
 Create HLF Peer instances, it will spun up instances of  HLF Peers and CouchDB 
 
-```
+```sh
 bash peer.sh
 ```
 
@@ -384,8 +390,8 @@ Navigate to *iSHARESatellite / hlf /\<Environment\>/\<orgName\>/ peers* director
 Check the presence of the docker\_data folder. <br>
 To ensure all the HLF Peer is running, use below commands to check the status. 
 
-```
-docker-compose -f iSHARESatellite/hlf/\<Environment\>/\<orgName\>/peers/docker-compose-hlf.yaml ps
+```sh
+docker-compose -f iSHARESatellite/hlf/<Environment>/<orgName>/peers/docker-compose-hlf.yaml ps
 ```
 
 <br>
@@ -417,7 +423,7 @@ The Hyperledger fabric node is deployed. Now follow the next chapter to register
 Share details with iSHARE foundation to register your node on iSHARE network
 Now generate the organization definition file which iSHARE Foundation (HLF Channel Admin) would require inorder to onboard your new satellite. Use the below command to create an org definition.
 
-```
+```sh
 bash orgDefinition.sh
 ```
 
@@ -477,28 +483,28 @@ Export these environment variables:.
 
 
 
-```
-export ORG\_NAME=<orgname> 
-export SUB\_DOMAIN=<sub-domain>
-export PEER\_COUNT=2
-export ORDERER\_COUNT=0 
+```sh
+export ORG_NAME=<orgname> 
+export SUB_DOMAIN=<sub-domain>
+export PEER_COUNT=2
+export ORDERER_COUNT=0 
 export ENVIRONMENT=test
-export ORDERER\_TLS\_CA\_CERT=<path-to-orderer-ca-cert>
-export ORDERER\_ADDRESS=<orderer-hostname-with-port> 
-export CHANNEL\_NAME=<channelname>
-export ANCHOR\_PEER\_HOSTNAME=<hostname-of-one-the-hlf-peer> 
-export ANCHOR\_PEER\_PORT\_NUMBER=\<port-number-of-one-the-hlf-peer\>
-export CHAINCODE\_NAME=\<chaincode-name\>
-export CHAINCODE\_SEQUENCE=\<chaincode-version\>
-export CHAINCODE\_VERSION=\<chaincode-version\>
-export CHAINCODE\_POLICY=\<chaincode-policy\>
-export PEER\_ADMIN\_MSP\_DIR=/<path>/app/<orgname>/users/Admin/msp
+export ORDERER_TLS_CA_CERT=<path-to-orderer-ca-cert>
+export ORDERER_ADDRESS=<orderer-hostname-with-port> 
+export CHANNEL_NAME=<channelname>
+export ANCHOR_PEER_HOSTNAME=<hostname-of-one-the-hlf-peer> 
+export ANCHOR_PEER_PORT_NUMBER=<port-number-of-one-the-hlf-peer>
+export CHAINCODE_NAME=<chaincode-name>
+export CHAINCODE_SEQUENCE=<chaincode-version>
+export CHAINCODE_VERSION=<chaincode-version>
+export CHAINCODE_POLICY=<chaincode-policy>
+export PEER_ADMIN_MSP_DIR=/<path>/app/<orgname>/users/Admin/msp
 ```
 
 <br>
 
 Join the HLF channel using below script:
-```
+```sh
 cd iSHARESatellite/scripts 
 bash joinchannel.sh
 ```
@@ -506,31 +512,36 @@ bash joinchannel.sh
 <br>
 
 Anchor peer for new satellite:
-```
+
+```sh
 bash anchorPeer.sh
 ```
 
 Install chaincode in new satellite peer
-```
+
+```sh
 bash installChaincode.sh
 ```
 
 <br>
 
 Approve the chaincode for new satellite peer
-```
+
+```sh
 bash approveChaincode.sh
 ```
 
 <br>
 
 Create chaincode instance
-```
+
+```sh
 bash chaincode.sh
 ```
 
 Create HLF explorer instance:
-```
+
+```sh
 bash explorer.sh
 ```
 
@@ -562,7 +573,7 @@ Export these environment variables to initialize scripts:
 
 <br> 
 
-```
+```sh
 export ORG_NAME=<myorg> 
 export SUB_DOMAIN=<test.example.com>
 export ENVIRONMENT=<test> 
@@ -584,12 +595,12 @@ To configure SSL (HTTPS) you need the certificate chain file and private key fil
 Copy/move the full certificate full chain file and private key file into the "ssl" directory. The files should have the given names and format shown below: 
 
 - The full chain certificate file should be named "tls.crt". 
-    - The certificate file should only contain the three keys, and begin with ```---BEGIN CERTIFICATE---``` and end with ```---END CERTIFICATE----```.
+    - The certificate file should only contain the three keys, and begin with `---BEGIN CERTIFICATE---` and end with `---END CERTIFICATE----`.
 
 <br>
 
 - The private key file should be named "tls.key". 
-  - The file should only contain the private key, and begin with ```---BEGIN PRIVATE KEY---``` and end with "```---END PRIVATE KEY---```, or begin with ```---BEGIN RSA PRIVATE KEY---``` and end with "```---END RSA PRIVATE KEY---```.
+  - The file should only contain the private key, and begin with `---BEGIN PRIVATE KEY---` and end with `---END PRIVATE KEY---`, or begin with `---BEGIN RSA PRIVATE KEY---` and end with `---END RSA PRIVATE KEY---`.
 
 Note: SSL certs should be a wild card certificate of your domain name like \*.example.com.
 
@@ -615,13 +626,13 @@ You can also use following script to automate above and extract certificate in v
 Copy/move RSA public cert and private key (e.g. your eIDAS certificate) in jwt-rsa folder. Jwt-rsa folder should contain following files with given names below:
 
 - jwtRSA256-public.pem - public full chain certificate for jwt signing. 
-  - The certificate file should contain three files, and begin with ```"-----BEGIN CERTIFICATE-----"``` and end with ```"-----END CERTIFICATE-----"```.
+  - The certificate file should contain three files, and begin with `-----BEGIN CERTIFICATE-----` and end with `-----END CERTIFICATE-----`.
 
 <br>
 
 - jwtRSA256-private.pem – RSA private key (unecrypted) file for jwt signing  
   - The certificate file should begin with 
-   "```-----BEGIN RSA PRIVATE KEY-----```"  and end with ```"-----END RSA PRIVATE KEY-----"```. 
+   `-----BEGIN RSA PRIVATE KEY-----`  and end with `-----END RSA PRIVATE KEY-----`. 
 
 <br>
 
@@ -636,14 +647,14 @@ Copy “genesis.block” and “isharechannel.tx” files into the "middleware" 
 
 Create Keycloak Instance using below command, It listens at port 8443.
 
-```
+```sh
 cd iSHARESatellite/scripts 
 bash keycloak.sh
 ```
 
 Create middleware instances using below command. 
 
-```
+```sh
 bash middleware.sh
 ```
 
@@ -651,7 +662,7 @@ bash middleware.sh
 
 Create UI and Nginx instances:
 
-```
+```sh
 bash deployUI.sh
 ```
 
@@ -822,24 +833,32 @@ You are now ready with your Satellite. Login with the user you created in step 5
 # 9. <a id="docker_service"> Commands for managing Docker services </a>
 
 To check the status of docker containers:
-```
+
+```sh
 docker-compose -f <docker-compose-file> ps
 ```
-To stop the container
 
-```
+To stop the container:
+
+```sh
 docker-compose -f <docker-compose-file> down
 ```
-To restart containers 
-```
+
+To restart containers:
+
+```sh
 docker-compose -f <docker-compose-file> restart
 ```
-To bring containers up and running
-```
+
+To bring containers up and running:
+
+```sh
 docker-compose -f <docker-compose-file> up -d
 ```
-To get the logs of containers
-```
+
+To get the logs of containers:
+
+```sh
 docker-compose -f <docker-compose-file> logs <service-name-in-compose-file>
 ```
 
