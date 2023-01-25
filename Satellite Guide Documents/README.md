@@ -36,9 +36,7 @@ VM-Docker based model
 
 [***5. &nbsp; &nbsp; Initial user setup***](#U_setup)
 
-
 [***6. &nbsp; &nbsp; Configure keycloak***](#configure_keycloak)
-
 
 [***7.. &nbsp; &nbsp; Set up email notifications***](#email)
 
@@ -270,7 +268,8 @@ environment:
       - DB_PASSWORD=keycloak
 ```
 
-Change **DB\_PASSWORD** value keycloak with desired password value.      
+Change `DB_PASSWORD` value keycloak with desired password value.
+
 # <a id="install_hyp"> 4.2. &nbsp; Installing Hyperledger Fabric node </a>
 
 <br>
@@ -297,7 +296,7 @@ Download the scripts from GitHub (if not done so already)
 ```sh
 git clone https://github.com/iSHAREScheme/iSHARESatellite.git
 
-cd iSHARESatellite 
+cd iSHARESatellite
 ```
 
 <br>
@@ -320,11 +319,11 @@ cd iSHARESatellite/scripts
 
 Configure environment variables to initialize scripts. See env variables with example below:
 
-| Environment | Description | 
-| ----------- | ----------- |
-|   ORG_NAME  | Satellite which is going to be a part of HLF network. It should be a word  without special characters (only alphanumeric) and max 17 characters. ex: mysatellite. |
-|  SUB_DOMAIN | Sub-domain reserved in DNS service for this satellite. No special characters. ex: uat.mydomain.com|
-| ENVIRONMENT | Name of the infra environment like uat, test, prod. No special characters. |
+| **Environment** | **Description**                                                                                                                                                     |
+|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ORG_NAME`      | Satellite which is going to be a part of HLF network. It should be a word  without special characters (only alphanumeric) and max 17 characters. ex: `mysatellite`. |
+| `SUB_DOMAIN`    | Sub-domain reserved in DNS service for this satellite. No special characters. ex: `uat.mydomain.com`                                                                |
+| `ENVIRONMENT`   | Name of the infra environment like `uat`, `test`, `prod`. No special characters.                                                                                    |
 
 
 <br>
@@ -357,15 +356,15 @@ Wait more than a minute after running the above command. Certificates are being 
 
 *Validation*
 
-Navigate to *iSHARESatellite / hlf /\<Environment\>/\<orgName\>/ fabric-ca* directory. <br>
-Check the presence of the docker\_data folder. <br>
+Navigate to `iSHARESatellite/hlf/<Environment>/<orgName>/fabric-ca` directory.
+
+Check the presence of the `docker_data` folder.
+
 To ensure all the HLF Fabric is running, use below commands and check the status.
 
 ```sh
-docker-compose -f iSHARESatellite/hlf/<Environment>/<orgName>/fabric-ca/docker-compose-fabric-ca.yaml ps
+docker-compose -f docker-compose-fabric-ca.yaml ps
 ```
-
-<br>
 
 Register and Enroll users and peers
 
@@ -385,33 +384,27 @@ bash peer.sh
 
 *Validation*
 
-Navigate to *iSHARESatellite / hlf /\<Environment\>/\<orgName\>/ peers* directory.
+Navigate to `iSHARESatellite/hlf/<Environment>/<orgName>/peers` directory.
 
-Check the presence of the docker\_data folder. <br>
+Check the presence of the `docker_data` folder.
+
 To ensure all the HLF Peer is running, use below commands to check the status. 
 
 ```sh
-docker-compose -f iSHARESatellite/hlf/<Environment>/<orgName>/peers/docker-compose-hlf.yaml ps
+docker-compose -f docker-compose-hlf.yaml ps
 ```
 
 <br>
 
-HLF Peer instances needs to be a part of  iSHARE Foundation HLF network, for that HLF peers needs to reachable over the internet. Previous script peer.sh creates two HLF peer instance with hostname peer\<num\>.\<ORG\_NAME\>.\<SUB\_DOMAIN\> and they listen at port 7051 and 8051 TCP. Make sure that necessary firewall settings are updated to allow access to these peers over internet. Map dns entries for Peers hostname with server IP address ex:
+HLF Peer instances needs to be a part of  iSHARE Foundation HLF network, for that HLF peers needs to reachable over the internet. Previous script peer.sh creates two HLF peer instance with hostname `peer<num>.<ORG_NAME>.<SUB_DOMAIN>` and they listen at port 7051 and 8051 TCP. Make sure that necessary firewall settings are updated to allow access to these peers over internet. Map DNS entries for Peers hostname with server IP address example for `ORG_NAME=newsatellite` and `SUB_DOMAIN=test.example.com`:
 
-If  **ORG\_NAME=newsatellite** and **SUB\_DOMAIN=test.example.com**, then
+`peer0.<orgname>.<subdomain>` -> `peer0.newsatellite.test.example.com` 
+`peer1.<orgname>.<subdomain>` -> `peer1.newsatellite.test.example.com`
 
-**peer0.\<orgname\>.\<subdomain\>  - peer0.newsatellite.test.example.com**, and 
-
-**peer1.\<orgname\>.\<subdomain\>  - peer1.newsatellite.test.example.com**
-
-<br>
-
-|Full Record Name|Record Type|Value|TTL|
-|----------------|-----------|-----|---|
-|peer0.\<orgname\>.\<subdomain\>|A|12.9.7.6.5|1 min|
-|peer1.\<orgname>.\<subdomain>|A|12.9.7.6.5|1 min|
-
-<br>
+| **Full Record Name**          | **Record Type** | **Value**  | **TTL** |
+|-------------------------------|-----------------|------------|---------|
+| `peer0.<orgname>.<subdomain>` | A               | 12.9.7.6.5 | 1 min   |
+| `peer1.<orgname>.<subdomain>` | A               | 12.9.7.6.5 | 1 min   |
 
 The Hyperledger fabric node is deployed. Now follow the next chapter to register your node in the network.
 
@@ -429,8 +422,10 @@ bash orgDefinition.sh
 
 <br>
 
-Find the \<orgName\>.json at *hlf /\<ENVIRONMENT\>/\<ORG\_NAME\>* folder. <br>
-Note: <orgName>.json file has to be shared securely, as it contains x509 certificates of the new satellite. <br>
+Find the `<orgName>.json` file in the `hlf/<ENVIRONMENT>/<ORG_NAME>` folder.
+
+Note: `<orgName>.json` file has to be shared securely, as it contains x509 certificates of the new satellite.
+
 Send this file as well as following details to iSHARE foundation.
 
 <br><br>
@@ -444,7 +439,7 @@ Join the network with information received from iSHARE Foundation. You should re
 
 **Files: copy these files in the VM** 
 
-- CA cert file of HLF ordering service (ca-ishareord.pem)
+- CA cert file of HLF ordering service (`ca-ishareord.pem`)
 - Genesis.block file 
 - Channel.tx file (isharechannel.tx)
 
@@ -452,36 +447,34 @@ Note: you need to copy Genesis.block and channel .tx file to the same folder whi
 
 **Values for following variables**
 
-- ORDERER\_ADDRESS - one of the ordering services hostname and port
-- CHANNEL\_NAME - channel name in which a particular satellite is on boarded
-- CHAINCODE\_NAME - chaincode (smart contract) which is defined in chaincode definition committed
-- CHAINCODE\_VERSION -  chaincode version defined in chaincode definition committed
-- CHAINCODE\_SEQUENCE - sequence number associated with chaincode 
-- CHAINCODE\_POLICY - chaincode policy string used while commiting chaincode definition in the HLF network
-- PARTY_ID - EORI identifier that iSHARE has used to register you in the network.
-- PARTY_NAME - Name used by iSHARE to register you in the network.  
+- `ORDERER_ADDRESS` - one of the ordering services hostname and port
+- `CHANNEL_NAME` - channel name in which a particular satellite is on boarded
+- `CHAINCODE_NAME` - chaincode (smart contract) which is defined in chaincode definition committed
+- `CHAINCODE_VERSION` -  chaincode version defined in chaincode definition committed
+- `CHAINCODE_SEQUENCE` - sequence number associated with chaincode 
+- `CHAINCODE_POLICY` - chaincode policy string used while commiting chaincode definition in the HLF network
+- `PARTY_ID` - EORI identifier that iSHARE has used to register you in the network.
+- `PARTY_NAME` - Name used by iSHARE to register you in the network.
 
-Once the above details is known, move the copy of the "ca-ishareord.pem" file in the VM and follow below steps. <br>
-Export these environment variables:.
+Once the above details is known, move the copy of the `ca-ishareord.pem` file in the VM and follow below steps.
 
-| Environment Variables | Description |
-|-----------------------|-------------|
-|ORG_NAME|Satellite which is going to be a part of HLF network. ex:mysatellite. You already set this value in chapter 4.2, make sure to use the same value here.|
-|SUB_DOMAIN|Sub-domain reserved in DNS service for this satellite.ex: uat.mydomain.com. You already set this value in chapter 4.2, make sure to use the same value here.|
-|PEER_COUNT|Number of HLF Peer nodes in a satellite. Default = 2.| 
-|ENVIRONMENT|Name of the infra environment like uat, test, prod. You already set this value in chapter 4.2, make sure to use the same value here.|
-|ORDERER_TLS_CA_CERT|Path to CA cert file (ca-ishareord.pem) of ordering service which you received from iSHARE Foundation and copied to your VM|
-|ORDERER_ADDRESS|Ordering service hostname with port ex: orderer1.example.aks.io:443|
-|CHANNEL_NAME|Name of the channel in which new satellite is onboarded.|
-|ANCHOR_PEER_HOSTNAME|HLF peer node hostname of a new satellite. ex: peer0.example.com. The peer name from chapter 4.2|
-|ANCHOR_PEER_PORT_NUMBER|HLF peer node listening port ex: 7051, corresponding port of the peer set in ANCHOR_PEER_HOSTNAME|
-|CHAINCODE_NAME|Chaincode (smart contract) name defined in chaincode definition comitted|
-|CHAINCODE_VERSION|Chaincode version defined in chaincode definition comitted.|
-|CHAINCODE_POLICY|Chaincode policy defined in chaincode definition comitted.|
-|PEER_ADMIN_MSP_DIR|Admin user msp directory of satellite ex: app/\<ENVIRONMENT>/crypto/peerOrganization/\<subdomain>/users/Admin@subdomain/msp| 
+Export these environment variables:
 
-
-
+| **Environment Variables** | **Description**                                                                                                                                                 |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ORG_NAME`                | Satellite which is going to be a part of HLF network. Ex: `mysatellite`. You already set this value in chapter 4.2, make sure to use the same value here.       |
+| `SUB_DOMAIN`              | Sub-domain reserved in DNS service for this satellite. Ex: `uat.mydomain.com`. You already set this value in chapter 4.2, make sure to use the same value here. |
+| `PEER_COUNT`              | Number of HLF Peer nodes in a satellite. Default = 2.                                                                                                           |
+| `ENVIRONMENT`             | Name of the infra environment like uat, test, prod. You already set this value in chapter 4.2, make sure to use the same value here.                            |
+| `ORDERER_TLS_CA_CERT`     | Path to CA cert file (`ca-ishareord.pem`) of ordering service which you received from iSHARE Foundation and copied to your VM                                     |
+| `ORDERER_ADDRESS`         | Ordering service hostname with port ex: `orderer1.example.aks.io:443`                                                                                           |
+| `CHANNEL_NAME`            | Name of the channel in which new satellite is onboarded.                                                                                                        |
+| `ANCHOR_PEER_HOSTNAME`    | HLF peer node hostname of a new satellite. ex: `peer0.example.com`. The peer name from chapter 4.2                                                              |
+| `ANCHOR_PEER_PORT_NUMBER` | HLF peer node listening port ex: `7051`, corresponding port of the peer set in `ANCHOR_PEER_HOSTNAME`                                                           |
+| `CHAINCODE_NAME`          | Chaincode (smart contract) name defined in chaincode definition comitted                                                                                        |
+| `CHAINCODE_VERSION`       | Chaincode version defined in chaincode definition committed.                                                                                                    |
+| `CHAINCODE_POLICY`        | Chaincode policy defined in chaincode definition committed.                                                                                                     |
+| `PEER_ADMIN_MSP_DIR`      | Admin user msp directory of satellite ex: `app/<ENVIRONMENT>/crypto/peerOrganization/<subdomain>/users/Admin@subdomain/msp`                                     |
 
 ```sh
 export ORG_NAME=<orgname> 
@@ -558,17 +551,17 @@ Export these environment variables to initialize scripts:
 
 <br>
 
-|Environment Variables|Description|
-|---------------------|-----------|
-|ORG_NAME|Satellite which is going to be a part of HLF network. ex:mysatellite. You already set this value in chapter 4.2, make sure to use the same value here.|
-|SUB_DOMAIN|Sub-domain reserved in DNS service for this satellite.ex: uat.mydomain.com. You already set this value in chapter 4.2, make sure to use the same value here.|
-|CHANNEL_NAME|Name of the channel in which new satellite is onboarded. Same value as used in previous chapter.|
-|CHAINCODE_NAME|Chaincode (smart contract) name defined in chaincode definition comitted. Same value as used in previous chapter.|
-|PARTY_ID|EORI identifier that iSHARE has used to register you in the network.|
-|PARTY_NAME|Name used by iSHARE to register you in the network.|
-|UIHostName|DNS name of Application UI. Ex: mysatellite.example.com. Base URL of your satellite application. This name should be unique.|
-|MiddlewareHostName|DNS name for application middleware. Ex: mysatellite-mw.example.com. Base URL of your satellite APIs. This name should be unique.|
-|KeycloakHostName|DNS name for application keycloak service. Ex: mysatellite-keycloak.example.com. Base URL of your keycloak for user administration. Internal use only. This name should be unique.|
+| **Environment Variables** | **Description**                                                                                                                                                                    |
+|---------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ORG_NAME`                | Satellite which is going to be a part of HLF network. Ex: `mysatellite`. You already set this value in chapter 4.2, make sure to use the same value here.                             |
+| `SUB_DOMAIN`              | Sub-domain reserved in DNS service for this satellite. Ex: `uat.mydomain.com`. You already set this value in chapter 4.2, make sure to use the same value here.                       |
+| `CHANNEL_NAME`            | Name of the channel in which new satellite is onboarded. Same value as used in previous chapter.                                                                                   |
+| `CHAINCODE_NAME`          | Chaincode (smart contract) name defined in chaincode definition comitted. Same value as used in previous chapter.                                                                  |
+| `PARTY_ID`                | EORI identifier that iSHARE has used to register you in the network.                                                                                                               |
+| `PARTY_NAME`              | Name used by iSHARE to register you in the network.                                                                                                                                |
+| `UIHostName`              | DNS name of Application UI. Ex: `mysatellite.example.com`. Base URL of your satellite application. This name should be unique.                                                       |
+| `MiddlewareHostName`      | DNS name for application middleware. Ex: `mysatellite-mw.example.com`. Base URL of your satellite APIs. This name should be unique.                                                  |
+| `KeycloakHostName`        | DNS name for application keycloak service. Ex: `mysatellite-keycloak.example.com`. Base URL of your keycloak for user administration. Internal use only. This name should be unique. |
 
 
 <br> 
@@ -602,7 +595,7 @@ Copy/move the full certificate full chain file and private key file into the "ss
 - The private key file should be named "tls.key". 
   - The file should only contain the private key, and begin with `---BEGIN PRIVATE KEY---` and end with `---END PRIVATE KEY---`, or begin with `---BEGIN RSA PRIVATE KEY---` and end with `---END RSA PRIVATE KEY---`.
 
-Note: SSL certs should be a wild card certificate of your domain name like \*.example.com.
+Note: SSL certs should be a wild card certificate of your domain name like `*.example.com`.
 
 <br>
 
@@ -611,11 +604,19 @@ Note: SSL certs should be a wild card certificate of your domain name like \*.ex
 
 **Note: For production environments you should have received your Qualified Seal digital certificate as specified in iSHARE, from your chosen Certificate Authority. When requesting you can request the certificate in p12 file format. For test environments you can request your certificates using following link:<a> https://ca7.isharetest.net:8442/ejbca/ra </a>. Use "postpone" option during request. Once your request is approved you will get a link via email to download the certificate.**
 
-To extract the public certificate from p12 compatible with required format: <br> 
-openssl pkcs12 -in <p12 file> -nokeys -passin <p12 password> | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > \<output filename\>(hint: jwtRSA256-public.pem). <br>
+To extract the public certificate from p12 compatible with required format:
 
-To extract the unencrypted private key from p12 compatible with required format:  <br> 
-openssl pkcs12 -in <p12 file> -nocerts -nodes -passin <p12 password> | openssl rsa > <output filename>(hint: jwtRSA256-private.pem).
+```sh
+openssl pkcs12 -in <p12 file> -nokeys -passin <p12 password> \
+| sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > jwtRSA256-public.pem
+```
+
+To extract the unencrypted private key from p12 compatible with required format:
+
+```sh
+openssl pkcs12 -in <p12 file> -nocerts -nodes -passin <p12 password> \
+| openssl rsa > jwtRSA256-private.pem
+```
 
 You can also use following script to automate above and extract certificate in various formats: <br> 
 <https://github.com/iSHAREScheme/code-snippets/tree/master/Cert_Key_Extractor>
@@ -625,25 +626,20 @@ You can also use following script to automate above and extract certificate in v
 
 Copy/move RSA public cert and private key (e.g. your eIDAS certificate) in jwt-rsa folder. Jwt-rsa folder should contain following files with given names below:
 
-- jwtRSA256-public.pem - public full chain certificate for jwt signing. 
+- `jwtRSA256-public.pem` - public full chain certificate for jwt signing. 
   - The certificate file should contain three files, and begin with `-----BEGIN CERTIFICATE-----` and end with `-----END CERTIFICATE-----`.
 
 <br>
 
-- jwtRSA256-private.pem – RSA private key (unecrypted) file for jwt signing  
+- `jwtRSA256-private.pem` – RSA private key (unecrypted) file for jwt signing.
   - The certificate file should begin with 
    `-----BEGIN RSA PRIVATE KEY-----`  and end with `-----END RSA PRIVATE KEY-----`. 
-
-<br>
-
-
-  
 
 <br> <br>
 
 *Configure environment and deploy applications:* <br>
 
-Copy “genesis.block” and “isharechannel.tx” files into the "middleware" folder. These files were shared by iSHARE Foundation to you earlier.
+Copy `genesis.block` and `isharechannel.tx` files into the `middleware` folder. These files were shared by iSHARE Foundation to you earlier.
 
 Create Keycloak Instance using below command, It listens at port 8443.
 
@@ -670,22 +666,21 @@ bash deployUI.sh
 
 *Configure DNS for your applications:* <br> 
 
-Map dns entries for application services with server IP address for these environment variables:
+Map DNS entries for application services with server IP address for these environment variables:
 
-**UIHostName** (ex: myorg-test.example.com, record type A, ip adress 123.0.0.23. Example.com is the domain name for the applications UI and 123.0.0.23 is the server’s public IP)
+- `UIHostName` (ex: `myorg-test.example.com`)
 
-**MiddlewareHostName** (ex: myorg-mw-test.example.com A record 123.0.0.23, example.com is the domain name for the applications middleware and 123.0.0.23 is the server’s public IP)
+- `MiddlewareHostName` (ex: `myorg-mw-test.example.com`)
 
-**KeycloakHostName** (ex: myorg-keycloak-test.example.com A record 123.0.0.23, example.com is the domain name for the applications keycloak and 123.0.0.23 is the server’s public IP) 
+- `KeycloakHostName` (ex: `myorg-keycloak-test.example.com`)
 
 
-|**Full Record Name**|**Record Type**|**Value**|**TTL**|
-| :- | :- | :- | :- |
-|\<UIHostName>|A|123.0.0.23|1min|
-|\<MiddlewareHostName\>|A|123.0.0.23|1min|
-|\<KeycloakHostName\>|A|123.0.0.23|1min|
+| **Full Record Name**   | **Record Type** | **Value**  | **TTL** |
+|------------------------|-----------------|------------|---------|
+| `<UIHostName>`         | A               | 123.0.0.23 | 1min    |
+| `<MiddlewareHostName>` | A               | 123.0.0.23 | 1min    |
+| `<KeycloakHostName>`   | A               | 123.0.0.23 | 1min    |
 
-<br> 
 Now your satellite is deployed! Finish the next chapter to use the application.
 
 <br> <br> <br>
@@ -783,10 +778,10 @@ Steps for RedirectURL configuration in keycloak
 
 Valid Redirect URLs* – it includes multiple values as URLs.
 
--  UI application URL with \* as route. Example: <https://satelliteone-demo.krypc.com/>\*
-- Keycloak URL with \* as route. Example: <https://satelliteone-demo.exapmle.com:8443/>\*
+-  UI application URL with `*` as route. Example: <https://satelliteone-demo.krypc.com/>\*
+- Keycloak URL with `*` as route. Example: <https://satelliteone-demo.exapmle.com:8443/>\*
 
-*Web Origins -* the values to this input should be keycloak URL with \* as route. Example: <https://satelliteone-demo.krypc.com:8443/>\*
+*Web Origins -* the values to this input should be keycloak URL with `*` as route. Example: <https://satelliteone-demo.krypc.com:8443/>\*
 
 Find below image as reference:
 
@@ -871,35 +866,35 @@ Following is general procedure for updates deployment. When new updates are avai
 
 You will find docker-compose files in following path in project directory. All the docker services will be managed using these docker-compose files. 
 
-- iSHARESatellite/hlf/<Environment>/<orgName>/peers/ docker-compose-hlf.yaml
-- iSHARESatellite/hlf/<Environment>/<orgName>/fabric-ca/ docker-compose-fabric-ca.yaml
-- iSHARESatellite/middleware/docker-compose-mw.yaml
-- iSHARESatellite/keycloak/keycloak-docker-compose.yaml
-- iSHARESatellite/explorer/explorer-docker-compose.yaml
-- iSHARESatellite/chaincode/cc-docker-compose-template.yaml
-- iSHARESatellite/ui/docker-compose-ui.yaml
+- `iSHARESatellite/hlf/<Environment>/<orgName>/peers/docker-compose-hlf.yaml`
+- `iSHARESatellite/hlf/<Environment>/<orgName>/fabric-ca/docker-compose-fabric-ca.yaml`
+- `iSHARESatellite/middleware/docker-compose-mw.yaml`
+- `iSHARESatellite/keycloak/keycloak-docker-compose.yaml`
+- `iSHARESatellite/explorer/explorer-docker-compose.yaml`
+- `iSHARESatellite/chaincode/cc-docker-compose-template.yaml`
+- `iSHARESatellite/ui/docker-compose-ui.yaml`
 
 Find the services which are going to be updated below: 
 
-|#|Services|Path|
-| :- | :- | :- |
-|1|<p>ishare\_mw (ishare middleware)</p><p>ishare\_hlf (ishare hlf middleware)</p>|iSHARESatellite/middleware/docker-compose-mw.yaml|
-|2|<p>ishare\_ui (ishare UI)</p><p>nginx-proxy (Nginx reverse proxy)</p>|iSHARESatellite/ui/docker-compose-ui.yaml|
-|3|ishare-cc.hlf (ishare chaincode)|iSHARESatellite/chaincode/cc-docker-compose-template.yaml|
+| # | Services                                                                          | Path                                                        |
+|---|-----------------------------------------------------------------------------------|-------------------------------------------------------------|
+| 1 | <p>`ishare_mw` (ishare middleware)</p><p>`ishare_hlf` (ishare hlf middleware)</p> | `iSHARESatellite/middleware/docker-compose-mw.yaml`         |
+| 2 | <p>`ishare_ui` (ishare UI)</p><p>`nginx-proxy` (Nginx reverse proxy)</p>          | `iSHARESatellite/ui/docker-compose-ui.yaml`                 |
+| 3 | `ishare-cc.hlf` (ishare chaincode)                                                | `iSHARESatellite/chaincode/cc-docker-compose-template.yaml` |
 
 
 Steps to deploy update/releases:
 
 - Open the docker-compose file in a text editor eg: docker-compose-mw.yaml file to manage ishare middleware and ishare hlf middleware.
-- Select one of the service eg: ishare\_mw (ishare middleware).
-- Under service name (ishare\_mw), look for image key eg:
-  ishare\_mw:
+- Select one of the service eg: `ishare_mw` (ishare middleware).
+- Under service name (`ishare_mw`), look for image key eg:
+  `ishare_mw`:
 
 image: isharefoundation/ishare-satellite-app-mw:<tag>
 
 - Change the tag of the image with new tag provided as an update/release eg: v1.50 and save it.
   Eg:
-  ishare\_mw: 
+  `ishare_mw`: 
 
 `            `image: isharefoundation/ishare-satellite-app-mw: v1.50
 
