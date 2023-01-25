@@ -77,6 +77,9 @@ sudo make install;
 fi
 
 if [[ ${IsDockerInstalledAlready} = false ]]; then 
-#reboot vm to complete installation
-sudo reboot; 
+    cat <<EOF
+**
+** Reboot to complete the installation of docker before proceeding
+**
+EOF
 fi

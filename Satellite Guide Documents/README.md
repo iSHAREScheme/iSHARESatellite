@@ -297,7 +297,7 @@ cd iSHARESatellite
 
 <br>
 
-To install and ensure all the necessary packages are available in the system, use the below script to verify (reboot the system on completion, if necessary).
+To install and ensure all the necessary packages are available in the system, use the below script to install the missing packages.
 
 <br>
 
