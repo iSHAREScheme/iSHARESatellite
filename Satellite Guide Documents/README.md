@@ -582,7 +582,7 @@ export CHAINCODE_NAME=<ccname>
 export PARTY_ID=<party_id>
 export PARTY_NAME=<party_name>
 export UIHostName=<myorg-test.example.com>
-export MiddlwareHostName=<myorg-mw-test.example.com>
+export MiddlewareHostName=<myorg-mw-test.example.com>
 export KeycloakHostName=<myorg-keycloak-test.example.com>
 ```
 
@@ -674,7 +674,7 @@ Map dns entries for application services with server IP address for these enviro
 
 **UIHostName** (ex: myorg-test.example.com, record type A, ip adress 123.0.0.23. Example.com is the domain name for the applications UI and 123.0.0.23 is the server’s public IP)
 
-**MiddlwareHostName** (ex: myorg-mw-test.example.com A record 123.0.0.23, example.com is the domain name for the applications middleware and 123.0.0.23 is the server’s public IP)
+**MiddlewareHostName** (ex: myorg-mw-test.example.com A record 123.0.0.23, example.com is the domain name for the applications middleware and 123.0.0.23 is the server’s public IP)
 
 **KeycloakHostName** (ex: myorg-keycloak-test.example.com A record 123.0.0.23, example.com is the domain name for the applications keycloak and 123.0.0.23 is the server’s public IP) 
 
@@ -682,7 +682,7 @@ Map dns entries for application services with server IP address for these enviro
 |**Full Record Name**|**Record Type**|**Value**|**TTL**|
 | :- | :- | :- | :- |
 |\<UIHostName>|A|123.0.0.23|1min|
-|\<MiddlwareHostName\>|A|123.0.0.23|1min|
+|\<MiddlewareHostName\>|A|123.0.0.23|1min|
 |\<KeycloakHostName\>|A|123.0.0.23|1min|
 
 <br> 

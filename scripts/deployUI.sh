@@ -7,10 +7,10 @@ function deployUI(){
 
     mkdir -p ../ui
     cp ../templates/nginx-template.conf ../ui/nginx.conf
-    sed -i -e "s/<UIHostName>/${UIHostName}/g" -e "s/<MiddlwareHostName>/${MiddlwareHostName}/g" ../ui/nginx.conf
+    sed -i -e "s/<UIHostName>/${UIHostName}/g" -e "s/<MiddlewareHostName>/${MiddlewareHostName}/g" ../ui/nginx.conf
 
     cp ../templates/docker-compose-ui.yaml ../ui/docker-compose-ui.yaml
-    sed -i -e "s/<UIHostName>/${UIHostName}/g" -e "s/<MiddlwareHostName>/${MiddlwareHostName}/g" -e "s/<KeycloakHostName>/${KeycloakHostName}/g"  ../ui/docker-compose-ui.yaml
+    sed -i -e "s/<UIHostName>/${UIHostName}/g" -e "s/<MiddlewareHostName>/${MiddlewareHostName}/g" -e "s/<KeycloakHostName>/${KeycloakHostName}/g"  ../ui/docker-compose-ui.yaml
 
     docker-compose -f ../ui/docker-compose-ui.yaml up -d
     infoln "deployment finished, use below command to check the status, if the status is showing Exited contact your support ...  "
@@ -22,8 +22,8 @@ if [[ ${UIHostName} = " " || ${UIHostName} = "" ]]; then
    exit 1
 fi
 
-if [[ ${MiddlwareHostName} = " " || ${MiddlwareHostName} = "" ]]; then 
-   errorln " MiddlwareHostName is not specified "
+if [[ ${MiddlewareHostName} = " " || ${MiddlewareHostName} = "" ]]; then
+   errorln " MiddlewareHostName is not specified "
    exit 1
 fi
 
