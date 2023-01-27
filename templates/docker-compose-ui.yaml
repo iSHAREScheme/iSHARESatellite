@@ -11,7 +11,7 @@ services:
     ports:
     - 4200:80
     environment:
-      - API_URL=https://<MiddlwareHostName>
+      - API_URL=https://<MiddlewareHostName>
       - AUTH_REDIRECT_URI=https://<UIHostName>
       - PROXY_ADDRESS_FORWARDING=true
       - KEYCLOAK_FRONTEND_URL=https://<KeycloakHostName>:8443/auth
