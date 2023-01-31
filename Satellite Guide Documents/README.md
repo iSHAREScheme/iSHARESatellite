@@ -269,14 +269,13 @@ If docker was not already setup and configured for the current user, logout and 
 
 Configure environment variables to initialize scripts. See environment variables with example below. 
 
-**Note: the ORG_NAME variable is exclusive. If you earlier tried to deploy a satellite, and this satellite was removed, you can not re-use the same ORG_NAME**. 
-
 | **Environment** | **Description**                                                                                                                                                     |
 |-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `ORG_NAME`      | Satellite which is going to be a part of HLF network. It should be a word  without special characters (only alphanumeric) and max 17 characters. ex: `mysatellite`. |
 | `SUB_DOMAIN`    | Sub-domain reserved in DNS service for this satellite. No special characters. ex: `uat.mydomain.com`                                                                |
 | `ENVIRONMENT`   | Name of the infra environment like `uat`, `test`, `prod`. No special characters.                                                                                    |
 
+**Note: the ORG_NAME variable is exclusive. If you earlier tried to deploy a satellite, and this satellite was removed, you can not re-use the same ORG_NAME**. 
 ```sh
 export ORG_NAME=newsatellite
 export SUB_DOMAIN=test.example.com
