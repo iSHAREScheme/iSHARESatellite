@@ -267,7 +267,9 @@ bash prerequisites.sh
 
 If docker was not already setup and configured for the current user, logout and login before continuing.
 
-Configure environment variables to initialize scripts. See env variables with example below:
+Configure environment variables to initialize scripts. See environment variables with example below. 
+
+**Note: the ORG_NAME variable is exclusive. If you earlier tried to deploy a satellite, and this satellite was removed, you can not re-use the same ORG_NAME**. 
 
 | **Environment** | **Description**                                                                                                                                                     |
 |-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
