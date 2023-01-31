@@ -50,9 +50,7 @@ The proposed model requires virtual machines provisioned on cloud providers and/
 
 *Note: the scripts and components are tested in versions mentioned in the brackets, usually it should work well in higher version as well.*
 
-1. Ubuntu Linux (20.04.4 LTS (Focal Fossa))
-1. Docker (v20.10.14)
-1. Docker-compose (version 1.24.0)
+1. A recent Debian-based GNU/Linux distribution (testen on Debian 11 / Bullseye and Ubuntu Linux 20.04.4 LTS / Focal Fossa)
 1. Create/Update rights to your DNS service to manage satellite URLs in DNS
 1. SSL certificates of your domain for applications (applications by default use HTTPS so having certificates on hand is required. You may also use free Letsencrypt certificates, please refer to its website on how to get them)
 1. JWT signing certificate –
@@ -157,13 +155,13 @@ Open app-mw-config-template.yaml in the text editor, configure password in explo
 
 ```yaml
 explorerDb:
-    postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
+  postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
 ```
 
 ### Steps to configure password for Application middleware postgres DB
 
 ```sh
- cd iSHARESatellite/templates
+cd iSHARESatellite/templates
 ```
 
 Open docker-compose-mw-template.yaml in a text editor and look for below snippet:
@@ -183,7 +181,8 @@ Open hlf-mw-config-template.yaml file in a text editor and look for the below sn
 
 ```yaml
 ishareConfig:
-    middlewareConfig:
+  middlewareConfig:
+    type: satellite
     postgres_connection_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
 ```
 
@@ -193,9 +192,9 @@ Open app-mw-config-template.yaml file in a text editor and look for the below sn
 
 ```yaml
 ishareConfig:
-    middlewareConfig:
-        postgres_connection_url:
-            postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
+  middlewareConfig:
+    postgres_connection_url:
+      postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
 ```
 
 Change the password `adminpw` in connection string with password configured in `docker-compose-mw.yaml`.
@@ -264,8 +263,9 @@ To install and ensure all the necessary packages are available in the system, us
 
 ```sh
 bash prerequisites.sh
-cd scripts
 ```
+
+If docker was not already setup and configured for the current user, logout and login before continuing.
 
 Configure environment variables to initialize scripts. See env variables with example below:
 
@@ -279,6 +279,7 @@ Configure environment variables to initialize scripts. See env variables with ex
 export ORG_NAME=newsatellite
 export SUB_DOMAIN=test.example.com
 export ENVIRONMENT=test
+cd scripts
 ```
 
 To generate HLF fabric ca certs, use the below command :
