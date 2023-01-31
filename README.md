@@ -1,5 +1,17 @@
 # iSHARE Satellite
 
+<img align="right" src="docs/assets/isharelogo-small.png">
+
+The satellite is an application that safeguards trust in a
+dataspace. It functions as a register of participants. Participants
+can call the satellite API to verify each other. When you verify that
+a participant is registered in the satellite, you know that this
+participant has signed the agreement, and can be held legally viable;
+the participant is indeed a part of the dataspace, also on a "legal
+level". Service providers should then verify the service consumer's
+participance in the dataspace by making an API call to the satellite,
+and receive the "list of participants".
+
 ## Deployment Guide
 
 See [INSTALL.md](./INSTALL.md).
