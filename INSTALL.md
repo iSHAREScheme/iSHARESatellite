@@ -363,13 +363,16 @@ Send this file as well as following details to iSHARE foundation.
 
 Join the network with information received from iSHARE Foundation. You should receive following information and files from iSHARE Foundation:
 
-**Files: copy these files in the VM**
+**Files to be copied into your VM**
 
-- CA cert file of HLF ordering service (`ca-ishareord.pem`)
-- Genesis.block file
-- Channel.tx file (isharechannel.tx)
+- Certificate authority file of HLF ordering service. Called `ca-ishareord.pem`
+- `genesis.block` 
+- `isharechannel.tx`
 
-Note: you need to copy Genesis.block and channel .tx file to the same folder which contains the `iSHARESatellite` folder
+Note: the `genesis.block` 
+ and `isharechannel.tx` will be used at a later stage (section 4.5). 
+ 
+
 
 **Values for following variables**
 
@@ -388,11 +391,8 @@ Export these environment variables:
 
 | **Environment Variables** | **Description**                                                                                                                                                 |
 |---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ORG_NAME`                | Satellite which is going to be a part of HLF network. Ex: `mysatellite`. You already set this value in chapter 4.2, make sure to use the same value here.       |
-| `SUB_DOMAIN`              | Sub-domain reserved in DNS service for this satellite. Ex: `uat.mydomain.com`. You already set this value in chapter 4.2, make sure to use the same value here. |
-| `PEER_COUNT`              | Number of HLF Peer nodes in a satellite. Default = 2.                                                                                                           |
-| `ENVIRONMENT`             | Name of the infra environment like uat, test, prod. You already set this value in chapter 4.2, make sure to use the same value here.                            |
-| `ORDERER_TLS_CA_CERT`     | Path to CA cert file (`ca-ishareord.pem`) of ordering service which you received from iSHARE Foundation and copied to your VM                                     |
+| `PEER_COUNT`              | Number of HLF Peer nodes in a satellite. The default number of peers is 2.|
+| `ORDERER_TLS_CA_CERT`     | Path to CA cert file (`ca-ishareord.pem`) of ordering service which you received from iSHARE Foundation and copied to your VM |
 | `ORDERER_ADDRESS`         | Ordering service hostname with port ex: `orderer1.example.aks.io:443`                                                                                           |
 | `CHANNEL_NAME`            | Name of the channel in which new satellite is onboarded.                                                                                                        |
 | `ANCHOR_PEER_HOSTNAME`    | HLF peer node hostname of a new satellite. ex: `peer0.example.com`. The peer name from chapter 4.2                                                              |
