@@ -20,42 +20,40 @@ VM-Docker based model running on Debian-based GNU/Linux distribution.
 
 [**4. Getting Started**](#get_start)
 
-[**4.1. Configure Passwords for the services**](#configure)
+[**5. Configure Passwords for the services**](#configure)
 
-[**4.2. Installing Hyperledger Fabric Node**](#install_hyp)
+[**6. Installing Hyperledger Fabric Node**](#install_hyp)
 
-[**4.3. Register your node**](#reg_node)
+[**7. Register your node**](#reg_node)
 
-[**4.4. Join the network**](#join_net)
+[**8. Join the network**](#join_net)
 
-[**4.5. Deploy the UI and middleware applications**](#deploy)
+[**9. Deploy the UI and middleware applications**](#deploy)
 
-[**5. Initial user setup**](#U_setup)
+[**10. Initial user setup**](#U_setup)
 
-[**6. Configure keycloak**](#configure_keycloak)
+[**11. Configure keycloak**](#configure_keycloak)
 
-[**7. Set up email notifications**](#email)
+[**12. Set up email notifications**](#email)
 
-[**8. Enable 2FA for users**](#2FA)
+[**13. Enable 2FA for users**](#2FA)
 
-[**9. Commands for managing Docker services**](#docker_service)
+[**14. Commands for managing Docker services**](#docker_service)
 
-[**10. Reference updates deployment procedure**](#ref_update)
+[**15. Reference updates deployment procedure**](#ref_update)
 
 # <a id="pre-requisites">  1. Pre-requisites </a>
 
-The proposed model requires virtual machines provisioned on cloud providers and/or on-prem with prescribed operating systems and following software's installed in them. Make sure that you have then before beginning 
+The proposed model requires virtual machines provisioned on cloud providers and/or on-prem with prescribed operating systems and following software's installed in them. Make sure that you have them before beginning. 
 
 *Note: the scripts and components are tested in versions mentioned in the brackets, usually it should work well in higher version as well.*
 
-1. A recent Debian-based GNU/Linux distribution (testen on Debian 11 / Bullseye and Ubuntu Linux 20.04.4 LTS / Focal Fossa)
-1. Create/Update rights to your DNS service to manage satellite URLs in DNS
-1. SSL certificates of your domain for applications (applications by default use HTTPS so having certificates on hand is required. You may also use free Letsencrypt certificates, please refer to its website on how to get them)
-1. JWT signing certificate –
-   1. For Production environments – Qualified Seals as defined in iSHARE specifications
-   1. For Test environments – test certificates obtained from <https://ca7.isharetest.net:8442/ejbca/ra/>
-
-(Use postpone option when requesting certificate. You will get email with link to download the certificate file, once your request is approved.)
+1. A recent Debian-based GNU/Linux distribution (tested on Debian 11 / Bullseye and Ubuntu Linux 20.04.4 LTS / Focal Fossa).
+1. Create/Update rights to your DNS service to manage satellite URLs in DNS record. 
+1. SSL certificates of your domain for applications (applications by default use HTTPS so having certificates on hand is required. You may also use free Letsencrypt certificates, please refer to its website to acquire them. 
+1. JWT signing certificate:  
+   - For production environments – Qualified Seals as defined in iSHARE specifications, 
+   - For test environments – test certificates obtained from <https://ca7.isharetest.net:8442/ejbca/ra/>. Use "postpone" option when you request a test certificate. You will get email with link to download the certificate file, once your request is approved.
 
 # <a id="hardware-req"> 2. Hardware Requirements </a>
 
@@ -77,26 +75,33 @@ Following ports are used by following applications, so make sure that you config
 
 # <a id="get_start"> 4. Getting Started </a>
 
-iSHARE satellite is based on Hyperledger fabric where participants registered via satellite are directly registered on the shared ledger and participant is trusted across the network. The iSHARE satellite is composed of following sub-components:
+The iSHARE satellite is based on Hyperledger fabric. When participants are registered via a satellite, the participants is directly registered on the shared ledger, meaning the participant is trusted across the iSHARE network. The iSHARE satellite is composed of following sub-components:
 
 - Hyperledger fabric node,
 - Application UI,
 - Keycloak (user managment backend),
 - Satellite Middleware (APIs and other relevant functions).
 
-To install iSHARE satellite and configure it to run follow the steps:
+This guide will take your through the following steps (sections), in order to install and configure the iSHARE satellite:
 
-1. Download and prepare your scripts/passwords,
-1. Install Hyperledger fabric node,
-1. Register your node,
-1. Join the network,
-1. Deploy the UI and middleware applications,
-   1. Deploy keycloak,
-   1. Deploy middleware,
-   1. Deploy UI,
-1. Setup and configure satellite access control – satellite admin user setup and login to UI. 
+5. Download the script files, and configure your passwords,
+1. Install Hyperledger fabric node.
+1. Register your node.
+1. Join the iSHARE network. 
+1. Deploy the UI and middleware applications. 
+   1. Deploy keycloak.
+   1. Deploy middleware.
+   1. Deploy UI.
+1. Set up and configure satellite access control. Configure satellite admin user and log in the the satellite user interface. 
 
-## <a id="configure"> 4.1. Configure Passwords for the Services </a>
+## <a id="configure"> 5. Configure Passwords for the Services </a>
+If you want to change the default passwords (recommended and mandatory for production environments) please follow the steps below. You are not obliged to configure passwords if you are setting up the satellite for a test environment.
+
+The following services use username and password as credentials for authentication:
+
+- Postgres DB for Application
+- Explorer DB for Explorer
+- Postgres DB for Keycloak
 
 Download the scripts from GitHub:
 
@@ -106,13 +111,7 @@ cd iSHARESatellite
 ```
 
 
-If you want to change the default passwords (recommended and mandatory for production environments) please follow these steps, else skip this chapter.
 
-Following are the services which uses username and password as credentials for authentication:
-
-- Postgres DB for Application
-- Explorer DB for Explorer
-- Postgres DB for Keycloak
 
 ### Steps to configure password for changing HLF Explorer’s DB
 
