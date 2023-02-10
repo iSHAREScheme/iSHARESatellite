@@ -121,9 +121,12 @@ cd iSHARESatellite/templates
 
 Open explorer-docker-compose-template.yaml in the text editor.
 
-Under *services* section, change the password for explorerdb by referring below snippet under environment:
+Under the *services* section, change the password for *explorerdb*. The password variable is called *DATABASE_PASSWORD*, and is located in the *environment* subsection. See below snipppet:
 
 ```yaml
+
+services:
+
 explorerdb:
     image: hyperledger/explorer-db:latest
     container_name: explorerdb
@@ -134,7 +137,7 @@ explorerdb:
       - DATABASE_PASSWORD=password
 ```
 
-Same Password has be configured for explorer service under environment, refer below snippet:
+The same password has to be configured for *explorer* service under the *environment* subsection. The password variable is called *DATABASE_PASSWD*. See the below snippet:
 
 ```yaml
 explorer:
@@ -148,7 +151,7 @@ explorer:
       - DATABASE_PASSWD=password
 ```
 
-Open app-mw-config-template.yaml in the text editor, configure password in explorer db connection string. Check below:
+Open app-mw-config-template.yaml in the text editor and change the *password* part of the explorer db connection string to you new password. See below:
 
 ```yaml
 explorerDb:
@@ -161,7 +164,7 @@ explorerDb:
 cd iSHARESatellite/templates
 ```
 
-Open docker-compose-mw-template.yaml in a text editor and look for below snippet:
+Open docker-compose-mw-template.yaml in a text editor. Under the *app-postgres section*, change the password given by *POSTGRES_PASSWORD*. See the below snippet for reference:
 
 ```yaml
 app-postgres:
