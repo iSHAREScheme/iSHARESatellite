@@ -641,13 +641,9 @@ Steps for Email Notification under keycloak administrator login:
 
 1. Login as administrator user
 
-2. Click on "Realm Settings" under the left menu bar.
+2. Click on "Realm Settings" under the left menu bar. Then, click on the "Email" tab and fill out the necessary details shown below. Remember to click save. Email notification will be enabled.
 
    ![](docs/assets/keycloakemail1.png)
-
-3. Click on the "Email" tab and fill out the necessary details shown below. Remember to click save. Email notification will be enabled.
-
-   ![](docs/assets/keycloakemail2.png)
 
 Note: Form inputs for *From* and *username* should be valid email id's. Password should be the app password configured in the mail account.
 
