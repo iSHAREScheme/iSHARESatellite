@@ -70,29 +70,26 @@ Following ports are used by following applications, so make sure that you config
 
 - 443/TCP,80/TCP for Application middleware and UI
 - 7051/TCP and 8051/TCP for HLF Peers
-- 8443/TCP for keyCloak instance (user management backend)
-- Optionally, 8081/TCP for explorer instance (hyperledger explorer) – open to outside only if require access from outside your own network, maybe necessary when hosted on cloud.
+- 8443/TCP for Keycloak instance (user management backend)
+- Optionally, 8081/TCP for explorer instance (hyperledger explorer). This port only needs to be open if users require access outside your network. Perhaps necessary when hosted on cloud.
 
 # <a id="get_start"> 4. Getting Started </a>
 
-The iSHARE satellite is based on Hyperledger fabric. When participants are registered via a satellite, the participants is directly registered on the shared ledger, meaning the participant is trusted across the iSHARE network. The iSHARE satellite is composed of following sub-components:
+The iSHARE satellite is based on Hyperledger fabric. When participants are registered via a satellite, they are directly registered on the shared ledger. This means that participants are trusted across the iSHARE network. The iSHARE satellite is composed of following sub-components:
 
 - Hyperledger fabric node,
 - Application UI,
 - Keycloak (user managment backend),
 - Satellite Middleware (APIs and other relevant functions).
 
-This guide will take your through the following steps (sections), in order to install and configure the iSHARE satellite:
+This guide will take your through the steps below (given by their section number), in order to install and configure the iSHARE satellite.
 
 5. Download the script files, and configure your passwords,
 1. Install Hyperledger fabric node.
 1. Register your node.
 1. Join the iSHARE network. 
-1. Deploy the UI and middleware applications. 
-   1. Deploy keycloak.
-   1. Deploy middleware.
-   1. Deploy UI.
-1. Set up and configure satellite access control. Configure satellite admin user and log in the the satellite user interface. 
+1. Deploy the UI, middleware and keycloak applications.
+1. & 11. Set up and configure satellite access control. Configure satellite admin user and log in the the satellite user interface. 
 
 ## <a id="configure"> 5. Configure Passwords for the Services </a>
 If you want to change the default passwords (recommended and mandatory for production environments) please follow the steps below. You are not obliged to configure passwords if you are setting up the satellite for a test environment.
@@ -151,7 +148,7 @@ explorer:
       - DATABASE_PASSWD=password
 ```
 
-Open app-mw-config-template.yaml in the text editor and change the *password* part of the explorer db connection string to you new password. See below:
+Open app-mw-config-template.yaml in the text editor and change the *password* part of the explorer db connection string to you new password. See the string below for reference:
 
 ```yaml
 explorerDb:
@@ -164,15 +161,15 @@ explorerDb:
 cd iSHARESatellite/templates
 ```
 
-Open docker-compose-mw-template.yaml in a text editor. Under the *app-postgres section*, change the password given by *POSTGRES_PASSWORD*. See the below snippet for reference:
+Open docker-compose-mw-template.yaml in a text editor. Under the *environment, change the password given by *POSTGRES_PASSWORD*. See the below snippet for reference:
 
 ```yaml
-app-postgres:
-  image: postgres:9
-  restart: always
-  environment:
-    POSTGRES_USER: admin
-    POSTGRES_PASSWORD: adminpw
+environment:
+      - DATABASE_DATABASE=offchaindata
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres 
 ```
 
 Change password for admin user under environment section and save.
