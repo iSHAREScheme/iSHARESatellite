@@ -669,9 +669,10 @@ Steps for RedirectURL configuration in keycloak
      - UI application URL with `*` as route. Example: <https://myorg-test.example.com/>\*
      - Keycloak URL. This URL was defined in section 4.5, in the `KeycloakHostName` variable. Example format is: <https://myorg-keycloak-test.example.com:8443/>
 
-   - `Web Origins` - this input should have two entries:
-      - UI application URL with `*` as route. Example: <https://myorg-test.example.com/>\*
-     - Keycloak URL. This URL was defined in section 4.5, in the `KeycloakHostName` variable. Example format is: <https://myorg-keycloak-test.example.com:8443/>
+   - `Web Origins` - this input should also have the following two entries 
+      - UI application URL with `*` as route. 
+     - Keycloak URL. 
+     
    
     the values to this input should be keycloak URL with `*` as route. Example: <https://myorg-keycloak-test.example.com:8443/
    *>\*
