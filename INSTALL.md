@@ -617,7 +617,7 @@ NOTE: Once you have set up an initial user, you can add your colleagues via sate
 
    ![](docs/assets/keycloakuser6.png)
 
-6. Click on the "Credentials tab and set the password for the user that is being created. 
+6. Click on the "Credentials tab and a password for the user that is being created. 
 
    ![](docs/assets/keycloakuser7.png)
 
