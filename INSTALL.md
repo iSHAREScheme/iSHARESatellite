@@ -663,13 +663,17 @@ Steps for RedirectURL configuration in keycloak
 
 3. In the "frontend" settings form, find `RootURL`, `Valid Redirect URIs ` and Web Origins`.  Add the entries as follows:
 
-   - `RootURL` – the value of this input should be the UI application URL. This URL was defined in section 4.5, in the `UIHostName` variable. Example: <https://myorg-test.example.com>
+   - `RootURL` – the value of this input should be the UI application URL. This URL was defined in section 4.5, in the `UIHostName` variable. Example format is: <https://myorg-test.example.com>
 
    - `Valid Redirect URLs` – this input should have two entries:
      - UI application URL with `*` as route. Example: <https://myorg-test.example.com/>\*
-     - Keycloak URL with `*` as route. This URL was defined in section 4.5, in the `KeycloakHostName` variable. Example: <https://myorg-keycloak-test.example.com:8443/>\*
+     - Keycloak URL. This URL was defined in section 4.5, in the `KeycloakHostName` variable. Example format is: <https://myorg-keycloak-test.example.com:8443/>
 
-   - `Web Origins` - the values to this input should be keycloak URL with `*` as route. Example: <https://myorg-keycloak-test.example.com:8443/
+   - `Web Origins` - this input should have two entries:
+      - UI application URL with `*` as route. Example: <https://myorg-test.example.com/>\*
+     - Keycloak URL. This URL was defined in section 4.5, in the `KeycloakHostName` variable. Example format is: <https://myorg-keycloak-test.example.com:8443/>
+   
+    the values to this input should be keycloak URL with `*` as route. Example: <https://myorg-keycloak-test.example.com:8443/
    *>\*
 
    Find below image as reference:
