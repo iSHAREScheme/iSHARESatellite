@@ -701,8 +701,6 @@ The steps below explain how to set up the 2FA for new devices (configured device
 
    ![](docs/assets/keycloak2fa2.png)
 
-   ![](docs/assets/keycloak2fa3.png)
-
 4. Inform the user to login with existing credentials and configure the 2FA on the new device.
 
 The application will allow to use the existing credentials with new 2FA.
