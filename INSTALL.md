@@ -613,13 +613,9 @@ NOTE: Once you have set up an initial user, you can add your colleagues via sate
 
    ![](docs/assets/keycloakuser7.png)
 
-7. Click on "Role Mappings" tab and find "Client Roles "dropdown. Select "frontend". 
+7. Click on "Role Mappings" tab and find "Client Roles "dropdown. Select "frontend". Then, under "Available Roles", select "satelliteAdmin" and click on the "Add Selected" button. Refer to the below image and click save. 
 
    ![](docs/assets/keycloakuser8.png)
-
-8. Under "Available Roles", select "satelliteAdmin" and click on the "Add Selected" button.
-
-   ![](docs/assets/keycloakuser9.png)
 
 Your user is now created, and you can proceed to use the satellite the UI with newly created user. In the UI you can start registering satellite participants.
 
