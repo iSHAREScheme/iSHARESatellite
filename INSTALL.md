@@ -661,26 +661,16 @@ Steps for RedirectURL configuration in keycloak
 
    ![](docs/assets/keycloakurl1.png)
 
-3. In the "frontend" settings form, find `RootURL`, `valid Redirect URIs ` and Web Origins`.  Add the entries as follows:
+3. In the "frontend" settings form, find `RootURL`, `Valid Redirect URIs ` and Web Origins`.  Add the entries as follows:
 
- | **Attrbiute Name** | **Attribute Value**                                                     |
-   |:-------------------|:------------------------------------------------------------------------|
-   | `partyId`          | ID of the participant that this user belongs. Usually, the satellite ID |
-   | `partyName`        | Name of the participant corresponding to the partyId                    |
+   - `RootURL` – the value of this input should be the UI application URL. This URL was defined in section 4.5, in the `UIHostName` variable. Example: <https://myorg-test.example.com>
 
+   - `Valid Redirect URLs` – this input should have two entries:
+     - UI application URL with `*` as route. Example: <https://myorg-test.example.com/>\*
+     - Keycloak URL with `*` as route. This URL was defined in section 4.5, in the `KeycloakHostName` variable. Example: <https://myorg-keycloak-test.example.com:8443/>\*
 
-
-
-
-
-   - `RootURL` – the values to this input should be UI application URL. Example: <https://satelliteone-demo.example.com>
-
-   - `Valid Redirect URLs` – it includes multiple values as URLs.
-
-     - UI application URL with `*` as route. Example: <https://satelliteone-demo.krypc.com/>\*
-     - Keycloak URL with `*` as route. Example: <https://satelliteone-demo.exapmle.com:8443/>\*
-
-   - `Web Origins` - the values to this input should be keycloak URL with `*` as route. Example: `https://satelliteone-demo.krypc.com:8443/*`
+   - `Web Origins` - the values to this input should be keycloak URL with `*` as route. Example: <https://myorg-keycloak-test.example.com:8443/
+   *>\*
 
    Find below image as reference:
 
