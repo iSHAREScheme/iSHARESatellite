@@ -661,7 +661,17 @@ Steps for RedirectURL configuration in keycloak
 
    ![](docs/assets/keycloakurl1.png)
 
-3. In the "frontend" settings form, find `RootURL`, `valid RedirectURLs, Web Origins` and add the entries as follows:
+3. In the "frontend" settings form, find `RootURL`, `valid Redirect URIs ` and Web Origins`.  Add the entries as follows:
+
+ | **Attrbiute Name** | **Attribute Value**                                                     |
+   |:-------------------|:------------------------------------------------------------------------|
+   | `partyId`          | ID of the participant that this user belongs. Usually, the satellite ID |
+   | `partyName`        | Name of the participant corresponding to the partyId                    |
+
+
+
+
+
 
    - `RootURL` – the values to this input should be UI application URL. Example: <https://satelliteone-demo.example.com>
 
