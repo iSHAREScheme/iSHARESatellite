@@ -592,19 +592,11 @@ NOTE: Once you have set up an initial user, you can add your colleagues via sate
 
    **IMPORTANT NOTE: if you change the admin username and password in the keycloak ui, you also need to change these inside the `keycloak-docker-compose.yaml` file.**
 
-2. Once logged in successfully, click on users in left menu
-
-   ![](docs/assets/keycloakuser3.png)
-
-3. Click on Add User button on right side of it
-
-   ![](docs/assets/keycloakuser4.png)
-
-4. Fill all the details in "Add user" form. Refer to the below image and click save.
+2. Once logged in successfully, click on the "Users" button located in the left menu. Then, click on the "Add User" button on the right side of the screen. Fill in all details in the "Add user form". Refer to the below image and click save. 
 
    Note : username and email should be email id.
 
-   ![](docs/assets/keycloakuser5.png)
+   ![](docs/assets/keycloakuser3.png)
 
 5. Click on the "Attribute" tab and add the attributes shown in the table below. Then click save. 
 
@@ -617,7 +609,7 @@ NOTE: Once you have set up an initial user, you can add your colleagues via sate
 
    ![](docs/assets/keycloakuser6.png)
 
-6. Click on the "Credentials tab and a password for the user that is being created. 
+6. Click on the "Credentials tab and make a password for the user that is being created. 
 
    ![](docs/assets/keycloakuser7.png)
 
