@@ -313,17 +313,17 @@ To ensure all the HLF Peer is running, use below commands to check the status.
 docker-compose -f docker-compose-hlf.yaml ps
 ```
 
-HLF Peer instances needs to be a part of  iSHARE Foundation HLF network, for that HLF peers needs to reachable over the internet. Previous script peer.sh creates two HLF peer instance with hostname `peer<num>.<ORG_NAME>.<SUB_DOMAIN>` and they listen at port 7051 and 8051 TCP. Make sure that necessary firewall settings are updated to allow access to these peers over internet. Map DNS entries for Peers hostname with server IP address example for `ORG_NAME=newsatellite` and `SUB_DOMAIN=test.example.com`:
+HLF Peer instances needs to be a part of the iSHARE Foundation HLF network. Therefore, HLF peers need to be reachable over the internet. The previous script `peer.sh` creates two HLF peer instances with hostnames `peer<num>.<ORG_NAME>.<SUB_DOMAIN>`, which listen at port 7051 and 8051 TCP. Make sure that necessary firewall settings are updated to allow access to these peers over internet. Log into your DNS record, and create two DNS entries that correspond to the peer address' shown below. Assign each peer address with you server IP address. The example below shows the format of the peer address' when `ORG_NAME=newsatellite` and `SUB_DOMAIN=test.example.com`.
 
 `peer0.<orgname>.<subdomain>` -> `peer0.newsatellite.test.example.com`  
 `peer1.<orgname>.<subdomain>` -> `peer1.newsatellite.test.example.com`
 
 | **Full Record Name**          | **Record Type** | **Value**  | **TTL** |
 |-------------------------------|-----------------|------------|---------|
-| `peer0.<orgname>.<subdomain>` | A               | 12.9.7.6.5 | 1 min   |
-| `peer1.<orgname>.<subdomain>` | A               | 12.9.7.6.5 | 1 min   |
+| `peer0.<orgname>.<subdomain>` | A               | `server IP address`| 1 min   |
+| `peer1.<orgname>.<subdomain>` | A               | `server IP address` | 1 min   |
 
-The Hyperledger fabric node is deployed. Now follow the next chapter to register your node in the network.
+The Hyperledger fabric node is deployed on your server. Now follow the next chapter to register your node in the ISHARE HLF network.
 
 ## 4.3. <a id="reg_node"> Register your node </a>
 
