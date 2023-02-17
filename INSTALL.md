@@ -148,7 +148,7 @@ explorer:
       - DATABASE_PASSWD=password
 ```
 
-Open app-mw-config-template.yaml in the text editor and change the *password* part of the explorer db connection string to you new password. See the string below for reference:
+Open app-mw-config-template.yaml in the text editor and change the *password* part of the explorer db connection string to your new password. See the string below for reference:
 
 ```yaml
 explorerDb:
@@ -161,7 +161,7 @@ explorerDb:
 cd iSHARESatellite/templates
 ```
 
-Open docker-compose-mw-template.yaml in a text editor. Under the *environment, change the password given by *POSTGRES_PASSWORD*. See the below snippet for reference:
+Open docker-compose-mw-template.yaml in a text editor. Under the *environment* section, change the password given by *POSTGRES_PASSWORD* and *DATABASE_PASSWORD*. These two passwords should be identical. See the below snippet for reference:
 
 ```yaml
 environment:
@@ -171,10 +171,7 @@ environment:
       - DATABASE_USERNAME=postgres
       - DATABASE_PASSWORD=postgres 
 ```
-
-Change password for admin user under environment section and save.
-
-Open hlf-mw-config-template.yaml file in a text editor and look for the below snippet and lower end of the file:
+Open *hlf-mw-config-template.yaml* file in a text editor. Locate the `postgres_connection_url` subsection. Change the `adminpw` part of the string with the same passwords configured in the snippet above; the docker-compose-mw-template.yaml file. See the below snippet for reference: 
 
 ```yaml
 ishareConfig:
@@ -183,9 +180,7 @@ ishareConfig:
     postgres_connection_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
 ```
 
-Change the password adminpw in connection string with password configured in docker-compose-mw.yaml.
-
-Open app-mw-config-template.yaml file in a text editor and look for the below snippet:
+Open *app-mw-config-template.yaml* file in a text editor. Locate the `postgres_connection_url` subsection. Change the `adminpw` part of the string to the passwords you configured two snippets above; in the `docker-compose-mw-template.yaml` file. Look at the below snippet for reference: 
 
 ```yaml
 ishareConfig:
@@ -194,27 +189,25 @@ ishareConfig:
       postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
 ```
 
-Change the password `adminpw` in connection string with password configured in `docker-compose-mw.yaml`.
-
 ### Steps to configure password for Application Keycloak service
 
+Move to the following directory: 
 ```sh
 cd iSHARESatellite/keycloak/postgres
 ```
 
-Open `init-db.sql` in a text editor:
+Open `init-db.sql` in a text editor, and look for the below snippet. Replace the `keycloak` string with your desired password. The password should be placed between single quotes.
 
 ```sql
 CREATE USER keycloak WITH ENCRYPTED PASSWORD 'keycloak';
 ```
 
-Change password from `keycloak` to desired password. Password should be between single quotes.
-
+Move to the following directory: 
 ```sh
 cd iSHARESatellite/keycloak
 ```
 
-Open `keycloak-docker-compose.yaml` in a text editor, look for below snippet
+Open *keycloak-docker-compose.yaml* in a text editor. Locate the `environment` section. Change the value of the `DB_PASSWORD` variable to your desired password. Look at the below snippet for reference: 
 
 ```yaml
 keycloak:
@@ -232,27 +225,26 @@ environment:
       - DB_PASSWORD=keycloak
 ```
 
-Change `DB_PASSWORD` value keycloak with desired password value.
+## <a id="install_hyp"> 6. Installing Hyperledger Fabric node </a>
 
-## <a id="install_hyp"> 4.2. Installing Hyperledger Fabric node </a>
-
-Hyperledger Fabric
-
-The fabric component for each satellite will contain:
+Each satellite will contain the following hyperledger fabric components:
 
 1. 2 Peers
 1. Shared Orderer
 1. 2 CouchDB
-1. 1 Fabric CA
+1. 1 Fabric Certification Authority
 
-These components have to be pulled as images, installed and initialized as per the directions mentioned here.
+These components have to be pulled as docker images, and installed and initialized as directions mentioned here.
 
 ### Steps and sequence for creating HLF components
 
-Download the scripts from GitHub (if not done so already)
+Download the scripts from GitHub (if not done so already).
 
 ```sh
 git clone https://github.com/iSHAREScheme/iSHARESatellite.git
+```
+Move into the correct directory:
+```sh
 cd iSHARESatellite
 ```
 
@@ -264,7 +256,7 @@ bash prerequisites.sh
 
 If docker was not already setup and configured for the current user, logout and login before continuing.
 
-Configure environment variables to initialize scripts. See environment variables with example below. 
+Configure environment variables to initialize scripts. The environment variables below will be needed for this section. 
 
 | **Environment** | **Description**                                                                                                                                                     |
 |-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -273,6 +265,9 @@ Configure environment variables to initialize scripts. See environment variables
 | `ENVIRONMENT`   | Name of the infra environment like `uat`, `test`, `prod`. No special characters.                                                                                    |
 
 **Note: the ORG_NAME variable is exclusive. If you earlier tried to deploy a satellite, and this satellite was removed, you can not re-use the same ORG_NAME**. 
+
+State your environment variables, and move into the correct directory.
+
 ```sh
 export ORG_NAME=newsatellite
 export SUB_DOMAIN=test.example.com
@@ -280,13 +275,13 @@ export ENVIRONMENT=test
 cd scripts
 ```
 
-To generate HLF fabric ca certs, use the below command :
+To generate HLF fabric CA certificates, use the below command.
 
 ```sh
 bash fabric-ca-cert.sh
 ```
 
-Creating HLF Fabric CA instance:
+Create the HLF Fabric CA instance. 
 
 ```sh
 bash fabric-ca.sh
@@ -294,25 +289,13 @@ bash fabric-ca.sh
 
 Wait more than a minute after running the above command. Certificates are being generated. Running the next "bash" command too early will cause an error. 
 
-#### Validation
-
-Navigate to `iSHARESatellite/hlf/<Environment>/<orgName>/fabric-ca` directory.
-
-Check the presence of the `docker_data` folder.
-
-To ensure all the HLF Fabric is running, use below commands and check the status.
-
-```sh
-docker-compose -f docker-compose-fabric-ca.yaml ps
-```
-
 Register and Enroll users and peers
 
 ```sh
 bash registerAndEnroll.sh
 ```
 
-Create HLF Peer instances, it will spun up instances of HLF Peers and CouchDB:
+Create HLF Peer instances, it will spin up instances of HLF Peers and CouchDB.
 
 ```sh
 bash peer.sh
