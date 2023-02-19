@@ -556,7 +556,7 @@ Create UI and Nginx instances:
 ```sh
 bash deployUI.sh
 ```
-
+### DNS record configuration
 Map DNS entries for application services with server IP address for these environment variables:
 
 - `UIHostName` (ex: `myorg-test.example.com`)
