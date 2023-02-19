@@ -313,6 +313,7 @@ To ensure all the HLF Peer is running, use below commands to check the status.
 docker-compose -f docker-compose-hlf.yaml ps
 ```
 
+### DNS record configuration
 HLF Peer instances needs to be a part of the iSHARE Foundation HLF network. Therefore, HLF peers need to be reachable over the internet. The previous script `peer.sh` creates two HLF peer instances with hostnames `peer<num>.<ORG_NAME>.<SUB_DOMAIN>`, which listen at port 7051 and 8051 TCP. Make sure that necessary firewall settings are updated to allow access to these peers over internet. Log into your DNS record, and create two DNS entries that correspond to the peer addresses shown below. Assign both peer addresses with you server IP address. The example below shows the format of the peer addresses when `ORG_NAME=newsatellite` and `SUB_DOMAIN=test.example.com`. The table below shows the registration format of the peer addresses in the DNS record. 
 
 `peer0.<orgname>.<subdomain>` -> `peer0.newsatellite.test.example.com`  
