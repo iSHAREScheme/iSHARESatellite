@@ -243,7 +243,7 @@ Download the scripts from GitHub (if not done so already).
 ```sh
 git clone https://github.com/iSHAREScheme/iSHARESatellite.git
 ```
-Move into the correct directory:
+Move into the correct directory.
 ```sh
 cd iSHARESatellite
 ```
@@ -301,7 +301,7 @@ Create HLF Peer instances, it will spin up instances of HLF Peers and CouchDB.
 bash peer.sh
 ```
 
-#### Validation
+### Validation
 
 Navigate to `iSHARESatellite/hlf/<Environment>/<orgName>/peers` directory.
 
@@ -313,7 +313,7 @@ To ensure all the HLF Peer is running, use below commands to check the status.
 docker-compose -f docker-compose-hlf.yaml ps
 ```
 
-HLF Peer instances needs to be a part of the iSHARE Foundation HLF network. Therefore, HLF peers need to be reachable over the internet. The previous script `peer.sh` creates two HLF peer instances with hostnames `peer<num>.<ORG_NAME>.<SUB_DOMAIN>`, which listen at port 7051 and 8051 TCP. Make sure that necessary firewall settings are updated to allow access to these peers over internet. Log into your DNS record, and create two DNS entries that correspond to the peer address' shown below. Assign each peer address with you server IP address. The example below shows the format of the peer address' when `ORG_NAME=newsatellite` and `SUB_DOMAIN=test.example.com`.
+HLF Peer instances needs to be a part of the iSHARE Foundation HLF network. Therefore, HLF peers need to be reachable over the internet. The previous script `peer.sh` creates two HLF peer instances with hostnames `peer<num>.<ORG_NAME>.<SUB_DOMAIN>`, which listen at port 7051 and 8051 TCP. Make sure that necessary firewall settings are updated to allow access to these peers over internet. Log into your DNS record, and create two DNS entries that correspond to the peer addresses shown below. Assign both peer addresses with you server IP address. The example below shows the format of the peer addresses when `ORG_NAME=newsatellite` and `SUB_DOMAIN=test.example.com`. The table below shows the registration format of the peer addresses in the DNS record. 
 
 `peer0.<orgname>.<subdomain>` -> `peer0.newsatellite.test.example.com`  
 `peer1.<orgname>.<subdomain>` -> `peer1.newsatellite.test.example.com`
@@ -325,25 +325,27 @@ HLF Peer instances needs to be a part of the iSHARE Foundation HLF network. Ther
 
 The Hyperledger fabric node is deployed on your server. Now follow the next chapter to register your node in the ISHARE HLF network.
 
-## 4.3. <a id="reg_node"> Register your node </a>
+## 7. <a id="reg_node"> Register your node </a>
 
-Share details with iSHARE foundation to register your node on iSHARE network.
-
-Now generate the organization definition file which iSHARE Foundation (HLF Channel Admin) would require inorder to onboard your new satellite. Use the below command to create an org definition.
-
+Move into the correct directory. 
+```sh
+cd scripts
+```
+Run the command below. The command will create an organization definition file. 
 ```sh
 bash orgDefinition.sh
 ```
+Find the generated organization definition file in the following directory: 
+```sh
+cd hlf/<ENVIRONMENT>/<ORG_NAME>
+```
+The organization definition file has the name format: `<orgName>.json`. The file has to be shared with iSHARE Foundation to register your satellite on the iSHARE HLF network. The satellite has to be shared securely, as it contains x509 certificates of the new satellite. After you have provided iSHARE Foundation with the organization definition file, you will receive files and information that is needed to proceed with the satellite deployment. 
 
-Find the `<orgName>.json` file in the `hlf/<ENVIRONMENT>/<ORG_NAME>` folder.
+Note: when setting up a satellite test environment, the organization definition file can be send via email. 
 
-Note: `<orgName>.json` file has to be shared securely, as it contains x509 certificates of the new satellite.
+## 8. <a id="join_net"> Join the network </a>
 
-Send this file as well as following details to iSHARE foundation.
-
-## 4.4. <a id="join_net"> Join the network </a>
-
-Join the network with information received from iSHARE Foundation. You should receive following information and files from iSHARE Foundation:
+iSHARE will provide you with the files and variable values below, in order for you to join the iSHARE HLF network.  
 
 **Files to be copied into your VM**
 
@@ -351,8 +353,7 @@ Join the network with information received from iSHARE Foundation. You should re
 - `genesis.block` 
 - `isharechannel.tx`
 
-Note: the `genesis.block` 
- and `isharechannel.tx` will be used at a later stage (section 4.5). 
+The `ca-ishareord.pem` should be moved into the `iSHARESatellite` folder. The `genesis.block` and `isharechannel.tx` will be used at a later stage (section 4.5). 
  
 
 
@@ -367,10 +368,8 @@ Note: the `genesis.block`
 - `PARTY_ID` - EORI identifier that iSHARE has used to register you in the network.
 - `PARTY_NAME` - Name used by iSHARE to register you in the network.
 
-Once the above details is known, move the copy of the `ca-ishareord.pem` file in the VM and follow below steps.
 
-Export these environment variables:
-
+The table below describes the variables that are new, and will be defined in this section. 
 | **Environment Variables** | **Description**                                                                                                                                                 |
 |---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `PEER_COUNT`              | Number of HLF Peer nodes in a satellite. The default number of peers is 2.|
@@ -384,12 +383,13 @@ Export these environment variables:
 | `CHAINCODE_POLICY`        | Chaincode policy defined in chaincode definition committed.                                                                                                     |
 | `PEER_ADMIN_MSP_DIR`      | Admin user msp directory of satellite ex: `app/<ENVIRONMENT>/crypto/peerOrganization/<subdomain>/users/Admin@subdomain/msp`                                     |
 
+Export the new variables. 
 ```sh
-export ORG_NAME=<orgname>
-export SUB_DOMAIN=<sub-domain>
+export ORG_NAME=newsatellite
+export SUB_DOMAIN=test.example.com
+export ENVIRONMENT=test
 export PEER_COUNT=2
 export ORDERER_COUNT=0
-export ENVIRONMENT=test
 export ORDERER_TLS_CA_CERT=<path-to-orderer-ca-cert>
 export ORDERER_ADDRESS=<orderer-hostname-with-port>
 export CHANNEL_NAME=<channelname>
@@ -401,67 +401,54 @@ export CHAINCODE_VERSION=<chaincode-version>
 export CHAINCODE_POLICY=<chaincode-policy>
 export PEER_ADMIN_MSP_DIR=/<path>/app/<orgname>/users/Admin/msp
 ```
-
-Join the HLF channel using below script:
+Move into the correct directory.
 ```sh
 cd iSHARESatellite/scripts
-bash joinchannel.sh
 ```
 
-Anchor peer for new satellite:
-
+Join the HLF channel by using the script below. 
+```sh
+bash joinchannel.sh
+```
+Anchor the peer for your satellite.
 ```sh
 bash anchorPeer.sh
 ```
-
-Install chaincode in new satellite peer:
+Install the chaincode in your satellite peer.
 
 ```sh
 bash installChaincode.sh
 ```
-
-Approve the chaincode for new satellite peer:
-
+Approve the chaincode for your satellite peer. 
 ```sh
 bash approveChaincode.sh
 ```
-
-Create chaincode instance:
-
+Create chaincode instance. 
 ```sh
 bash chaincode.sh
 ```
-
-Create HLF explorer instance:
-
+Create HLF explorer instance.
 ```sh
 bash explorer.sh
 ```
+Your node is now on the iSHARE HLF network!
 
-Your node is now on network!
-
-## 4.5. <a id="deploy"> Deploy the UI and middleware applications </a>
+## 9. <a id="deploy"> Deploy the UI, middleware and keycloak applications </a>
 
 **Note: Steps to configure Private key (of the eIDAS) certificate in production environment could differ to accommodate your organizations policies. <br> For test environments currently we configure the private keys in VM itself which is not very secure. But since we issue you test eIDAS certificates it is usually no issue. Please contact us if you wish to configure private keys differently.**
 
-Export these environment variables to initialize scripts:
-
+The table below describes the variables that are new, and will be defined in this section. 
 | **Environment Variables** | **Description**                                                                                                                                                                    |
 |---------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ORG_NAME`                | Satellite which is going to be a part of HLF network. Ex: `mysatellite`. You already set this value in chapter 4.2, make sure to use the same value here.                             |
-| `SUB_DOMAIN`              | Sub-domain reserved in DNS service for this satellite. Ex: `uat.mydomain.com`. You already set this value in chapter 4.2, make sure to use the same value here.                       |
-| `CHANNEL_NAME`            | Name of the channel in which new satellite is onboarded. Same value as used in previous chapter.                                                                                   |
-| `CHAINCODE_NAME`          | Chaincode (smart contract) name defined in chaincode definition comitted. Same value as used in previous chapter.                                                                  |
-| `PARTY_ID`                | EORI identifier that iSHARE has used to register you in the network.                                                                                                               |
-| `PARTY_NAME`              | Name used by iSHARE to register you in the network.                                                                                                                                |
 | `UIHostName`              | DNS name of Application UI. Ex: `mysatellite.example.com`. Base URL of your satellite application. This name should be unique.                                                       |
 | `MiddlewareHostName`      | DNS name for application middleware. Ex: `mysatellite-mw.example.com`. Base URL of your satellite APIs. This name should be unique.                                                  |
 | `KeycloakHostName`        | DNS name for application keycloak service. Ex: `mysatellite-keycloak.example.com`. Base URL of your keycloak for user administration. Internal use only. This name should be unique. |
 
+Export the variables. 
 ```sh
-export ORG_NAME=<myorg>
-export SUB_DOMAIN=<test.example.com>
-export ENVIRONMENT=<test>
+export ORG_NAME=newsatellite
+export SUB_DOMAIN=test.example.com
+export ENVIRONMENT=test
 export CHANNEL_NAME=<mychannel>
 export CHAINCODE_NAME=<ccname>
 export PARTY_ID=<party_id>
@@ -471,48 +458,80 @@ export MiddlewareHostName=<myorg-mw-test.example.com>
 export KeycloakHostName=<myorg-keycloak-test.example.com>
 ```
 
-#### Configure HTTPS (SSL/TLS)
+### Configure HTTPS (SSL/TLS)
 
-To configure SSL (HTTPS) you need the certificate chain file and private key file from your CA. 
+To enable HTTPS protocol for your satellite, you will need SSL/TLS certificates from your certification authority (CA). You will need the full chain certificate file, and the private key file for the deployment. The encryption of the SSL/TLS certificates should be RSA, and not ECDSA. Your certificate should be a wild card certificate of your domain, like `*.example.com`.
 
-Copy/move the full certificate full chain file and private key file into the "ssl" directory. The files should have the given names and format shown below: 
+Move into the correct directory. 
+```sh
+cd iSHARESatellite/ssl
+```
+Copy/move the full chain certificate file and the private key file into the `ssl` directory. 
 
-- The full chain certificate file should be named "tls.crt".
-  - The certificate file should only contain the three keys, and begin with `---BEGIN CERTIFICATE---` and end with `---END CERTIFICATE----`.
-- The private key file should be named "tls.key".
-  - The file should only contain the private key, and begin with `---BEGIN PRIVATE KEY---` and end with `---END PRIVATE KEY---`, or begin with `---BEGIN RSA PRIVATE KEY---` and end with `---END RSA PRIVATE KEY---`.
+Rename the full chain certificate file to `tls.crt`. The file should only contain three keys, and no other text. See the snippet below for reference. 
+```text
+-----BEGIN CERTIFICATE-----
+XXXXX
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+XXXXX
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+XXXXX
+-----END CERTIFICATE-----
+```
 
-Note: SSL certs should be a wild card certificate of your domain name like `*.example.com`.
+The private key file should be named `tls.key`. The file should only contain the private key, and no other text. See the below snippet for reference. 
+```text
+-----BEGIN PRIVATE KEY-----
+XXXXX
+-----END PRIVATE KEY-----
+```
 
-#### Configure Signing Certificate (e.g. your eIDAS certificate)
 
-**Note: For production environments you should have received your Qualified Seal digital certificate as specified in iSHARE, from your chosen Certificate Authority. When requesting you can request the certificate in p12 file format. For test environments you can request your certificates using following link:<a> https://ca7.isharetest.net:8442/ejbca/ra </a>. Use "postpone" option during request. Once your request is approved you will get a link via email to download the certificate.**
+### Configure Your Signing Certificate (e.g. your eIDAS certificate)
 
-To extract the public certificate from p12 compatible with required format:
+**Note: For the satellite production environment, you should receive your qualified seal digital certificate from your chosen certificate authority, as specified by iSHARE. You can request your certificate in the p12 format. For test environments, you can request your certificates by using the following link:<a> https://ca7.isharetest.net:8442/ejbca/ra </a>.  Use the "postpone" option during your request. Once your request is approved, you will get a link via email to download the certificate.**
 
+Your satellite needs signing certificates to enable Oauth2.0 protocol. You will need the fullchain certificate file, and private key file. The certificates should be RSA encrypted. 
+
+You can use the command below to extract the public certificate, with the correct format and file name, from the p12 certificate file. 
 ```sh
 openssl pkcs12 -in <p12 file> -nokeys -passin <p12 password> \
 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > jwtRSA256-public.pem
 ```
-
-To extract the unencrypted private key from p12 compatible with required format:
-
+The command below extracts the unencrypted private key, with the correct format and file name, from p12 certificate file.
 ```sh
 openssl pkcs12 -in <p12 file> -nocerts -nodes -passin <p12 password> \
 | openssl rsa > jwtRSA256-private.pem
 ```
+Alternatively, you can also use the script in the following link to extract the certificate public keys and private key in various formats: <https://github.com/iSHAREScheme/code-snippets/tree/master/Cert_Key_Extractor>
 
-You can also use following script to automate above and extract certificate in various formats:
+Move to the correct directory. 
+```sh
+cd iSHARESatellite/jwt-rsa
+```
+Copy/move the full chain certificate file and the private key file into the `jwtRSA256` directory. 
 
-<https://github.com/iSHAREScheme/code-snippets/tree/master/Cert_Key_Extractor>
+Rename the full chain certificate file to `jwtRSA256-public.pem`. The file should only contain three keys, and no other text. See the snippet below for reference.
+```text
+-----BEGIN CERTIFICATE-----
+XXXXX
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+XXXXX
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+XXXXX
+-----END CERTIFICATE-----
+```
+The private key file should be named `jwtRSA256-private.pem`. The file should only contain the private key, and no other text. See the below snippet for reference. 
+```text
+-----BEGIN PRIVATE KEY-----
+XXXXX
+-----END PRIVATE KEY-----
+```
 
-Copy/move RSA public cert and private key (e.g. your eIDAS certificate) in `jwt-rsa` folder.  The folder should contain following files with given names below:
-
-- `jwtRSA256-public.pem` - public full chain certificate for jwt signing.
-  - The certificate file should contain three files, and begin with `-----BEGIN CERTIFICATE-----` and end with `-----END CERTIFICATE-----`.
-- `jwtRSA256-private.pem` – RSA private key (unecrypted) file for jwt signing.
-  - The certificate file should begin with
-   `-----BEGIN RSA PRIVATE KEY-----`  and end with `-----END RSA PRIVATE KEY-----`. 
 
 #### Configure environment and deploy applications
 
@@ -536,8 +555,6 @@ Create UI and Nginx instances:
 ```sh
 bash deployUI.sh
 ```
-
-#### Configure DNS for your applications
 
 Map DNS entries for application services with server IP address for these environment variables:
 
