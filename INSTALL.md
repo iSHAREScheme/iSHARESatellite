@@ -82,7 +82,7 @@ The iSHARE satellite is based on Hyperledger fabric. When participants are regis
 - Keycloak (user managment backend),
 - Satellite Middleware (APIs and other relevant functions).
 
-This guide will take your through the steps below (given by their section number), in order to install and configure the iSHARE satellite.
+This guide will take your through the steps below (given by their chapter number), in order to install and configure the iSHARE satellite.
 
 5. Download the script files, and configure your passwords,
 1. Install Hyperledger fabric node.
@@ -91,7 +91,7 @@ This guide will take your through the steps below (given by their section number
 1. Deploy the UI, middleware and keycloak applications.
 1. & 11. Set up and configure satellite access control. Configure satellite admin user and log in the the satellite user interface. 
 
-## <a id="configure"> 5. Configure Passwords for the Services </a>
+# <a id="configure"> 5. Configure Passwords for the Services </a>
 If you want to change the default passwords (recommended and mandatory for production environments) please follow the steps below. You are not obliged to configure passwords if you are setting up the satellite for a test environment.
 
 The following services use username and password as credentials for authentication:
@@ -225,7 +225,7 @@ environment:
       - DB_PASSWORD=keycloak
 ```
 
-## <a id="install_hyp"> 6. Installing Hyperledger Fabric node </a>
+# <a id="install_hyp"> 6. Installing Hyperledger Fabric node </a>
 
 Each satellite will contain the following hyperledger fabric components:
 
@@ -256,7 +256,7 @@ bash prerequisites.sh
 
 If docker was not already setup and configured for the current user, logout and login before continuing.
 
-Configure environment variables to initialize scripts. The environment variables below will be needed for this section. 
+Configure environment variables to initialize scripts. The environment variables below will be needed for in this chapter. 
 
 | **Environment** | **Description**                                                                                                                                                     |
 |-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -326,7 +326,7 @@ HLF Peer instances needs to be a part of the iSHARE Foundation HLF network. Ther
 
 The Hyperledger fabric node is deployed on your server. Now follow the next chapter to register your node in the ISHARE HLF network.
 
-## 7. <a id="reg_node"> Register your node </a>
+# <a id="reg_node"> 7. Register your node </a>
 
 Move into the correct directory. 
 ```sh
@@ -344,7 +344,7 @@ The organization definition file has the name format: `<orgName>.json`. The file
 
 Note: when setting up a satellite test environment, the organization definition file can be send via email. 
 
-## 8. <a id="join_net"> Join the network </a>
+# <a id="join_net"> 8. Join the network </a>
 
 iSHARE will provide you with the files and variable values below, in order for you to join the iSHARE HLF network.  
 
@@ -354,7 +354,7 @@ iSHARE will provide you with the files and variable values below, in order for y
 - `genesis.block` 
 - `isharechannel.tx`
 
-The `ca-ishareord.pem` should be moved into the `iSHARESatellite` folder. The `genesis.block` and `isharechannel.tx` will be used at a later stage (section 4.5). 
+The `ca-ishareord.pem` should be moved into the `iSHARESatellite` folder. The `genesis.block` and `isharechannel.tx` will be used at a later stage (chapter 9). 
  
 
 
@@ -370,7 +370,7 @@ The `ca-ishareord.pem` should be moved into the `iSHARESatellite` folder. The `g
 - `PARTY_NAME` - Name used by iSHARE to register you in the network.
 
 
-The table below describes the variables that are new, and will be defined in this section. 
+The table below describes the variables that are new, and will be defined in this chapter. 
 | **Environment Variables** | **Description**                                                                                                                                                 |
 |---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `PEER_COUNT`              | Number of HLF Peer nodes in a satellite. The default number of peers is 2.|
@@ -434,11 +434,11 @@ bash explorer.sh
 ```
 Your node is now on the iSHARE HLF network!
 
-## 9. <a id="deploy"> Deploy the UI, middleware and keycloak applications </a>
+# <a id="deploy">9. Deploy the UI, middleware and keycloak applications </a>
 
 **Note: Steps to configure Private key (of the eIDAS) certificate in production environment could differ to accommodate your organizations policies. <br> For test environments currently we configure the private keys in VM itself which is not very secure. But since we issue you test eIDAS certificates it is usually no issue. Please contact us if you wish to configure private keys differently.**
 
-The table below describes the variables that are new, and will be defined in this section. 
+The table below describes the variables that are new, and you will define in this chapter. 
 | **Environment Variables** | **Description**                                                                                                                                                                    |
 |---------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `UIHostName`              | DNS name of Application UI. Ex: `mysatellite.example.com`. Base URL of your satellite application. This name should be unique.                                                       |
@@ -557,26 +557,21 @@ Create UI and Nginx instances:
 bash deployUI.sh
 ```
 ### DNS record configuration
-Map DNS entries for application services with server IP address for these environment variables:
 
-- `UIHostName` (ex: `myorg-test.example.com`)
-
-- `MiddlewareHostName` (ex: `myorg-mw-test.example.com`)
-
-- `KeycloakHostName` (ex: `myorg-keycloak-test.example.com`)
+Log into your DNS record, and create three DNS entries that correspond to the UI, middleware and keycloak addresses that you specified as export variables in the beginning of this chapter. Assign the ui, middleware and keycloak addresses with your server IP address. 
 
 
 | **Full Record Name**   | **Record Type** | **Value**  | **TTL** |
 |------------------------|-----------------|------------|---------|
-| `<UIHostName>`         | A               | 123.0.0.23 | 1min    |
-| `<MiddlewareHostName>` | A               | 123.0.0.23 | 1min    |
-| `<KeycloakHostName>`   | A               | 123.0.0.23 | 1min    |
+| `<UIHostName>`         | A               | `server IP address` | 1min    |
+| `<MiddlewareHostName>` | A               | `server IP address` | 1min    |
+| `<KeycloakHostName>`   | A               | `server IP address` | 1min    |
 
 Now your satellite is deployed! Finish the next chapter to use the application.
 
-# 5. <a id="U_setup"> Initial user setup </a>
+# <a id="U_setup"> 10. Initial user setup </a>
 
-The satellite is now installed. To access the satellite, first set up a satellite admin user for the keycloak identity provider with the procedure below.  Keycloak URL is accessible over the browser. Example: <https://satellite.example.com:8443/auth>.
+The satellite is now installed. To access the satellite, first set up a satellite admin user for the keycloak identity provider with the procedure below. To access the Keycloak admin portal, use the url address that you defined in the `<KeycloakHostName>` variable in chapter 9. Specify the port 8843, and the subdirectory `/auth` in your url. A reference example is: <https://myorg-keycloak-test.example.com:8443/auth>
 
 NOTE: Once you have set up an initial user, you can add your colleagues via satellite UI in a straightforward manner. Therefore, you do not need repeat the keycloak user setup for other users. Also, make sure to secure keycloak environment based on your organization policy to limit users that can log into the keycloak admin console. You can set stricter password and user policies via keycloak admin console. 
 
@@ -617,7 +612,7 @@ NOTE: Once you have set up an initial user, you can add your colleagues via sate
 
 Your user is now created, and you can proceed to use the satellite the UI with newly created user. In the UI you can start registering satellite participants.
 
-# 6. <a id="email"> Set up email notifications </a>
+# <a id="email"> 11. Set up email notifications </a>
 
 You need an email account so that notifications can be sent to users. The steps below explain how to set up notifications with google email. Make to create an app password in the google account, as this is needed for the notification configuration. 
 
@@ -633,7 +628,7 @@ Steps for Email Notification under keycloak administrator login:
 
 Note: Form inputs for *From* and *username* should be valid email id's. Password should be the app password configured in the mail account.
 
-# 7. <a id="configure_keycloak"> Configure Keycloak </a>
+# <a id="configure_keycloak"> 12. Configure Keycloak </a>
 
 Steps for RedirectURL configuration in keycloak
 
@@ -643,33 +638,25 @@ Steps for RedirectURL configuration in keycloak
 
    ![](docs/assets/keycloakurl1.png)
 
-3. In the "frontend" settings form, find `RootURL`, `Valid Redirect URIs ` and Web Origins`.  Add the entries as follows:
+3. In the "frontend" settings form, find `RootURL`, `Valid Redirect URIs` and `Web Origins`. The entries in these text boxes should be the `UIHostName`, `MiddlewareHostName` and `KeycloakHostName` addresses that you defined in chapter 9. 
 
-   - `RootURL` – the value of this input should be the UI application URL. This URL was defined in section 4.5, in the `UIHostName` variable. Example format is: <https://myorg-test.example.com>
+   The `RootURL` textbox should contain the `UIHostName` url. An example of this url (based on the example from chapter 9.) is: <https://myorg-test.example.com>. 
 
-   - `Valid Redirect URLs` – this input should have two entries:
-     - UI application URL with `*` as route. Example: <https://myorg-test.example.com/>\*
-     - Keycloak URL. This URL was defined in section 4.5, in the `KeycloakHostName` variable. Example format is: <https://myorg-keycloak-test.example.com:8443/>
+   The `Valid Redirect URLs` textbox should have two entries. The first entry is the `UIHostName` url with `*` as route. Example: <https://myorg-test.example.com/*>. The second entry is the `KeycloakHostName` url with the port 8443 specied. An example of the format is: <https://myorg-keycloak-test.example.com:8443/>. 
 
-   - `Web Origins` - this input should also have the following two entries 
-      - UI application URL with `*` as route. 
-     - Keycloak URL. 
-     
-   
-    the values to this input should be keycloak URL with `*` as route. Example: <https://myorg-keycloak-test.example.com:8443/
-   *>\*
+   The `Web Origins` textboxes should have two entries. The first entry is the `UIHostName` url with `*` as route. The second entry is the `KeycloakHostName` url with with the port 8443 specied.
 
-   Find below image as reference:
+   Use the image below as reference.
 
    ![](docs/assets/keycloakurl2.png)
 
-4. Match all the settings as below image and save it. Redirection settings has been changed successfully.
+4. Match all the settings as below image and save it. Redirect settings have been changed successfully.
 
    ![](docs/assets/keycloakurl3.png)
 
    ![](docs/assets/keycloakurl4.png)
 
-# 8. <a id="2FA"> Enable 2FA for users </a>
+# <a id="2FA"> 13. Enable 2FA for users </a>
 
 The steps below explain how to set up the 2FA for new devices (configured device lost/new device to configure with existing users). The keycloak administrator has the provision to enable this feature. 
 
@@ -689,7 +676,7 @@ The application will allow to use the existing credentials with new 2FA.
 
 You are now ready with your Satellite. Login with the user you created in step 5.2 using the application link `<UIHostName>` setup in previous chapter.
 
-# 9. <a id="docker_service"> Commands for managing Docker services </a>
+# <a id="docker_service"> 14. Commands for managing Docker services </a>
 
 To check the status of docker containers:
 
@@ -721,7 +708,7 @@ To get the logs of containers:
 docker-compose -f <docker-compose-file> logs <service-name-in-compose-file>
 ```
 
-# 10. <a id="ref_update"> Reference updates deployment procedure </a>
+# <a id="ref_update"> 15. Reference updates deployment procedure </a>
 
 Following is general procedure for updates deployment. When new updates are available to be deployed, iSHARE Foundation will inform you with additional details about the deployment.
 
