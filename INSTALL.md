@@ -44,7 +44,7 @@ VM-Docker based model running on Debian-based GNU/Linux distribution.
 
 # <a id="pre-requisites">  1. Pre-requisites </a>
 
-The proposed model requires virtual machines provisioned on cloud providers and/or on-prem with prescribed operating systems and following software's installed in them. Make sure that you have them before beginning. 
+There are various ways to deploy satellite. However this guide is only for standalone deployment of satellite in a VM using docker containers. The proposed model requires virtual machines provisioned on cloud providers and/or on-prem with prescribed operating systems and following software's installed in them. Make sure that you have them before beginning. 
 
 *Note: the scripts and components are tested in versions mentioned in the brackets, usually it should work well in higher version as well.*
 
@@ -53,17 +53,17 @@ The proposed model requires virtual machines provisioned on cloud providers and/
 1. SSL certificates of your domain for applications (applications by default use HTTPS so having certificates on hand is required. You may also use free Letsencrypt certificates, please refer to its website to acquire them. 
 1. JWT signing certificate:  
    - For production environments – Qualified Seals as defined in iSHARE specifications, 
-   - For test environments – test certificates obtained from <https://ca7.isharetest.net:8442/ejbca/ra/>. Use "postpone" option when you request a test certificate. You will get email with link to download the certificate file, once your request is approved.
+   - For test environments – test certificates maybe obtained from <https://ca7.isharetest.net:8442/ejbca/ra/>. (Use "postpone" option when you request a test certificate. You will get email with link to download the certificate file, once your request is approved.)
 
 # <a id="hardware-req"> 2. Hardware Requirements </a>
 
 ## <a id="minimum"> 2.1. Minimum </a>
 
-Virtual Machine with 2 CPU’s and 8 GB Memory.
+Virtual Machine with 2 CPU’s and 8 GB Memory. 20GB Disk Space
 
 ## <a id="recommendation"> 2.2. Recommendation </a>
 
-Virtual Machine with 4 CPU’s and 16 GB Memory.
+Virtual Machine with 4 CPU’s and 16 GB Memory. 40GB Disk Space
 
 # <a id="network-req"> 3. Network Requirements </a>
 Following ports are used by following applications, so make sure that you configure your firewall and network settings to allow access via these ports
@@ -71,7 +71,7 @@ Following ports are used by following applications, so make sure that you config
 - 443/TCP,80/TCP for Application middleware and UI
 - 7051/TCP and 8051/TCP for HLF Peers
 - 8443/TCP for Keycloak instance (user management backend)
-- Optionally, 8081/TCP for explorer instance (hyperledger explorer). This port only needs to be open if users require access outside your network. Perhaps necessary when hosted on cloud.
+
 
 # <a id="get_start"> 4. Getting Started </a>
 
@@ -84,15 +84,15 @@ The iSHARE satellite is based on Hyperledger fabric. When participants are regis
 
 This guide will take your through the steps below (given by their chapter number), in order to install and configure the iSHARE satellite.
 
-5. Download the script files, and configure your passwords,
+1. Download the script files, and configure your passwords,
 1. Install Hyperledger fabric node.
 1. Register your node.
 1. Join the iSHARE network. 
 1. Deploy the UI, middleware and keycloak applications.
-1. & 11. Set up and configure satellite access control. Configure satellite admin user and log in the the satellite user interface. 
+1. Set up and configure satellite access control. Configure satellite admin user and log in the the satellite user interface. 
 
 # <a id="configure"> 5. Configure Passwords for the Services </a>
-If you want to change the default passwords (recommended and mandatory for production environments) please follow the steps below. You are not obliged to configure passwords if you are setting up the satellite for a test environment.
+If you want to change the default passwords (recommended and mandatory for production environments) please follow the steps below. You are not obliged to configure passwords if you are setting up the satellite for a test environment. Skip this chapter if you want to deploy satellite with default passwords.
 
 The following services use username and password as credentials for authentication:
 
@@ -461,7 +461,7 @@ export KeycloakHostName=<myorg-keycloak-test.example.com>
 
 ### Configure HTTPS (SSL/TLS)
 
-To enable HTTPS protocol for your satellite, you will need SSL/TLS certificates from your certification authority (CA). You will need the full chain certificate file, and the private key file for the deployment. The encryption of the SSL/TLS certificates should be RSA, and not ECDSA. Your certificate should be a wild card certificate of your domain, like `*.example.com`.
+To enable HTTPS protocol for your satellite, you will need SSL/TLS certificates from your certification authority (CA). You will need the full chain certificate file, and the private key file for the deployment. The encryption of the SSL/TLS certificates with RSA is widely accepted whereas with ECDSA may face compatibility issues, so avoid using ECDSA. Your certificate may be a wild card certificate of your domain, like `*.example.com`.
 
 Move into the correct directory. 
 ```sh
@@ -492,9 +492,9 @@ XXXXX
 
 ### Configure Your Signing Certificate (e.g. your eIDAS certificate)
 
-**Note: For the satellite production environment, you should receive your qualified seal digital certificate from your chosen certificate authority, as specified by iSHARE. You can request your certificate in the p12 format. For test environments, you can request your certificates by using the following link:<a> https://ca7.isharetest.net:8442/ejbca/ra </a>.  Use the "postpone" option during your request. Once your request is approved, you will get a link via email to download the certificate.**
+**Note: For the satellite production environment, you should receive your qualified eseal digital certificate from your chosen certificate authority. The list of trusted Certificate authorities is as specified by iSHARE. You can request your certificate in the p12 format. <br>For test environments, you can request your test certificates by using the following link:<a> https://ca7.isharetest.net:8442/ejbca/ra </a>.  Use the "postpone" option during your request. Once your request is approved, you will get a link via email to download the certificate.**
 
-Your satellite needs signing certificates to enable Oauth2.0 protocol. You will need the fullchain certificate file, and private key file. The certificates should be RSA encrypted. 
+Your satellite needs signing certificates to sign JWTs. You will need the fullchain certificate file, and private key file. The certificates should be RSA encrypted. 
 
 You can use the command below to extract the public certificate, with the correct format and file name, from the p12 certificate file. 
 ```sh
@@ -569,13 +569,13 @@ Log into your DNS record, and create three DNS entries that correspond to the UI
 
 Now your satellite is deployed! Finish the next chapter to use the application.
 
-# <a id="U_setup"> 10. Initial user setup </a>
+# <a id="configure_keycloak"> 10. Configure Keycloak </a>
 
-The satellite is now installed. To access the satellite, first set up a satellite admin user for the keycloak identity provider with the procedure below. To access the Keycloak admin portal, use the url address that you defined in the `<KeycloakHostName>` variable in chapter 9. Specify the port 8843, and the subdirectory `/auth` in your url. A reference example is: <https://myorg-keycloak-test.example.com:8443/auth>
+The satellite is now installed, however it must be configured for use. To access the Keycloak admin portal, use the url address that you defined in the `<KeycloakHostName>` variable in chapter 9. Specify the port 8443, and the path `/auth` in your url. A reference example is: <https://myorg-keycloak-test.example.com:8443/auth>
 
-NOTE: Once you have set up an initial user, you can add your colleagues via satellite UI in a straightforward manner. Therefore, you do not need repeat the keycloak user setup for other users. Also, make sure to secure keycloak environment based on your organization policy to limit users that can log into the keycloak admin console. You can set stricter password and user policies via keycloak admin console. 
+Steps for RedirectURL configuration in keycloak
 
-1. Click on administrator console and login with seeded admin user refer to below screenshots.
+1. Click on administrator console and login with default admin user refer to below screenshots.
 
    ![](docs/assets/keycloakuser1.png)
 
@@ -585,15 +585,45 @@ NOTE: Once you have set up an initial user, you can add your colleagues via sate
 
    **IMPORTANT NOTE: if you change the admin username and password in the keycloak ui, you also need to change these inside the `keycloak-docker-compose.yaml` file.**
 
+2. Click on "Clients" under left menu bar and select "frontend" from the "ClientID" options.
+
+   ![](docs/assets/keycloakurl1.png)
+
+3. In the "frontend" settings form, find `RootURL`, `Valid Redirect URIs` and `Web Origins`. The entries in these text boxes should be the `UIHostName`, `MiddlewareHostName` and `KeycloakHostName` addresses that you defined in chapter 9. 
+
+   The `RootURL` textbox should contain the `UIHostName` url. An example of this url (based on the example from chapter 9.) is: <https://myorg-test.example.com>. 
+
+   The `Valid Redirect URLs` textbox should have two entries. The first entry is the `UIHostName` url with `*` as route. Example: <https://myorg-test.example.com/*>. The second entry is the `KeycloakHostName` url with the port 8443 specied. An example of the format is: <https://myorg-keycloak-test.example.com:8443/>. 
+
+   The `Web Origins` MUST be set to '+'.
+
+   Use the image below as reference.
+
+   ![](docs/assets/keycloakurl2.png)
+
+4. Match all the settings as below image and save it. Redirect settings have been changed successfully.
+
+   ![](docs/assets/keycloakurl3.png)
+
+   ![](docs/assets/keycloakurl4.png)
+
+# <a id="U_setup"> 11. Initial user setup </a>
+
+To access the satellite, first set up a satellite admin user from within the keycloak identity provider with the procedure below. To access the Keycloak admin portal follow the steps as explained in previous step
+
+**NOTE: Once you have set up an initial satellite user, you can add your colleagues via satellite UI in a straightforward manner. Therefore, you do not need repeat these steps for other users. Also, make sure to secure keycloak environment based on your organization policy to limit users that can log into the keycloak admin console. You can set stricter password and user policies via keycloak admin console.** 
+
+1. Login as administrator user
+
 2. Once logged in successfully, click on the "Users" button located in the left menu. Then, click on the "Add User" button on the right side of the screen. Fill in all details in the "Add user form". Refer to the below image and click save. 
 
-   Note : username and email should be email id.
+   **Note : username and email should be email id. First name must be set to partyId value and Last Name must be set to partyName value**
 
    ![](docs/assets/keycloakuser3.png)
 
 5. Click on the "Attribute" tab and add the attributes shown in the table below. Then click save. 
 
-   Note: Attributes are mandatory.
+   **Note: Attributes are mandatory.**
 
    | **Attribute Name** | **Attribute Value**                                                     |
    |:-------------------|:------------------------------------------------------------------------|
@@ -612,11 +642,11 @@ NOTE: Once you have set up an initial user, you can add your colleagues via sate
 
 Your user is now created, and you can proceed to use the satellite the UI with newly created user. In the UI you can start registering satellite participants.
 
-# <a id="email"> 11. Set up email notifications </a>
+# <a id="email"> 12. Set up email notifications </a>
 
 You need an email account so that notifications can be sent to users. The steps below explain how to set up notifications with google email. Make to create an app password in the google account, as this is needed for the notification configuration. 
 
-If you wish to use other email providers, please refer specifically to their values and settings for setup.
+**Note: If you wish to use other email providers, please refer specifically to their values and settings for setup.**
 
 Steps for Email Notification under keycloak administrator login:
 
@@ -627,34 +657,6 @@ Steps for Email Notification under keycloak administrator login:
    ![](docs/assets/keycloakemail1.png)
 
 Note: Form inputs for *From* and *username* should be valid email id's. Password should be the app password configured in the mail account.
-
-# <a id="configure_keycloak"> 12. Configure Keycloak </a>
-
-Steps for RedirectURL configuration in keycloak
-
-1. Login as administrator user
-
-2. Click on "Clients" under left menu bar and select "frontend" from the "ClientID" options.
-
-   ![](docs/assets/keycloakurl1.png)
-
-3. In the "frontend" settings form, find `RootURL`, `Valid Redirect URIs` and `Web Origins`. The entries in these text boxes should be the `UIHostName`, `MiddlewareHostName` and `KeycloakHostName` addresses that you defined in chapter 9. 
-
-   The `RootURL` textbox should contain the `UIHostName` url. An example of this url (based on the example from chapter 9.) is: <https://myorg-test.example.com>. 
-
-   The `Valid Redirect URLs` textbox should have two entries. The first entry is the `UIHostName` url with `*` as route. Example: <https://myorg-test.example.com/*>. The second entry is the `KeycloakHostName` url with the port 8443 specied. An example of the format is: <https://myorg-keycloak-test.example.com:8443/>. 
-
-   The `Web Origins` textboxes should have two entries. The first entry is the `UIHostName` url with `*` as route. The second entry is the `KeycloakHostName` url with with the port 8443 specied.
-
-   Use the image below as reference.
-
-   ![](docs/assets/keycloakurl2.png)
-
-4. Match all the settings as below image and save it. Redirect settings have been changed successfully.
-
-   ![](docs/assets/keycloakurl3.png)
-
-   ![](docs/assets/keycloakurl4.png)
 
 # <a id="2FA"> 13. Enable 2FA for users </a>
 
@@ -674,7 +676,7 @@ The steps below explain how to set up the 2FA for new devices (configured device
 
 The application will allow to use the existing credentials with new 2FA.
 
-You are now ready with your Satellite. Login with the user you created in step 5.2 using the application link `<UIHostName>` setup in previous chapter.
+You are now ready with your Satellite. Login with the user you created earlier using the application link `<UIHostName>` setup in previous chapter.
 
 # <a id="docker_service"> 14. Commands for managing Docker services </a>
 
