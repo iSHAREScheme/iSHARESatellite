@@ -82,6 +82,11 @@ The iSHARE satellite is based on Hyperledger fabric. When participants are regis
 - Keycloak (user managment backend),
 - Satellite Middleware (APIs and other relevant functions).
 
+The following diagram shows the overall satellite architecture and its components as it is deployed using this guide. Note alternatives are possible and will be updated into this guide at a later stage. If you wish to customise your satellite deployment, please get in touch with iSHARE support team.
+
+
+![iSHARE satellite general architecture overview](docs/assets/iSHARE-satellite-architecturev1.0.drawio.png)
+
 This guide will take your through the steps below (given by their chapter number), in order to install and configure the iSHARE satellite.
 
 1. Download the script files, and configure your passwords,
