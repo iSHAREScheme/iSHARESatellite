@@ -6,7 +6,8 @@ networks:
 
 services:
  ishare_ui:
-    image: isharefoundation/ishare-satellite-ui:v2.27
+    # image: isharefoundation/ishare-satellite-ui:v2.30
+    image: isharefoundation/ishare-satellite-ui:v3.0
     container_name: ishare_ui
     ports:
     - 4200:80
@@ -14,13 +15,13 @@ services:
       - API_URL=https://<MiddlwareHostName>
       - AUTH_REDIRECT_URI=https://<UIHostName>
       - PROXY_ADDRESS_FORWARDING=true
-      - KEYCLOAK_FRONTEND_URL=https://<KeycloakHostName>:8443/auth
+      - KEYCLOAK_FRONTEND_URL=https://<KeycloakHostName>:8443/
       - REALM_NAME=<UIHostName>
     restart: always      
     networks:
     - net       
  nginx-proxy:
-   image: nginx:1.21.6
+   image: nginx:1.25.1-alpine
    ports:
      - "443:443"
    volumes:

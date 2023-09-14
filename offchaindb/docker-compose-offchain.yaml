@@ -1,0 +1,21 @@
+version: "2.1" 
+networks: 
+  net: 
+    name: fabric_network 
+services:  
+  sat-offchaindb: 
+    image: postgres:13.0-alpine 
+    container_name: sat-offchaindb 
+    ports: 
+     - 8432:5432 
+    environment: 
+     - POSTGRES_USER=postgres 
+     - POSTGRES_PASSWORD=password 
+    volumes: 
+     - ./postgres:/var/lib/postgresql/data 
+     - ./postgres:/docker-entrypoint-initdb.d 
+    networks: 
+      - net 
+volumes: 
+  postgres: 
+ 

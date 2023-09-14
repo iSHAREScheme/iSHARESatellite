@@ -1,5 +1,4 @@
 ﻿<img align="right" src="docs/assets/isharelogo-small.png">
-
 iSHARE FOUNDATION
 
 iSHARE SATELLITE DEPLOYMENT GUIDE
@@ -462,6 +461,11 @@ export PARTY_NAME=<party_name>
 export UIHostName=<myorg-test.example.com>
 export MiddlewareHostName=<myorg-mw-test.example.com>
 export KeycloakHostName=<myorg-keycloak-test.example.com>
+export SMTP_PORT=<smtp-port>
+export SMTP_HOST=<smtp-host>
+export SMTP_USER=<my-email-id>
+export SMTP_PASSWORD=<my-email-passowrd>
+export DISPALY_NAME=<email-id-display-name>
 ```
 
 ### Configure HTTPS (SSL/TLS)
@@ -767,3 +771,173 @@ image: isharefoundation/ishare-satellite-app-mw:<tag>
 
 Similarly, updates can be done for all the services.
 
+# <a id="ref_update"> 16. Renewal of HLF Peer TLS Certificate </a>
+
+The steps to be followed to renewal the HLF peer TLS certificate
+
+**Step 1**: Follow below step to update the hlf binaries
+a) Remove bin and config directory
+ ```sh
+cd iSHARESatellite
+rm -rf bin
+rm -rf config
+```
+b) Download the updated binaries (it will create bin and config directory for hlf)
+ ```sh
+curl https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash -s -- 2.2.0 1.4.9 -d -s
+```
+**Step 2**:  Update the fabric ca server
+ ```sh
+cd iSHARESatellite/hlf/<env>/<satellite>/fabric-ca
+```
+a) Open docker-compose-fabric-ca.yaml in text editor
+
+b) Change docker to image: hyperledger/fabric-ca:1.4.9 and save it
+The certificate expiry period can be defined  by changing the below values in the docker-compose-fabric-ca.yaml
+```sh
+- FABRIC_CA_SERVER_SIGNING_DEFAULT_EXPIRY=87600h
+- FABRIC_CA_SERVER_SIGNING_PROFILES_TLS_EXPIRY=87600h
+```
+**Note  : 87600h = 10 years**
+```sh
+docker-compose -f docker-compose-fabric-ca.yaml down 
+```
+```sh
+docker-compose -f docker-compose-fabric-ca.yaml up -d
+```
+
+**Step 3**:  Bring Peers down
+```sh
+cd /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/peers
+```
+```sh
+docker-compose -f docker-compose-hlf.yaml down
+```
+
+**Step 4**:  Take backup of fabric ca server data and crypto materials
+a) Locate your crypto directory below
+```sh
+cd iSHARESatellite/hlf/<env>/<satellite>
+```
+```sh
+tar -cvzf crypto-bakup.tar.gz  crypto
+```
+b) Take backup of fabric ca server data
+```sh
+cd iSHARESatellite/hlf/<env>/<satellite>/fabric-ca  
+```
+```sh
+docker-compose -f docker-compose-fabric-ca.yaml down  
+```
+```sh
+sudo tar -cvzf  docker-data-fabric-ca.tar.gz  docker_data
+```
+```sh
+docker-compose -f docker-compose-fabric-ca.yaml up -d
+```
+
+**Step 5**: Intialize fabric-ca-client client
+```sh
+cd iSHARESatellite
+```
+```sh
+export PATH=$PATH:<path-to-hlf-bin-directory>
+```
+a) Now you should be able access fabrica-ca-client via terminal (version should refer to v1.4.9) 
+**Note:Replace the placeholders for all the below commands**
+```sh
+fabric-ca-client version 
+```
+Please check the peer expiry date before proceeding to **Step 6**,if the peer expiry date is later than the current date, the VM date time will be backdated to before the peer expiry date using the below steps. Try to execute the below commands as a root user.
+     
+a)To adjust the time and date manually, turn off NTP synchronizing with: 
+```sh
+timedatectl set-ntp no   
+```
+b) Set date before expiry time
+```sh
+timedatectl set-time 2019-04-10
+```
+- 2019-04-10 is the previous date of the peer certificate expiry date.
+
+c) To come back to original time
+```sh
+timedatectl set-ntp yes
+```
+**Note: The above back dated commands are only compatible with the Ubuntu 20.04 LTS. If it is a different OS version/package, the system administrator must take care of the backdated steps on their own.**
+
+ **Step 6 :**  Renew Admin user TLS certs  
+ ```sh
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/fabca/ca-admin/tls/tlscacerts/tls-localhost-7054.pem
+```
+```sh
+export FABRIC_CA_CLIENT_HOME=/<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/users/Admin@<satellite>
+```
+```sh
+export FABRIC_CA_CLIENT_MSPDIR=/<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/users/Admin@<satellite>/tls
+```
+```sh
+fabric-ca-client reenroll -u https://Admin:<enrollment-secret>@localhost:7054 --csr.hosts "Admin" --enrollment.profile tls –csr.keyrequest.reusekey
+```
+**Note :<enrollment secret> - can be find inside the script directory in global.sh file**
+
+
+**Step 7:** Renew Peer0 TLS certs  
+```sh
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/fabca/ca-admin/tls/tlscacerts/tls-localhost-7054.pem
+```
+```sh
+ export FABRIC_CA_CLIENT_HOME=/<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer0.<org-domain>
+```
+```sh
+export FABRIC_CA_CLIENT_MSPDIR=/<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer0.<org-domain>/tls
+```
+```sh
+fabric-ca-client reenroll -u https://peer0.<org-domain>:<enrollment-secret>@localhost:7054 --csr.hosts "peer.<satellite>,peer0.<org-domain>" --enrollment.profile tls –csr.keyrequest.reusekey
+```
+**Note : <enrollment-secret> - can be find inside the script directory in global.sh file**
+
+      
+**Step 8:**  Replace the new TLS cert with old one for peer0
+```sh
+rm -f /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer1.<org-domain>/tls/server/cert.pem
+```
+```sh
+cp /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer0.<org-domain>/tls/signcerts/cert.pem  /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer0.<org-domain>/tls/server/cert.pem
+```
+Use the below command to view the certificate expiry
+```sh
+openssl x509 -in /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer0.<org-domain>/tls/server/cert.pem -noout -text
+```
+
+**Step 9:** Follow above step for Peer1 as well 
+```sh
+export FABRIC_CA_CLIENT_TLS_CERTFILES=/<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/fabca/ca-admin/tls/tlscacerts/tls-localhost-7054.pem
+```
+```sh
+export FABRIC_CA_CLIENT_HOME=/<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer1.<org-domain>
+```
+```sh
+export FABRIC_CA_CLIENT_MSPDIR=/<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer1.<org-domain>/tls
+```
+```sh
+fabric-ca-client reenroll -u https://peer1.<org-domain>:<enrollment- secret>@localhost:7054 --csr.hosts "peer.<satellite>,peer1.<org-domain>" --enrollment.profile tls --csr.keyrequest.reusekey
+```
+**Note: <enrollment-secret> - can be find inside the script directory in global.sh file**
+
+
+**Step 10:**  Replace the new TLS cert with old one for peer1
+```sh
+ rm -f /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer1.<org-domain>/tls/server/cert.pem
+```
+```sh
+cp /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer1.<org-domain>/tls/signcerts/cert.pem  /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/crypto/peers/peer1.<org-domain>/tls/server/cert.pem
+```
+
+**Step 11:** Once tls certs are renewed, Bring the peers up again
+```sh
+cd /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/peers
+```
+```sh
+docker-compose -f docker-compose-hlf.yaml up -d
+```

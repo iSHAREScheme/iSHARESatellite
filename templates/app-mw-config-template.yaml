@@ -2,10 +2,19 @@ version: 1.0.0
 ishareConfig:
   middlewareConfig:
     type: satellite
-    mode: uat
+    mode: "<ENVIRONMENT>"
     blockchain_middleware_url: "http://ishare_hlf:21001/api"
     explorerDb: postgresql://hppoc:password@explorerdb:5432/fabricexplorer?sslmode=disable
-    offchainDb: postgresql://postgres:postgres@offchain_sat:5432/offchaindata?sslmode=disable
+    offchainDb: postgresql://postgres:postgres@offchain_sat:5432/offchaindata?sslmode=disable 
+#STARTS Scheduler Configuration to send Email Notifications for Network status and push the updates to the keycloak  
+    emailID: "<SMTP_USER>"
+    emailSecret: "<SMTP_PASSWORD>"
+    emailPort: "<SMTP_PORT>"
+    emailHost: "<SMTP_HOST>"
+    displayName: "<DISPALY_NAME>"
+    emailForceUpdate: false
+    # If the emailForceUpdate values are true, then the middleware application will update the above email setup in the keycloak. (restart the ishare middleware service once the changes are incorporated)
+#Sceduler Configuration to send Email Notifications for Network status ENDS    
     blockchain_details:
       admin: Admin
       channel_id: <CHANNEL_NAME>

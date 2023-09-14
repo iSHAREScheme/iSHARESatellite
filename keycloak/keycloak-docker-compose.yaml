@@ -6,29 +6,41 @@ networks:
 
 services:
   keycloak:
-#     image: jboss/keycloak:11.0.2
-    image: isharefoundation/ishare-satellite-keycloak:v16.1.1
+    image: isharefoundation/ishare-satellite-keycloak:v22.0.1
+    # image: isharefoundation/ishare-satellite-keycloak:v16.1.1
     container_name: keycloak
     ports:
       - 8443:8443
     environment:
-      - KEYCLOAK_USER=admin
-      - KEYCLOAK_PASSWORD=admin
-      - DB_VENDOR=postgres
-      - DB_ADDR=keycloakpostgres
-      - DB_DATABASE=keycloak
-      - DB_USER=keycloak
-      - DB_PASSWORD=keycloak
-      - KEYCLOAK_IMPORT=/tmp/realm-test.json
-    #   - PROXY_ADDRESS_FORWARDING=true
-    #   - KEYCLOAK_FRONTEND_URL=https://isharefoundation-demo.krypc.com:6001/auth
+      # - KEYCLOAK_USER=admin
+      # - KEYCLOAK_PASSWORD=admin
+      # - DB_VENDOR=postgres
+      # - DB_ADDR=keycloakpostgres
+      # - DB_DATABASE=keycloak
+      # - DB_USER=keycloak
+      # - DB_PASSWORD=keycloak
+      # - KEYCLOAK_IMPORT=/tmp/realm-test.json
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HTTPS_PORT=8443
+      - KC_FILE=/tmp/realm-test.json
+      - KC_HTTPS_CERTIFICATE_FILE=etc/x509/https/tls.crt
+      - KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/x509/https/tls.key
+      - KC_DB=postgres
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+      - KC_DB_URL_HOST=keycloakpostgres
+      - KC_DB_URL=jdbc:postgresql://keycloakpostgres/keycloak
+      - KC_HOSTNAME=<KeycloakHostName>
+      - KC_HOSTNAME_ADMIN_URL=https://<KeycloakHostName>:8443/
+      - KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_LEGACY_LOGOUT_REDIRECT_URI=true
     volumes:
       - ./realm-test.json:/tmp/realm-test.json
       - ../ssl/tls.crt:/etc/x509/https/tls.crt
       - ../ssl/tls.key:/etc/x509/https/tls.key
-#      - ./myTheme:/opt/jboss/keycloak/themes/myTheme
-#      - ./scripts/disable-theme-cache.cli:/opt/jboss/startup-scripts/disable-theme-cache.cli
-    command: ["-Dkeycloak.profile.feature.upload_scripts=enabled"]
+    command:
+      - start      
+    # command: ["-Dkeycloak.profile.feature.upload_scripts=enabled"]
     restart: always
     depends_on:
       - keycloakpostgres
@@ -36,7 +48,8 @@ services:
     - net       
 
   keycloakpostgres:
-    image: postgres:13.0-alpine
+    # image: postgres:13.0-alpine
+    image: postgres:15.0-alpine
     container_name: keycloakpostgres
     ports:
       - 1432:5432

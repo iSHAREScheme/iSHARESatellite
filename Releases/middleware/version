@@ -1,0 +1,40 @@
+Image Version : v4.15
+Release on    : 25/08/2023
+Tag           : isharefoundation/ishare-satellite-app-mw:v4.15
+Description   : 
+  Change Request : 
+    1. Handled the case-insensitive "OID" subject name search key.
+    2. Parties endpoint with empty object handled
+
+
+Update the latest image tag in the following steps
+ Step 1: cd to the path of the middleware folder (/VM-Model-iSHARE-Satellites/middleware)
+ Step 2: nano app-mw-config.yaml and added the below changes and save.
+ Step 4: nano docker-compose-mw.yaml
+ Step 5: Change the image version under "ishare_mw" (image: isharefoundation/ishare-satellite-app-mw:v4.15) docker service and save the file.
+ Step 6: docker-compose -f docker-compose-mw.yaml up -d (To bring up the latest image up and running)
+
+
+Older Release note: 
+Image Version : v3.8
+Release on    : 27/06/2023
+Tag           : isharefoundation/ishare-satellite-app-mw:v3.9
+Description   : 
+  Change Request : 
+    1. Network Health check implementation with offchain database
+    2. Store the public certificate details in the blockchain
+    3. Email notification for a network health check
+
+app-mw-config.yaml changes
+
+#STARTS Scheduler Configuration to send Email Notifications for Network status and push the updates to the keycloak    
+    emailID: "Enter the mail id"
+    emailSecret: "Enter the mail app password"
+    emailPort: "465"
+    emailHost: "smtp.gmail.com"
+    displayName: "iShare Notification"
+    emailForceUpdate: false 
+    # If the emailForceUpdate values are true, then the middleware application will update the above email setup in the keycloak. (restart the ishare middleware service once the changes are incorporated)
+#Sceduler Configuration to send Email Notifications for Network status ENDS  
+
+    # The ishareOrg(true) parameter is to be added only in the foundation satellites and regular satellites this is not required.

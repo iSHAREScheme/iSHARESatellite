@@ -6,7 +6,8 @@ networks:
 
 services:
   couchdb.peer0.<orgDomain>:
-    image: hyperledger/fabric-couchdb:0.4.21
+#    image: hyperledger/fabric-couchdb:0.4.21
+    image: couchdb:3.3.2
     ports:
     - 5984:5984
     environment:
@@ -20,7 +21,8 @@ services:
     - net    
 
   couchdb.peer1.<orgDomain>:
-    image: hyperledger/fabric-couchdb:0.4.21
+#    image: hyperledger/fabric-couchdb:0.4.21
+    image: couchdb:3.3.2
     ports:
     - 6984:5984
     environment:
@@ -34,7 +36,8 @@ services:
     - net     
    
   peer0.<orgDomain>:
-    image: hyperledger/fabric-peer:2.2.0
+    # image: hyperledger/fabric-peer:2.2.0
+    image: hyperledger/fabric-peer:2.5.4
     environment:
     - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
     - CORE_PEER_ID=peer0.<orgDomain>
@@ -42,8 +45,10 @@ services:
     - CORE_CHAINCODE_STARTUPTIMEOUT=30s
     - CORE_CHAINCODE_LOGGING_SHIM=debug
     - CORE_CHAINCODE_LOGGING_LEVEL=debug
-    - CORE_CHAINCODE_BUILDER=hyperledger/fabric-ccenv:2.2.0
-    - CORE_CHAINCODE_GOLANG_RUNTIME=hyperledger/fabric-baseos:2.2.0
+    # - CORE_CHAINCODE_BUILDER=hyperledger/fabric-ccenv:2.2.0
+    # - CORE_CHAINCODE_GOLANG_RUNTIME=hyperledger/fabric-baseos:2.2.0
+    - CORE_CHAINCODE_BUILDER=hyperledger/fabric-ccenv:2.5.4
+    - CORE_CHAINCODE_GOLANG_RUNTIME=hyperledger/fabric-baseos:2.5.4
     - CORE_VM_DOCKER_ATTACHSTDOUT=false
     - CORE_PEER_GOSSIP_USELEADERELECTION=true
     - CORE_PEER_GOSSIP_ORGLEADER=false
@@ -88,7 +93,8 @@ services:
     - net 
 
   peer1.<orgDomain>:
-    image: hyperledger/fabric-peer:2.2.0
+    # image: hyperledger/fabric-peer:2.2.0
+    image: hyperledger/fabric-peer:2.5.4    
     environment:
     - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
     - CORE_PEER_ID=peer1.<orgDomain>
@@ -96,8 +102,10 @@ services:
     - CORE_CHAINCODE_STARTUPTIMEOUT=30s
     - CORE_CHAINCODE_LOGGING_SHIM=debug
     - CORE_CHAINCODE_LOGGING_LEVEL=debug
-    - CORE_CHAINCODE_BUILDER=hyperledger/fabric-ccenv:2.2.0
-    - CORE_CHAINCODE_GOLANG_RUNTIME=hyperledger/fabric-baseos:2.2.0
+    - CORE_CHAINCODE_BUILDER=hyperledger/fabric-ccenv:2.5.4
+    - CORE_CHAINCODE_GOLANG_RUNTIME=hyperledger/fabric-baseos:2.5.4    
+    # - CORE_CHAINCODE_BUILDER=hyperledger/fabric-ccenv:2.2.0
+    # - CORE_CHAINCODE_GOLANG_RUNTIME=hyperledger/fabric-baseos:2.2.0
     - CORE_VM_DOCKER_ATTACHSTDOUT=false
     - CORE_PEER_GOSSIP_USELEADERELECTION=true
     - CORE_PEER_GOSSIP_ORGLEADER=false

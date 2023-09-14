@@ -1,0 +1,12 @@
+Image Version : v1.8
+Release on    : 23/06/2023
+Tag           : isharefoundation/ishare-satellite-hlf-mw:v1.8
+Description   : 
+  Change Request : 
+    1. Network Health check API implementation
+
+Update the latest image tag in the following steps
+ Step 1 : cd to the path of middleware folder (/VM-Model-iSHARE-Satellites/middleware)
+ Step 2 : nano docker-compose-mw.yaml
+ Step 3 : Change the image version under "ishare_hlf" (image: isharefoundation/ishare-satellite-hlf-mw:v1.8) docker service and save the file.
+ Step 4 : docker-compose -f docker-compose-mw.yaml up -d (To bring up the latest image up and running)

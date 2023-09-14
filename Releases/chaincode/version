@@ -1,0 +1,9 @@
+Image Version : v1.18
+Release on    : 23/06/2023
+Tag           : isharefoundation/ishare-satellite-cc:v1.18
+Description   : 
+Update the latest image tag in the following steps
+ Step 1: cd to the path of the chaincode folder (/VM-Model-iSHARE-Satellites/chaincode)
+ Step 2: nano cc-docker-compose-template.yaml
+ Step 3: Change the image version under "ishare-cc.hlf" (image: isharefoundation/ishare-satellite-cc:v1.18) docker service and save the file.
+ Step 4: docker-compose -f cc-docker-compose-template.yaml up -d(To bring up the latest image up and running)
