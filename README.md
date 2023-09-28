@@ -11,6 +11,12 @@ the participant is indeed a part of the dataspace, also on a "legal
 level". Service consumers will often connect with service providers to request data. Service providers should then verify the service consumer's status of 
 participance in the dataspace by making an API call to the satellite.
 
+---
+⚠️ IMPORTANT
+
+All satellites which are deployed with version v1.x.x will need to be upgraded to v2.x.x once the upgrade of the iSHARE Foundation satellite is complete. Note, without upgrade your satellite may still seem operational, however, when you want to make changes to participants information it will throw errors until you have upgraded the version to v2.x.x. Kindly follow the upgrade guide in v2.x.x for upgrade instructions.
+---
+
 ## Deployment Guide
 
 See [INSTALL.md](./INSTALL.md).
