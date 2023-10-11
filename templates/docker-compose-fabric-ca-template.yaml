@@ -7,7 +7,8 @@ networks:
 services:
   ca.<orgDomain>:
     container_name: ca.<orgDomain>
-    image: hyperledger/fabric-ca:1.5.7
+    # image: hyperledger/fabric-ca:1.5.7
+    image: isharefoundation/fabric-ca:v1.5.7
     environment:
     - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
     - FABRIC_CA_SERVER_CA_NAME=ca.<orgDomain>

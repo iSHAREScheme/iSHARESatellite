@@ -7,7 +7,8 @@ networks:
 services:
   couchdb.peer0.<orgDomain>:
 #    image: hyperledger/fabric-couchdb:0.4.21
-    image: couchdb:3.3.2
+    # image: couchdb:3.3.2
+    image: isharefoundation/couchdb:v3.3.2
     ports:
     - 5984:5984
     environment:
@@ -22,7 +23,8 @@ services:
 
   couchdb.peer1.<orgDomain>:
 #    image: hyperledger/fabric-couchdb:0.4.21
-    image: couchdb:3.3.2
+    # image: couchdb:3.3.2
+    image: isharefoundation/couchdb:v3.3.2
     ports:
     - 6984:5984
     environment:
@@ -37,7 +39,8 @@ services:
    
   peer0.<orgDomain>:
     # image: hyperledger/fabric-peer:2.2.0
-    image: hyperledger/fabric-peer:2.5.4
+    # image: hyperledger/fabric-peer:2.5.4
+    image: isharefoundation/fabric-peer:v2.5.4
     environment:
     - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
     - CORE_PEER_ID=peer0.<orgDomain>
@@ -94,7 +97,8 @@ services:
 
   peer1.<orgDomain>:
     # image: hyperledger/fabric-peer:2.2.0
-    image: hyperledger/fabric-peer:2.5.4    
+    # image: hyperledger/fabric-peer:2.5.4    
+    image: isharefoundation/fabric-peer:v2.5.4    
     environment:
     - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
     - CORE_PEER_ID=peer1.<orgDomain>
