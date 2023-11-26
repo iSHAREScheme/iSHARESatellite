@@ -1,6 +1,7 @@
 **iSHARE Component Migration Manual**
 
 
+
 # Table of Contents 
 
 [[Introduction ](#introduction)]
@@ -68,15 +69,15 @@ components.
 
 To be executed once at the start.
 
-1\. Stop all the docker container. Execute the below command:
+1. Stop all the docker container. Execute the below command:
 
-```
+```shell
 docker stop $(docker ps -aq)
 ```
-2\. Take the entire setup backup. Execute the below command, enter the
+2. Take the entire setup backup. Execute the below command, enter the
 appropriate file name.
 
-```
+```shell
 sudo zip -r <Filename.zip> iShareSatellite/
 ```
 
@@ -84,7 +85,7 @@ sudo zip -r <Filename.zip> iShareSatellite/
 
 1.  Once entire system setup back up is completed, Start the containers
     using the below given docker command.
-```
+```shell
 docker start $(docker ps -aq)
 ```
 1.  Ensure that all the containers are running properly, using the below
@@ -347,30 +348,30 @@ docker-compose -f docker-compose-ui.yaml logs -f ishare_ui
 # Component #4.2: Application Components-MW
 
 1.  Redirect to below directory.
-
-> **cd iSHARESatellite/middleware**
-
+```shell
+cd iSHARESatellite/middleware
+```
 2.  Using the below command, stop the docker container.
-
-> **docker-compose -f docker-compose-mw.yaml down**
-
+```shell
+docker-compose -f docker-compose-mw.yaml down
+```
 3.  Take a backup of docker-compose-mw.yaml file. Execute the below
     command for the backup activity.
-
-> **cp docker-compose-mw.yaml docker-compose-mw.yaml-bkup**
-
+```shell
+cp docker-compose-mw.yaml docker-compose-mw.yaml-bkup
+```
 4.  Open the docker-compose-mw.yaml, refer to snip 1 to update image
     version and refer to snip 2 to add the highlighted lines in the
     volume section and comment the existing lines and save the file.
 
 > ![](docs/assets/images/image7.png)
-> **image:
-> isharefoundation/ishare-satellite-app-mw:v4.18**
 
-# > ![](docs/assets/images/image8.png)
+**image:isharefoundation/ishare-satellite-app-mw:v4.18**
+# ![](docs/assets/images/image8.png)
 
 5.  Start the container with the latest upgraded version using the below
     command.
+    
 ```shell
 docker-compose -f docker-compose-mw.yaml up -d
 ```
@@ -395,8 +396,7 @@ cd iSHARESatellite/middleware
 2.  Open the docker-compose-mw.yaml, refer to snip 1 to update image
     version and save the file.
 
-> **image: isharefoundation/ishare-satellite-hlf-mw:v1.9**
->
+**image: isharefoundation/ishare-satellite-hlf-mw:v1.9**
 > ![](docs/assets/images/image9.png)
 
 3.  Start the container with the latest upgraded version using the below
@@ -615,7 +615,7 @@ docker exec -it keycloakpostgres pg_dump -U postgres -d keycloak-backup.sql
 
 ```shell
 docker-compose -f keycloak-docker-compose.yaml down
-```shell
+```
 
 
 5.  Rename the existing postgres data folder (keyclockpostgres) as
@@ -625,9 +625,9 @@ docker-compose -f keycloak-docker-compose.yaml down
     image version. Remove the image version that is highlighted in blue
     text. Save the file once changes are done. Refer the below snip.
 
-> **image: isharefoundation/postgressql:v15.0-alpine**
+**image: isharefoundation/postgressql:v15.0-alpine**
 
-![](docs/assets/images/image22.png)
+> ![](docs/assets/images/image22.png)
 
 7.  Start the container with the latest upgraded version using the below
     command.
@@ -641,10 +641,8 @@ docker-compose -f keycloak-docker-compose.yaml up -d
 
 ```shell
 docker-compose -f keycloak-docker-compose.yaml logs -f keycloakpostgres
-```shell
-
-
-![](docs/assets/images/image23.png)
+```
+> ![](docs/assets/images/image23.png)
 
 9.  Restore the backup file (backup.sql) by executing the below command
     and verify the output. Refer to the below snip for the output
@@ -668,7 +666,7 @@ cd iSHARESatellite/middleware
 
 ```shell
 docker exec -it offchain_sat pg_dump -U postgres -d offchaindata > backup.sql
-```shell
+```
 
 
 3.  Once after back up is completed, verify backup.sql is available in
@@ -697,7 +695,6 @@ isharefoundation/postgressql:v15.0-alpine**
 ```shell
 docker-compose -f docker-compose-mw.yaml up -d
 ```
-
 
 8.  Verify the container's docker logs to make sure if container is
     running fine.

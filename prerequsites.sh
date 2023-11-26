@@ -52,7 +52,7 @@ then
     echo "Directory bin and config exists."  ||  { echo 'Binaries files already exist' ; exit 1; }
 else
     echo "Error: Directory bin and config does not exists."
-curl https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash -s -- 2.2.0 1.4.8 -d -s
+curl https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash -s -- 2.5.4 1.5.7 -d -s
 fi
 
 

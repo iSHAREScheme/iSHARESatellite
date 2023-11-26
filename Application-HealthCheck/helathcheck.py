@@ -33,7 +33,7 @@ def mail(reason, url):
         message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
         server = smtplib.SMTP("<HOST>")
         server.starttls()
-        server.login(FROM,'')
+        server.login(FROM,'xcjribgwcmztxbap')
         server.sendmail(FROM, TO, message)
         server.quit()
 
