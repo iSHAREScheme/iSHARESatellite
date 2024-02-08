@@ -22,7 +22,7 @@ services:
     networks:
       - net       
  ishare_mw:
-    image: isharefoundation/ishare-satellite-app-mw:v2.7
+    image: isharefoundation/ishare-satellite-app-mw:v4.8
     ports:
       - 5001:21001
     volumes:
@@ -38,7 +38,7 @@ services:
 
 
  ishare_hlf:
-    image: isharefoundation/ishare-satellite-hlf-mw:v1.7
+    image: isharefoundation/ishare-satellite-hlf-mw:v1.8
     ports:
       - 4001:21001
     volumes:
