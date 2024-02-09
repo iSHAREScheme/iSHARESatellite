@@ -38,6 +38,9 @@ function ParseCompose(){
    
    cryptoPath=$(cd ../app/${RUNNER_MODE}/${orgName}/crypto && echo $(pwd))
    sed -i -e "s%<path-to-crypto>%${cryptoPath}%g" ../middleware/docker-compose-mw.yaml
+   sudo mkdir -p ../middleware/postgresdata
+   sudo chmod -R 777 ../middleware/postgresdata
+   sudo chown -R 1001:1001 ../middleware/postgresdata
 }
 function composeUp(){
     set -e
@@ -52,8 +55,8 @@ if [[ ${UIHostName} = " " || ${UIHostName} = "" ]]; then
    exit 1
 fi
 
-if [[ ${MiddlwareHostName} = " " || ${MiddlwareHostName} = "" ]]; then 
-   errorln " MiddlwareHostName is not specified "
+if [[ ${MiddlewareHostName} = " " || ${MiddlewareHostName} = "" ]]; then 
+   errorln " MiddlewareHostName is not specified "
    exit 1
 fi
 

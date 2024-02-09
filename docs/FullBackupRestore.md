@@ -1,4 +1,9 @@
-# iShare Satellite Backup and Restore
+# iSHARE Satellite full Backup and Restore
+
+This guide explains steps for full backup and restore of satellite components. For backing up individual components please refer to [backup.md](./backup.md).
+
+Alternatively and additionally, one can make backups of full VMs and restore VMs. Please refer to guides from respective host providers on how to backup and restore VMs.
+
 1. Login to respective Satellite VM and check the status of running container
 ```shell
   docker ps

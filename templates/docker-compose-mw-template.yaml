@@ -5,8 +5,8 @@ networks:
     name: fabric_network
 services:
  offchain_sat:
-#    image: postgres:13.0-alpine
-    image: postgres:15.0-alpine    
+    image: isharefoundation/postgressql:v14-alpine
+#    image: postgres:15.0-alpine    
     container_name: offchain_sat
     restart: always
     ports:

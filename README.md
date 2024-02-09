@@ -2,18 +2,32 @@
 
 <img align="right" src="docs/assets/isharelogo-small.png">
 
-The satellite is an application that safeguards trust in a
+The iSHARE satellite is an application that safeguards trust in a
 dataspace. It functions as a register of participants. Participants
 can call the satellite API to verify each other. When you verify that
 a participant is registered in the satellite, you know that this
-participant has signed the agreement, and can be held legally viable;
-the participant is indeed a part of the dataspace, also on a "legal
-level". Service consumers will often connect with service providers to request data. Service providers should then verify the service consumer's status of 
-participance in the dataspace by making an API call to the satellite.
+participant has signed which agreements and the participant is indeed a part of a dataspace, also on a "legal
+level". 
+
+Service consumers will often connect with service providers to request data. Service providers should then verify the service consumer's status of participant in the dataspace by making an API call to the satellite.
+
+> [!NOTE]
+> Please subscribe to update group so that you get important communications about the Satellite. You can send request to join the group https://groups.google.com/a/ishare.eu/g/testsats/about
+
 
 ## Deployment Guide
 
-See [INSTALL.md](./INSTALL.md).
+iSHARE Satellite component can be deployed in various ways and on variety of servers and/or containers locally or on hyperscalers and can be configured for high availablity, redundancy and with additional security mechanisms when required. The following guide is meant to be **reference** for deploying all satellite components into one linux server (Virtual Machine) using docker and docker compose. Providing additional guides and maintaining them is out of scope of iSHARE Foundation, however, we highly encourage participants to perform these steps themselves or publish such guide as community driven open source guide. Please reach out to iSHARE Foundation support team for discussing possiblities to get support for doing different deployment then the one below and/or for publishing repository for alternative models contributed by you.
+
+See [INSTALL.md](docs/INSTALL.md) for fresh installations on Ubuntu Linux machine using docker and docker-compose.
+
+## Backup and Restore Guide
+
+See [FullBackupRestore.md](docs/FullBackupRestore.md) for Ubuntu Linux machine using docker and docker-compose installations.
+
+## Upgrade to version 2.x of satellite from 1.x
+
+See [migration.md](docs/migration.md) for Ubuntu Linux machine using docker and docker-compose installations.
 
 ## License Notice and Copyright
 

@@ -1,4 +1,4 @@
-﻿<img align="right" src="docs/assets/isharelogo-small.png">
+﻿<img align="right" src="./assets/isharelogo-small.png">
 iSHARE FOUNDATION
 
 iSHARE SATELLITE DEPLOYMENT GUIDE
@@ -49,9 +49,9 @@ There are various ways to deploy satellite. However this guide is only for stand
 
 1. A recent Debian-based GNU/Linux distribution (tested on Debian 11 / Bullseye and Ubuntu Linux 20.04.4 LTS / Focal Fossa).
 1. Create/Update rights to your DNS service to manage satellite URLs in DNS record. 
-1. SSL certificates of your domain for applications (applications by default use HTTPS so having certificates on hand is required. You may also use free Letsencrypt certificates, please refer to its website to acquire them. 
+1. SSL certificates of your domain for applications (applications by default use HTTPS so having certificates on hand is required. You may also use free Letsencrypt certificates, please refer to its website to acquire them.) 
 1. JWT signing certificate:  
-   - For production environments – Qualified Seals as defined in iSHARE specifications, 
+   - For production environments – Qualified eSeals as defined in iSHARE specifications, please refer to https://framework.ishare.eu/is/admission 
    - For test environments – test certificates maybe obtained from <https://ca7.isharetest.net:8442/ejbca/ra/>. (Use "postpone" option when you request a test certificate. You will get email with link to download the certificate file, once your request is approved.)
 
 # <a id="hardware-req"> 2. Hardware Requirements </a>
@@ -84,7 +84,7 @@ The iSHARE satellite is based on Hyperledger fabric. When participants are regis
 The following diagram shows the overall satellite architecture and its components as it is deployed using this guide. Note alternatives are possible and will be updated into this guide at a later stage. If you wish to customise your satellite deployment, please get in touch with iSHARE support team.
 
 
-![iSHARE satellite general architecture overview](docs/assets/iSHARE-satellite-architecturev1.0.drawio.png)
+![iSHARE satellite general architecture overview](./assets/iSHARE-satellite-architecturev1.0.drawio.png)
 
 This guide will take your through the steps below (given by their chapter number), in order to install and configure the iSHARE satellite.
 
@@ -255,7 +255,7 @@ cd iSHARESatellite
 To install and ensure all the necessary packages are available in the system, use the below script to install the missing packages.
 
 ```sh
-bash prerequisites.sh
+bash prerequsites.sh
 ```
 
 If docker was not already setup and configured for the current user, logout and login before continuing.
@@ -459,7 +459,7 @@ export CHAINCODE_NAME=<ccname>
 export PARTY_ID=<party_id>
 export PARTY_NAME=<party_name>
 export UIHostName=<myorg-test.example.com>
-export MiddlewareHostName=<myorg-mw-test.example.com>
+export MiddlwareHostName=<myorg-mw-test.example.com>
 export KeycloakHostName=<myorg-keycloak-test.example.com>
 export SMTP_PORT=<smtp-port>
 export SMTP_HOST=<smtp-host>
@@ -586,9 +586,9 @@ Steps for RedirectURL configuration in keycloak
 
 1. Click on administrator console and login with default admin user refer to below screenshots.
 
-   ![](docs/assets/keycloakuser1.png)
+   ![](./assets/keycloakuser1.png)
 
-   ![](docs/assets/keycloakuser2.png)
+   ![](./assets/keycloakuser2.png)
 
    Note: username and password for admin can be found in keycloak-docker-compose.yaml inside "keycloak" directory of the project folder.
 
@@ -596,7 +596,7 @@ Steps for RedirectURL configuration in keycloak
 
 2. Click on "Clients" under left menu bar and select "frontend" from the "ClientID" options.
 
-   ![](docs/assets/keycloakurl1.png)
+   ![](./assets/keycloakurl1.png)
 
 3. In the "frontend" settings form, find `RootURL`, `Valid Redirect URIs` and `Web Origins`. The entries in these text boxes should be the `UIHostName`, `MiddlewareHostName` and `KeycloakHostName` addresses that you defined in chapter 9. 
 
@@ -608,13 +608,13 @@ Steps for RedirectURL configuration in keycloak
 
    Use the image below as reference.
 
-   ![](docs/assets/keycloakurl2.png)
+   ![](./assets/keycloakurl2.png)
 
 4. Match all the settings as below image and save it. Redirect settings have been changed successfully.
 
-   ![](docs/assets/keycloakurl3.png)
+   ![](./assets/keycloakurl3.png)
 
-   ![](docs/assets/keycloakurl4.png)
+   ![](./assets/keycloakurl4.png)
 
 # <a id="U_setup"> 11. Initial user setup </a>
 
@@ -628,7 +628,7 @@ To access the satellite, first set up a satellite admin user from within the key
 
    **Note : username and email should be email id. First name must be set to partyId value and Last Name must be set to partyName value**
 
-   ![](docs/assets/keycloakuser3.png)
+   ![](./assets/keycloakuser3.png)
 
 5. Click on the "Attribute" tab and add the attributes shown in the table below. Then click save. 
 
@@ -639,15 +639,15 @@ To access the satellite, first set up a satellite admin user from within the key
    | `partyId`          | ID of the participant that this user belongs. Usually, the satellite ID |
    | `partyName`        | Name of the participant corresponding to the partyId                    |
 
-   ![](docs/assets/keycloakuser6.png)
+   ![](./assets/keycloakuser6.png)
 
 6. Click on the "Credentials tab and make a password for the user that is being created. 
 
-   ![](docs/assets/keycloakuser7.png)
+   ![](./assets/keycloakuser7.png)
 
 7. Click on "Role Mappings" tab and find "Client Roles "dropdown. Select "frontend". Then, under "Available Roles", select "satelliteAdmin" and click on the "Add Selected" button. Refer to the below image and click save. 
 
-   ![](docs/assets/keycloakuser8.png)
+   ![](./assets/keycloakuser8.png)
 
 Your user is now created, and you can proceed to use the satellite the UI with newly created user. In the UI you can start registering satellite participants.
 
@@ -663,7 +663,7 @@ Steps for Email Notification under keycloak administrator login:
 
 2. Click on "Realm Settings" under the left menu bar. Then, click on the "Email" tab and fill out the necessary details shown below. Remember to click save. Email notification will be enabled.
 
-   ![](docs/assets/keycloakemail1.png)
+   ![](./assets/keycloakemail1.png)
 
 Note: Form inputs for *From* and *username* should be valid email id's. Password should be the app password configured in the mail account.
 
@@ -675,11 +675,11 @@ The steps below explain how to set up the 2FA for new devices (configured device
 
 2. Go to the "Credentials" tab and delete the "otp” type. Then click "confirm". 
 
-   ![](docs/assets/keycloak2fa1.png)
+   ![](./assets/keycloak2fa1.png)
 
 3. Go to the "Details" tab. Click on the "Required user action" dropdown bar, and select "Configure OTP". Click on save.
 
-   ![](docs/assets/keycloak2fa2.png)
+   ![](./assets/keycloak2fa2.png)
 
 4. Inform the user to login with existing credentials and configure the 2FA on the new device.
 
@@ -775,6 +775,9 @@ Similarly, updates can be done for all the services.
 
 The steps to be followed to renewal the HLF peer TLS certificate
 
+>[!WARNING]
+> Always make full backups before performing these steps
+
 **Step 1**: Follow below step to update the hlf binaries
 a) Remove bin and config directory
  ```sh
@@ -783,9 +786,14 @@ rm -rf bin
 rm -rf config
 ```
 b) Download the updated binaries (it will create bin and config directory for hlf)
+
+> [!WARNING]
+> Please make sure to match the version of peer (2.5.4) and fabric ca (1.5.7) which is installed in the following command
+
  ```sh
-curl https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash -s -- 2.2.0 1.4.9 -d -s
+curl https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash -s -- 2.5.4 1.5.7 -d -s
 ```
+
 **Step 2**:  Update the fabric ca server
  ```sh
 cd iSHARESatellite/hlf/<env>/<satellite>/fabric-ca

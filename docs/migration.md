@@ -1,39 +1,36 @@
-**iSHARE Component Migration Manual**
-
-
+**iSHARE Satellite Components Migration Manual**
 
 # Table of Contents 
 
-[[Introduction ](#introduction)]
+[Introduction ](#introduction)
 
-[[List of Components ](#list-of-components)]
+[List of Components ](#list-of-components)
 
-[[Pre-requisites ](#pre-requisites)]
+[Pre-requisites ](#pre-requisites)
 
-[[Component #1: Fabric CA](#component-1-fabric-ca)]
+[Component #1: Fabric CA](#component-1-fabric-ca)
 
-[[Component #2: Peer ](#component-2-peer)]
+[Component #2: Peer ](#component-2-peer)
 
-[[Component #3: Couch DB](#component-3-couch-db)]
+[Component #3: Couch DB](#component-3-couch-db)
 
-[[Component #4.1: Application Components-UI](#component-4.1-application-components-ui)]
+[Component #4.1: Application Components-UI](#component-4.1-application-components-ui)
 
-[[Component #4.2: Application Components-MW](#component-4.2-application-components-mw)]
+[Component #4.2: Application Components-MW](#component-4.2-application-components-mw)
 
-[[Component #4.3: Application Components-HLF Middleware](#component-4.3-application-components-hlf-middleware)]
+[Component #4.3: Application Components-HLF Middleware](#component-4.3-application-components-hlf-middleware)
 
-[[Component #4.4: Application Components-Chain Code](#component-4.4-application-components-chain-code)]
+[Component #4.4: Application Components-Chain Code](#component-4.4-application-components-chain-code)
 
-[[Component #5: Key Cloak](#component-5-key-cloak)]
+[Component #5: Key Cloak](#component-5-key-cloak)
 
-[[Component #6.1: Postgres DB -- Key Cloak](#component-6.1-postgres-db-key-cloak)]
+[Component #6.1: Postgres DB -- Key Cloak](#component-6.1-postgres-db-key-cloak)
 
-[[Component #6.2: Postgres DB -- Offchain Data](#component-6.2-postgres-db-offchain-data)]
+[Component #6.2: Postgres DB -- Offchain Data](#component-6.2-postgres-db-offchain-data)
 
-[[Component #7: Explorer](#component-7-explorer)]
+[Component #7: Explorer](#component-7-explorer)
 
-[[Component #8: Orderer ](#component-8-orderer)]
-
+[Component #8: Orderer ](#component-8-orderer)
 # Introduction
 
 This document explains the migration activity of the existing
@@ -125,7 +122,7 @@ cp docker-compose-fabric-ca.yaml docker-compose-fabric-ca.yaml-bkup
 
 > **image: isharefoundation/fabric-ca:v1.5.7**
 >
-> ![](docs/assets/images/image1.png)
+> ![](./assets/images/image1.png)
 
 6.  Execute the below commands in the same given order, which in turn
     provides permission for the directory and its contents.
@@ -192,9 +189,9 @@ cp docker-compose-hlf.yaml docker-compose-hlf.yaml-bkup
 
 > **image: isharefoundation/fabric-peer:v2.5.4**
 >
-> ![](docs/assets/images/image2.png)
+> ![](./assets/images/image2.png)
 >
-> ![](docs/assets/images/image3.png)
+> ![](./assets/images/image3.png)
 
 5.  Execute the below command, which in turn provides permission for the
     directory and its contents.
@@ -234,7 +231,7 @@ cd iSHARESatellite/hlf/<Environment>/<orgName>/peers
 
 ```shell
 docker-compose -f docker-compose-hlf.yaml up -d
-```shell
+```
 
 11. Verify the container's docker logs to make sure if container is
     running fine.
@@ -264,7 +261,7 @@ docker-compose -f docker-compose-hlf.yaml down
     couchdb.peer 1 and save the file. Refer the below snip on the
     highlighted command.
 
-> ![](docs/assets/images/image4.png)
+> ![](./assets/images/image4.png)
 > **image:
 > isharefoundation/couchdb:v3.3.2**
 
@@ -328,9 +325,9 @@ cp docker-compose-ui.yaml docker-compose-ui.yaml-bkup
     updated image and save the file. Refer to the highlighted command in
     both the snips.
 
-> ![](docs/assets/images/image5.png)
+> ![](./assets/images/image5.png)
 >
-> ![](docs/assets/images/image6.png)
+> ![](./assets/images/image6.png)
 > **image:
 > isharefoundation/ishare-satellite-ui:v3.0**
 
@@ -364,10 +361,10 @@ cp docker-compose-mw.yaml docker-compose-mw.yaml-bkup
     version and refer to snip 2 to add the highlighted lines in the
     volume section and comment the existing lines and save the file.
 
-> ![](docs/assets/images/image7.png)
+> ![](./assets/images/image7.png)
 
 **image:isharefoundation/ishare-satellite-app-mw:v4.18**
-# ![](docs/assets/images/image8.png)
+# ![](./assets/images/image8.png)
 
 5.  Start the container with the latest upgraded version using the below
     command.
@@ -397,7 +394,7 @@ cd iSHARESatellite/middleware
     version and save the file.
 
 **image: isharefoundation/ishare-satellite-hlf-mw:v1.9**
-> ![](docs/assets/images/image9.png)
+> ![](./assets/images/image9.png)
 
 3.  Start the container with the latest upgraded version using the below
     command.
@@ -440,18 +437,18 @@ cp cc-docker-compose-template.yaml cc-docker-compose-template.yaml-bkup
 
 > **image: isharefoundation/ishare-satellite-cc:v2.0**
 >
-> ![](docs/assets/images/image10.png)
+> ![](./assets/images/image10.png)
 
 
 5. Comment the run command mentioned in **cc-docker-compose-template.yaml** as per the given sample image.
-   > ![](docs/assets/images/imagecc.png)
+   > ![](./assets/images/imagecc.png)
    
 7. Start the container with the latest upgraded version using the below
     command.
 
 ```shell
 docker-compose -f cc-docker-compose-template.yaml up -d
-```shell
+```
 
 
 6.  Verify the container's docker logs to make sure if container is
@@ -468,15 +465,15 @@ docker-compose -f cc-docker-compose-template.yaml logs -f
 
 2.  Click on Administration Console
 
-> ![](docs/assets/images/image11.png)
+> ![](./assets/images/image11.png)
 
-3.  ![](docs/assets/images/image12.png)
+3.  ![](./assets/images/image12.png)
     Enter the login credentials. Username
     and Password for admin can be found in keycloak-docker-compose.yaml
     inside \"keycloak\" directory of the project folder.
 
 5.  Click on 'Export'
-    ![](docs/assets/images/image13.png)
+    ![](./assets/images/image13.png)
     
 
 6.  Make sure 'Export groups and roles' and 'Export clients' options are
@@ -484,7 +481,7 @@ docker-compose -f cc-docker-compose-template.yaml logs -f
     (realm-export.json) will be downloaded to the system. This file will
     be used when in need to revert if any conflict occurs.
 
-    ![](docs/assets/images/image14.png)
+    ![](./assets/images/image14.png)
 
 6.  Redirect to below directory.
 
@@ -535,13 +532,13 @@ value.**
 
 > **image: isharefoundation/ ishare-satellite-keycloak:v22.0.1**
 
-> ![](docs/assets/images/image15.png)
+> ![](./assets/images/image15.png)
 
 13. Run Command has to be changed in keycloak-docker-compose.yaml. Refer
     to below snip to update run command and remove the blue highlighted
     text. Save the file once changes are done.
     
-   ![](docs/assets/images/image16.png)
+   ![](./assets/images/image16.png)
 
 15. Start the container with the latest upgraded version using the below
     command.
@@ -563,34 +560,34 @@ docker-compose -f keycloak-docker-compose.yaml logs -f keycloak
     <https://myorg-keycloak-test.example.com:8443/admin>. Repeat Step 3
     to login.
 
-> ![](docs/assets/images/image12.png)
+> ![](./assets/images/image12.png)
 
     
  17. After login, click on the realm
     dropdown to verify the realm name. Refer to below snip.
 
-> ![](docs/assets/images/image17.png)
+> ![](./assets/images/image17.png)
 
 18. Click on **Clients** menu and click on 'frontend' client ID. Verify
     it is updated as per the earlier settings.
 
-> ![](docs/assets/images/image18.png)
+> ![](./assets/images/image18.png)
 
 19. Click on **Users** menu to verify
     whether the users list are updated as per the earlier settings.
     
-> ![](docs/assets/images/image19.png)
+> ![](./assets/images/image19.png)
     
     
 
 20.  Click on **Realm Settings** and verify
     **Email** config. Is updated as per the earlier settings.
-> ![](docs/assets/images/image20.png)
+> ![](./assets/images/image20.png)
    
 21.  Verify whether existing users are able
     to access the application. Login and verify participants and user
     data are displayed.
-> ![](docs/assets/images/image21.png)
+> ![](./assets/images/image21.png)
    
 
 # Component #6.1: Postgres DB -- Key Cloak
@@ -627,7 +624,7 @@ docker-compose -f keycloak-docker-compose.yaml down
 
 **image: isharefoundation/postgressql:v15.0-alpine**
 
-> ![](docs/assets/images/image22.png)
+> ![](./assets/images/image22.png)
 
 7.  Start the container with the latest upgraded version using the below
     command.
@@ -642,7 +639,7 @@ docker-compose -f keycloak-docker-compose.yaml up -d
 ```shell
 docker-compose -f keycloak-docker-compose.yaml logs -f keycloakpostgres
 ```
-> ![](docs/assets/images/image23.png)
+> ![](./assets/images/image23.png)
 
 9.  Restore the backup file (backup.sql) by executing the below command
     and verify the output. Refer to the below snip for the output
@@ -651,7 +648,7 @@ docker-compose -f keycloak-docker-compose.yaml logs -f keycloakpostgres
 ```shell
 docker exec -i keycloakpostgres psql -U postgres -d keycloak-backup.sql
 ```
-> ![](docs/assets/images/image24.png)
+> ![](./assets/images/image24.png)
 
 # Component #6.2: Postgres DB -- Offchain Data
 
@@ -685,7 +682,7 @@ docker-compose -f docker-compose-mw.yaml down
     version. Remove the image version that is highlighted in blue text.
     Save the file once changes are done. Refer the below snip.
 
-![](docs/assets/images/image25.png)
+![](./assets/images/image25.png)
 **image:
 isharefoundation/postgressql:v15.0-alpine**
 
@@ -720,7 +717,7 @@ docker exec -it offchain_sat psql -U postgres -d offchaindata
 11. Now restore the offchaindata in the postgres 15 by executing the
     below command. Refer to the below snip for example output.
 
-![](docs/assets/images/image26.png)
+![](./assets/images/image26.png)
 
 ```shell
 docker exec -i offchain_sat psql -U postgres -d offchaindata < backup.sql
@@ -752,11 +749,11 @@ sudo zip -r docker_data-explorer-bkup-<date>.zip docker_data/
     image version that is highlighted in blue text. Save the file once
     changes are done. Refer the below snips.
 
-![](docs/assets/images/image27.png)
+![](./assets/images/image27.png)
 **image: 
 ghcr.io/hyperledger-labs/explorer-db:2.0.0**
 
-![](docs/assets/images/image28.png)
+![](./assets/images/image28.png)
 **image:
 ghcr.io/hyperledger-labs/explorer:2.0.0**
 
@@ -772,7 +769,7 @@ docker-compose -f explorer-docker-compose.yaml up -d
 
 ```shell
 docker-compose -f explorer-docker-compose.yaml logs -f explorerdb
-```shell
+```
 
 ```shell
 docker-compose -f explorer-docker-compose.yaml logs -f explorer
@@ -827,20 +824,20 @@ sudo zip -r docker_data-orderer-bkup-<date>.zip docker_data/
 
 **Image:** **hyperledger/fabric-orderer:2.5.4**
 
-![](docs/assets/images/image29.png)
+![](./assets/images/image29.png)
 
 Environment session:
 ```shell
 - FABRIC_CFG_PATH=/sample/config
 ```
 
-![](docs/assets/images/image30.png)
+![](./assets/images/image30.png)
 
 ```shell
 - ./orderer.yaml:/sample/config/orderer.yaml
 ```
 
-![](docs/assets/images/image31.png)
+![](./assets/images/image31.png)
 
 9.  Using the below command, stop and remove the docker container.
 

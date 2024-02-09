@@ -1,8 +1,10 @@
 
 # Introduction
 
-This document explains the backup activity of the existing
-components.
+This document explains the backup steps for individual components. For full backup and restore of satellite please refer to [FullBackupRestore.md](./FullBackupRestore.md)
+
+> [!NOTE]
+> Always shutdown component before taking backup
 
 # List of Components
 

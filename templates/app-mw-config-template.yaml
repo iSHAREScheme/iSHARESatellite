@@ -32,7 +32,7 @@ ishareConfig:
     adminId: admin
     adminSecret: "admin"
     adminRealmName: master
-    realmName: <UIHostName>
+    realmName: <orgName>
   versionConfig:
     currentVersion: 1.0
   cookieInfo:
