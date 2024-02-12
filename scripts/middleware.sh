@@ -8,6 +8,8 @@ function ParseHLFMiddlewareConfig(){
     sed -i -e "s/<orgDomain>/${orgDomain}/g" -e "s/<orgName>/${orgName}/g" -e "s/<CHANNEL_NAME>/${CHANNEL_NAME}/g" -e "s/<CHAINCODE_NAME>/${CHAINCODE_NAME}/g" \
 -e "s/<KeycloakHostName>/${KeycloakHostName}/g" ../middleware/hlf-mw-config.yaml
 
+
+
 }
 function ParseAPPMiddlewareConfig(){
     local PartyId=${PARTY_ID}
@@ -16,6 +18,18 @@ function ParseAPPMiddlewareConfig(){
     cp ../templates/app-mw-config-template.yaml ../middleware/app-mw-config.yaml
     sed -i -e "s/<orgDomain>/${orgDomain}/g" -e "s/<orgName>/${orgName}/g" -e "s/<CHANNEL_NAME>/${CHANNEL_NAME}/g" -e "s/<CHAINCODE_NAME>/${CHAINCODE_NAME}/g" \
 -e "s/<KeycloakHostName>/${KeycloakHostName}/g" -e "s/<UIHostName>/${UIHostName}/g" -e "s/<PartyId>/${PartyId}/g" -e "s/<PartyName>/${PartyName}/g" ../middleware/app-mw-config.yaml
+    sed -i -e "s/<SMTP_PASSWORD>/${SMTP_PASSWORD}/g" -e "s/<SMTP_PORT>/${SMTP_PORT}/g" -e "s/<SMTP_HOST>/${SMTP_HOST}/g" -e "s/<SMTP_USER>/${SMTP_USER}/g" \
+-e "s/<DISPALY_NAME>/${DISPALY_NAME}/g" ../middleware/app-mw-config.yaml
+   if [[ "$ENVIRONMENT" == "uat" || "$ENVIRONMENT" == "test" || "$ENVIRONMENT" == "prod" ]]; then
+        if [[ "$ENVIRONMENT" == "test" ]]; then
+            ENVIRONMENT="uat"
+        fi
+        sed -i -e "s/<ENVIRONMENT>/${ENVIRONMENT}/g" ../middleware/app-mw-config.yaml
+    else
+        echo "Invalid mode provided. Using default mode."
+        MODE="default"  # Set your default mode here
+        sed -i -e "s/<ENVIRONMENT>/${ENVIRONMENT}/g" ../middleware/app-mw-config.yaml
+    fi
 }
 
 function ParseCompose(){
@@ -24,6 +38,9 @@ function ParseCompose(){
    
    cryptoPath=$(cd ../app/${RUNNER_MODE}/${orgName}/crypto && echo $(pwd))
    sed -i -e "s%<path-to-crypto>%${cryptoPath}%g" ../middleware/docker-compose-mw.yaml
+   sudo mkdir -p ../middleware/postgresdata
+   sudo chmod -R 777 ../middleware/postgresdata
+   sudo chown -R 1001:1001 ../middleware/postgresdata
 }
 function composeUp(){
     set -e
@@ -38,8 +55,8 @@ if [[ ${UIHostName} = " " || ${UIHostName} = "" ]]; then
    exit 1
 fi
 
-if [[ ${MiddlwareHostName} = " " || ${MiddlwareHostName} = "" ]]; then 
-   errorln " MiddlwareHostName is not specified "
+if [[ ${MiddlewareHostName} = " " || ${MiddlewareHostName} = "" ]]; then 
+   errorln " MiddlewareHostName is not specified "
    exit 1
 fi
 

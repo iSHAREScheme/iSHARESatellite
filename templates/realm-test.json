@@ -1,6 +1,6 @@
 {
-  "id": "<UIHostName>",
-  "realm": "<UIHostName>",
+  "id": "<ORG_NAME>",
+  "realm": "<ORG_NAME>",
   "enabled": true,
   "loginWithEmailAllowed": true,
   "resetPasswordAllowed": true,

@@ -14,6 +14,13 @@ cp ../templates/fabric-ca-server-config.yaml ../hlf/${RUNNER_MODE}/${orgName}/fa
 cp ../templates/docker-compose-fabric-ca-template.yaml ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker-compose-fabric-ca.yaml
 sed -i -e "s/<orgDomain>/${orgDomain}/g" -e "s/<ENROLLMENT_SECRET>/${ENROLLMENT_SECRET}/g" ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker-compose-fabric-ca.yaml
 
+
+sudo mkdir -p ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data/ca.${orgDomain}
+sudo chmod -R 777 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data/ca.${orgDomain}
+sudo chown -R 1001:1001 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data/ca.${orgDomain}
+sudo chmod -R 777 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/certs
+sudo chmod -R 777 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data
+
 infoln "Bringing Fabric CA UP ...."
 docker-compose -f ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker-compose-fabric-ca.yaml up -d 2>&1
 sleep 5

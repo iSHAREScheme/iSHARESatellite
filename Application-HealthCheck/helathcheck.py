@@ -28,12 +28,13 @@ def main():
 def mail(reason, url):
         FROM = "<Form_Email_ID>"
         TO = ["<To_Email_ID>"] # must be a list
-        SUBJECT = "<Eneter_Email_Subject>"
+        SUBJECT = "<Enter_Email_Subject>"
+
         TEXT = url+" "+ reason
         message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
         server = smtplib.SMTP("<HOST>")
         server.starttls()
-        server.login(FROM,'xcjribgwcmztxbap')
+        server.login(FROM,'')
         server.sendmail(FROM, TO, message)
         server.quit()
 

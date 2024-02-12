@@ -5,7 +5,8 @@ networks:
     name: fabric_network
 services:
  offchain_sat:
-    image: postgres:13.0-alpine
+    image: isharefoundation/postgressql:v14-alpine
+#    image: postgres:15.0-alpine    
     container_name: offchain_sat
     restart: always
     ports:
@@ -22,13 +23,15 @@ services:
     networks:
       - net       
  ishare_mw:
-    image: isharefoundation/ishare-satellite-app-mw:v4.8
+    # image: isharefoundation/ishare-satellite-app-mw:v4.4
+    image: isharefoundation/ishare-satellite-app-mw:v4.18
+
     ports:
       - 5001:21001
     volumes:
       - ./app-mw-config.yaml:/test/config/app-mw-config.yaml
-      - ../jwt-rsa/jwtRSA256-private.pem:/jwtRSA256-private.pem
-      - ../jwt-rsa/jwtRSA256-public.pem:/jwtRSA256-public.pem      
+      - ../jwt-rsa/jwtRSA256-private.pem:/home/appuser/ishare-middleware/jwtRSA256-private.pem
+      - ../jwt-rsa/jwtRSA256-public.pem:/home/appuser/ishare-middleware/jwtRSA256-public.pem      
     restart: always      
     environment:
       - CONFIG_FILE_PATH=/test/config/app-mw-config.yaml
@@ -38,7 +41,8 @@ services:
 
 
  ishare_hlf:
-    image: isharefoundation/ishare-satellite-hlf-mw:v1.8
+    # image: isharefoundation/ishare-satellite-hlf-mw:v1.8
+    image: isharefoundation/ishare-satellite-hlf-mw:v1.9
     ports:
       - 4001:21001
     volumes:

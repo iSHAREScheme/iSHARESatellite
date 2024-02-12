@@ -52,31 +52,37 @@ then
     echo "Directory bin and config exists."  ||  { echo 'Binaries files already exist' ; exit 1; }
 else
     echo "Error: Directory bin and config does not exists."
-curl https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash -s -- 2.2.0 1.4.8 -d -s
+curl https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash -s -- 2.5.4 1.5.7 -d -s
 fi
 
+# Function to install OpenSSL
+install_openssl() {
+  cd /usr/local/src/ || { echo 'Change directory failed' ; exit 1; }
+  wget --no-check-certificate https://www.openssl.org/source/openssl-3.2.0.tar.gz || { echo 'wget openssl failed' ; exit 1; }
+  tar -xf  openssl-3.2.0.tar.gz || { echo 'Extracting openssl tar file failed' ; exit 1; }
+  cd openssl-3.2.0 || { echo 'Change directory failed' ; exit 1; }
+  openssl version || { echo 'check openssl version failed' ; exit 1; }
+  sudo ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib || { echo 'configure and compile OpenSSL failed' ; exit 1; }
+  sudo make || { echo 'make command failed' ; exit 1; }
+  sudo make test
+  sudo make install
+}
 
-#Check and install openssl
-
-if openssl version; then
-  echo "openssl is installed"
+# Check and install openssl
+if openssl version | grep -q "3.2.0"; then
+  echo "openssl 3.1.0 is already installed"
 else
-  echo "Install openssl"
-sudo apt update ||  { echo 'update existing list of packages failed' ; exit 1; }
-
-sudo apt install build-essential checkinstall zlib1g-dev -y ||  { echo 'install build-essential failed' ; exit 1; }
-cd /usr/local/src/ ;
-wget https://www.openssl.org/source/openssl-1.1.1k.tar.gz ||  { echo 'wget openssl failed' ; exit 1; }
-tar -xf openssl-1.1.1k.tar.gz ||  { echo 'Extracting openssl tar file failed' ; exit 1; }
-cd openssl-1.1.1k.tar.gz;
-openssl version ||  { echo 'check opensslversion failed' ; exit 1; }
-sudo ./config --prefix=/us3r/local/ssl --openssldir=/usr/local/ssl shared zlib ||  { echo 'configure and compile OpenSSL failed' ; exit 1; }
-sudo make ||  { echo 'make command failed' ; exit 1; }
-sudo make test;
-sudo make install;
+  echo "Install openssl 3.2.0"
+  sudo apt update || { echo 'update existing list of packages failed' ; exit 1; }
+  sudo apt install build-essential checkinstall zlib1g-dev -y || { echo 'install build-essential failed' ; exit 1; }
+  install_openssl
 fi
+
+
+# Log Rotation for Docker
 
 if [[ ${IsDockerInstalledAlready} = false ]]; then 
+sudo mv ./templates/daemon.json /etc/docker/
 #reboot vm to complete installation
 sudo reboot; 
 fi

@@ -141,9 +141,6 @@ certificateAuthorities:
 ishareConfig:
   middlewareConfig:
     type: satellite
-    postgres_connection_url: postgresql://admin:adminpw@app-postgres:5432/ishare?sslmode=disable
-    auth_audience: https://ishare-core-middleware
-    auth_domain: https://ishare.eu.auth0.com/
     blockchain_middleware_url: "http://ishare-hlf-mw:21001/api/invoke"
     blockchain_details:
       admin: Admin

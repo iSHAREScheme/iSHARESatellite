@@ -7,7 +7,8 @@ networks:
 services:
 
   explorerdb:
-    image: hyperledger/explorer-db:latest
+    # image: hyperledger/explorer-db:latest
+    image: ghcr.io/hyperledger-labs/explorer-db:2.0.0
     container_name: explorerdb
     hostname: explorerdb
     environment:
@@ -28,7 +29,8 @@ services:
       - net
 
   explorer:
-    image: hyperledger/explorer:latest
+    # image: hyperledger/explorer:latest
+    image: ghcr.io/hyperledger-labs/explorer:2.0.0
     container_name: explorer
     hostname: explorer
     environment:
