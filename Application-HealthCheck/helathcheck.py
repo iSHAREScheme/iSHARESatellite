@@ -29,6 +29,7 @@ def mail(reason, url):
         FROM = "<Form_Email_ID>"
         TO = ["<To_Email_ID>"] # must be a list
         SUBJECT = "<Enter_Email_Subject>"
+
         TEXT = url+" "+ reason
         message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
         server = smtplib.SMTP("<HOST>")

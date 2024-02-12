@@ -15,6 +15,12 @@ Service consumers will often connect with service providers to request data. Ser
 > Please subscribe to update group so that you get important communications about the Satellite. You can send request to join the group https://groups.google.com/a/ishare.eu/g/testsats/about
 
 
+---
+⚠️ IMPORTANT
+
+All satellites which are deployed with version v1.x.x will need to be upgraded to v2.x.x once the upgrade of the iSHARE Foundation satellite is complete. Note, without upgrade your satellite may still seem operational, however, when you want to make changes to participants information it will throw errors until you have upgraded the version to v2.x.x. Kindly follow the upgrade guide in v2.x.x for upgrade instructions.
+---
+
 ## Deployment Guide
 
 iSHARE Satellite component can be deployed in various ways and on variety of servers and/or containers locally or on hyperscalers and can be configured for high availablity, redundancy and with additional security mechanisms when required. The following guide is meant to be **reference** for deploying all satellite components into one linux server (Virtual Machine) using docker and docker compose. Providing additional guides and maintaining them is out of scope of iSHARE Foundation, however, we highly encourage participants to perform these steps themselves or publish such guide as community driven open source guide. Please reach out to iSHARE Foundation support team for discussing possiblities to get support for doing different deployment then the one below and/or for publishing repository for alternative models contributed by you.
