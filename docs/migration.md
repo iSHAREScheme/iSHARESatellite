@@ -163,7 +163,7 @@ You can press ctrl+c to exit
 
 # Component #2: Peer
 
-1.  Redirect to *iSHARESatellite/hlf/<Environment>/<orgName>/peers* directory. Change the *environment* and *orgname* appropriately in the command.
+1.  Redirect to `iSHARESatellite/hlf/<Environment>/<orgName>/peers` directory. Change the *environment* and *orgname* appropriately in the command.
 
 ```shell
 cd ../peers
@@ -730,17 +730,15 @@ nano cc-docker-compose-template.yaml
 
 
 5. Comment the run command mentioned in **cc-docker-compose-template.yaml** as per the given sample image.
-   > ![](assets/images/imagecc.png)
+> ![](assets/images/imagecc.png)
 
-7. Start the container with the latest upgraded version using the below
-   command.
+6. Start the container with the latest upgraded version using the below command.
 
 ```shell
 docker-compose -f cc-docker-compose-template.yaml up -d
 ```
 
-
-6.  Verify the container's docker logs to make sure if container is
+7.  Verify the container's docker logs to make sure if container is
     running fine.
 
 ```shell
@@ -762,7 +760,6 @@ cd iSHARESatellite/middleware
 ```shell
 docker exec -it offchain_sat pg_dump -U postgres -d offchaindata > backup.sql
 ```
-
 
 3.  Once after back up is completed, verify **backup.sql** is available in
     the working directory.
@@ -810,28 +807,28 @@ sudo chown -R 1001:1001 postgresdata/
 docker-compose -f docker-compose-mw.yaml up -d
 ```
 
-8.  Verify the container's docker logs to make sure if container is
+9.  Verify the container's docker logs to make sure if container is
     running fine.
 
 ```shell
 docker-compose -f docker-compose-mw.yaml logs -f offchain_sat
 ```
 
-9.  Create a new offchaindb in new postgres 15 by executing the below
+10.  Create a new offchaindb in new postgres 15 by executing the below
     command.
 
 ```shell
 docker exec -it offchain_sat psql -U postgres -c "CREATE DATABASE offchaindata;"
 ```
 
-10. Verify whether the offchaindb is created correctly by executing the
+11. Verify whether the offchaindb is created correctly by executing the
     below command.
 
 ```shell
 docker exec -it offchain_sat psql -U postgres -d offchaindata
 ```
 
-11. Now restore the offchaindata in the postgres 15 by executing the
+12. Now restore the offchaindata in the postgres 15 by executing the
     below command. Refer to the below snip for example output.
 
 ```shell
@@ -915,3 +912,4 @@ docker-compose -f explorer-docker-compose.yaml logs -f explorer
 docker-compose -f explorer-docker-compose.yaml ps
 ```
 
+Upgrade is complete! Please check if all containers are running properly and also perform basic checks by logging into UI. Check if middleware/APIs are working fine. Refer to postman collection on the dev portal.
