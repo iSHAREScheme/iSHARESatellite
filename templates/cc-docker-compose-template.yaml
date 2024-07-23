@@ -17,7 +17,6 @@ services:
       CHAINCODE_TLS_DISABLED: "true"  
       CORE_PEER_LOCALMSPID: <orgName>
     # command: "./out/is-chaincode"
-    restart: always
     ports:
       - 9999:9999
     networks:
