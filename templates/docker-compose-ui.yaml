@@ -15,7 +15,7 @@ services:
       - API_URL=https://<MiddlewareHostName>
       - AUTH_REDIRECT_URI=https://<UIHostName>
       - PROXY_ADDRESS_FORWARDING=true
-      - KEYCLOAK_FRONTEND_URL=https://<KeycloakHostName>:8443/
+      - KEYCLOAK_FRONTEND_URL=https://<KeycloakHostName>/
       - REALM_NAME=<ORG_NAME>
     restart: always      
     networks:

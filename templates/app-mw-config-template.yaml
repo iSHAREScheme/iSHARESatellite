@@ -26,7 +26,7 @@ ishareConfig:
     partyName: <PartyName>
   platformURL: ""
   keyCloakConfig:
-    domain: https://<KeycloakHostName>:8443
+    domain: https://<KeycloakHostName>
     clientId: frontend
     clientSecret: ""
     adminId: admin
