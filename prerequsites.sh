@@ -55,6 +55,12 @@ else
 curl https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash -s -- 2.5.4 1.5.7 -d -s
 fi
 
+
+# Log Rotation for Docker
+if [[ ${IsDockerInstalledAlready} = false ]]; then 
+sudo mv ./templates/daemon.json /etc/docker/
+fi
+
 # Function to install OpenSSL
 install_openssl() {
   cd /usr/local/src/ || { echo 'Change directory failed' ; exit 1; }
@@ -66,23 +72,17 @@ install_openssl() {
   sudo make || { echo 'make command failed' ; exit 1; }
   sudo make test
   sudo make install
+
+  #reboot vm to complete installation
+  sudo reboot; 
 }
 
 # Check and install openssl
 if openssl version | grep -q "3.2.0"; then
-  echo "openssl 3.1.0 is already installed"
+  echo "openssl 3.2.0 is already installed"
 else
   echo "Install openssl 3.2.0"
   sudo apt update || { echo 'update existing list of packages failed' ; exit 1; }
   sudo apt install build-essential checkinstall zlib1g-dev -y || { echo 'install build-essential failed' ; exit 1; }
   install_openssl
-fi
-
-
-# Log Rotation for Docker
-
-if [[ ${IsDockerInstalledAlready} = false ]]; then 
-sudo mv ./templates/daemon.json /etc/docker/
-#reboot vm to complete installation
-sudo reboot; 
 fi
