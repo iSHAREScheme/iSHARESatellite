@@ -6,7 +6,7 @@ networks:
 
 services:
  ishare_ui:
-    image: isharefoundation/ishare-satellite-ui:v3.0
+    image: isharefoundation/ishare-satellite-ui:v3.0.2
 
     container_name: ishare_ui
     ports:
