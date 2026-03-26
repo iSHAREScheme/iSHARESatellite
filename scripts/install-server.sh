@@ -299,7 +299,8 @@ usage() {
 Usage: bash scripts/install-server.sh [options]
 
 Mode behavior:
-  Interactive (default): prompts for required values and creates/updates ENV_FILE.
+  Interactive (default): prompts for required values, explains each one, and pre-fills common defaults.
+                        Creates/updates ENV_FILE.
   Non-interactive: requires an existing complete ENV_FILE.
 
 Options:
@@ -454,6 +455,24 @@ prompt_required_secret_with_example() {
   done
 }
 
+prompt_required_with_context() {
+  local label="$1"
+  local current_value="$2"
+  local example_value="$3"
+  local explanation="$4"
+  log_info "${label}: ${explanation}"
+  prompt_required_with_example "${label}" "${current_value}" "${example_value}"
+}
+
+prompt_required_secret_with_context() {
+  local label="$1"
+  local current_value="$2"
+  local example_value="$3"
+  local explanation="$4"
+  log_info "${label}: ${explanation}"
+  prompt_required_secret_with_example "${label}" "${current_value}" "${example_value}"
+}
+
 validate_env_format_with_report() {
   local stage="$1"
 
@@ -576,39 +595,57 @@ interactive_capture_env() {
   local smtp_user_example="noreply@example.com"
   local smtp_password_example="change-me"
   local display_name_example="iSHARE Satellite"
+  local channel_default
+  local anchor_peer_default
+  local anchor_peer_port_default
+  local chaincode_name_default
+  local chaincode_version_default
+  local chaincode_sequence_default
+  local chaincode_policy_default
+  local peer_admin_msp_default
+  local orderer_tls_ca_default
 
   log_info "Collecting server deployment inputs"
-  ORG_NAME="$(prompt_required_with_example "ORG_NAME" "${ORG_NAME:-}" "${org_example}")"
-  SUB_DOMAIN="$(prompt_required_with_example "SUB_DOMAIN" "${SUB_DOMAIN:-}" "${sub_domain_example}")"
-  ENVIRONMENT="$(prompt_required_with_example "ENVIRONMENT" "${ENVIRONMENT:-}" "${environment_example}")"
+  ORG_NAME="$(prompt_required_with_context "ORG_NAME" "${ORG_NAME:-}" "${org_example}" "Organization identifier used in peer/orderer identities and policy values.")"
+  SUB_DOMAIN="$(prompt_required_with_context "SUB_DOMAIN" "${SUB_DOMAIN:-}" "${sub_domain_example}" "Base DNS suffix for generated hostnames.")"
+  ENVIRONMENT="$(prompt_required_with_context "ENVIRONMENT" "${ENVIRONMENT:-}" "${environment_example}" "Environment folder namespace used in generated paths and artifacts.")"
   set_derived_defaults
 
   orderer_tls_ca_example="${REPO_ROOT}/ca-ishareord.pem"
   anchor_peer_example="peer0.${ORG_NAME}.${SUB_DOMAIN}"
   chaincode_policy_example="OR('${ORG_NAME}.member')"
   peer_admin_msp_example="${REPO_ROOT}/app/${ENVIRONMENT}/${ORG_NAME}/crypto/peerOrganizations/${ORG_NAME}.${SUB_DOMAIN}/users/Admin@${ORG_NAME}.${SUB_DOMAIN}/msp"
+  channel_default="${CHANNEL_NAME:-appchannel}"
+  anchor_peer_default="${ANCHOR_PEER_HOSTNAME:-peer0.${ORG_NAME}.${SUB_DOMAIN}}"
+  anchor_peer_port_default="${ANCHOR_PEER_PORT_NUMBER:-7051}"
+  chaincode_name_default="${CHAINCODE_NAME:-isharecode}"
+  chaincode_version_default="${CHAINCODE_VERSION:-v1}"
+  chaincode_sequence_default="${CHAINCODE_SEQUENCE:-1}"
+  chaincode_policy_default="${CHAINCODE_POLICY:-OR('${ORG_NAME}.member')}"
+  peer_admin_msp_default="${PEER_ADMIN_MSP_DIR:-${REPO_ROOT}/app/${ENVIRONMENT}/${ORG_NAME}/crypto/peerOrganizations/${ORG_NAME}.${SUB_DOMAIN}/users/Admin@${ORG_NAME}.${SUB_DOMAIN}/msp}"
+  orderer_tls_ca_default="${ORDERER_TLS_CA_CERT:-${REPO_ROOT}/ca-ishareord.pem}"
 
-  ORDERER_ADDRESS="$(prompt_required_with_example "ORDERER_ADDRESS" "${ORDERER_ADDRESS:-}" "${orderer_address_example}")"
-  ORDERER_TLS_CA_CERT="$(prompt_required_with_example "ORDERER_TLS_CA_CERT" "${ORDERER_TLS_CA_CERT:-}" "${orderer_tls_ca_example}")"
-  CHANNEL_NAME="$(prompt_required_with_example "CHANNEL_NAME" "${CHANNEL_NAME:-}" "${channel_example}")"
-  ANCHOR_PEER_HOSTNAME="$(prompt_required_with_example "ANCHOR_PEER_HOSTNAME" "${ANCHOR_PEER_HOSTNAME:-}" "${anchor_peer_example}")"
-  ANCHOR_PEER_PORT_NUMBER="$(prompt_required_with_example "ANCHOR_PEER_PORT_NUMBER" "${ANCHOR_PEER_PORT_NUMBER:-}" "7051")"
-  CHAINCODE_NAME="$(prompt_required_with_example "CHAINCODE_NAME" "${CHAINCODE_NAME:-}" "${chaincode_name_example}")"
-  CHAINCODE_VERSION="$(prompt_required_with_example "CHAINCODE_VERSION" "${CHAINCODE_VERSION:-}" "${chaincode_version_example}")"
-  CHAINCODE_SEQUENCE="$(prompt_required_with_example "CHAINCODE_SEQUENCE" "${CHAINCODE_SEQUENCE:-}" "${chaincode_sequence_example}")"
-  CHAINCODE_POLICY="$(prompt_required_with_example "CHAINCODE_POLICY" "${CHAINCODE_POLICY:-}" "${chaincode_policy_example}")"
-  PEER_ADMIN_MSP_DIR="$(prompt_required_with_example "PEER_ADMIN_MSP_DIR" "${PEER_ADMIN_MSP_DIR:-}" "${peer_admin_msp_example}")"
+  ORDERER_ADDRESS="$(prompt_required_with_context "ORDERER_ADDRESS" "${ORDERER_ADDRESS:-}" "${orderer_address_example}" "Remote orderer endpoint used by channel and chaincode lifecycle operations.")"
+  ORDERER_TLS_CA_CERT="$(prompt_required_with_context "ORDERER_TLS_CA_CERT" "${orderer_tls_ca_default}" "${orderer_tls_ca_example}" "CA certificate file used to trust the remote orderer TLS certificate.")"
+  CHANNEL_NAME="$(prompt_required_with_context "CHANNEL_NAME" "${channel_default}" "${channel_example}" "Fabric channel to join and use for ledger and chaincode operations.")"
+  ANCHOR_PEER_HOSTNAME="$(prompt_required_with_context "ANCHOR_PEER_HOSTNAME" "${anchor_peer_default}" "${anchor_peer_example}" "Peer hostname published as your org anchor peer on the channel.")"
+  ANCHOR_PEER_PORT_NUMBER="$(prompt_required_with_context "ANCHOR_PEER_PORT_NUMBER" "${anchor_peer_port_default}" "7051" "Anchor peer service port.")"
+  CHAINCODE_NAME="$(prompt_required_with_context "CHAINCODE_NAME" "${chaincode_name_default}" "${chaincode_name_example}" "Chaincode package name expected by the shared network.")"
+  CHAINCODE_VERSION="$(prompt_required_with_context "CHAINCODE_VERSION" "${chaincode_version_default}" "${chaincode_version_example}" "Chaincode version expected by the shared network.")"
+  CHAINCODE_SEQUENCE="$(prompt_required_with_context "CHAINCODE_SEQUENCE" "${chaincode_sequence_default}" "${chaincode_sequence_example}" "Chaincode sequence expected by the shared network.")"
+  CHAINCODE_POLICY="$(prompt_required_with_context "CHAINCODE_POLICY" "${chaincode_policy_default}" "${chaincode_policy_example}" "Endorsement policy used during chaincode approval.")"
+  PEER_ADMIN_MSP_DIR="$(prompt_required_with_context "PEER_ADMIN_MSP_DIR" "${peer_admin_msp_default}" "${peer_admin_msp_example}" "Admin MSP path used by peer CLI to sign channel and lifecycle operations.")"
 
-  PARTY_ID="$(prompt_required_with_example "PARTY_ID" "${PARTY_ID:-}" "${party_id_example}")"
-  PARTY_NAME="$(prompt_required_with_example "PARTY_NAME" "${PARTY_NAME:-}" "${party_name_example}")"
-  UIHostName="$(prompt_required_with_example "UIHostName" "${UIHostName:-}" "${ui_hostname_example}")"
-  MiddlewareHostName="$(prompt_required_with_example "MiddlewareHostName" "${MiddlewareHostName:-}" "${mw_hostname_example}")"
-  KeycloakHostName="$(prompt_required_with_example "KeycloakHostName" "${KeycloakHostName:-}" "${kc_hostname_example}")"
-  SMTP_PORT="$(prompt_required_with_example "SMTP_PORT" "${SMTP_PORT:-}" "${smtp_port_example}")"
-  SMTP_HOST="$(prompt_required_with_example "SMTP_HOST" "${SMTP_HOST:-}" "${smtp_host_example}")"
-  SMTP_USER="$(prompt_required_with_example "SMTP_USER" "${SMTP_USER:-}" "${smtp_user_example}")"
-  SMTP_PASSWORD="$(prompt_required_secret_with_example "SMTP_PASSWORD" "${SMTP_PASSWORD:-}" "${smtp_password_example}")"
-  DISPALY_NAME="$(prompt_required_with_example "DISPALY_NAME" "${DISPALY_NAME:-}" "${display_name_example}")"
+  PARTY_ID="$(prompt_required_with_context "PARTY_ID" "${PARTY_ID:-}" "${party_id_example}" "iSHARE party identifier used by app middleware.")"
+  PARTY_NAME="$(prompt_required_with_context "PARTY_NAME" "${PARTY_NAME:-}" "${party_name_example}" "Display/legal organization name used by app middleware.")"
+  UIHostName="$(prompt_required_with_context "UIHostName" "${UIHostName:-}" "${ui_hostname_example}" "Public hostname for the UI entrypoint.")"
+  MiddlewareHostName="$(prompt_required_with_context "MiddlewareHostName" "${MiddlewareHostName:-}" "${mw_hostname_example}" "Public hostname for middleware APIs.")"
+  KeycloakHostName="$(prompt_required_with_context "KeycloakHostName" "${KeycloakHostName:-}" "${kc_hostname_example}" "Public hostname for Keycloak identity provider.")"
+  SMTP_PORT="$(prompt_required_with_context "SMTP_PORT" "${SMTP_PORT:-}" "${smtp_port_example}" "SMTP port used for notification emails.")"
+  SMTP_HOST="$(prompt_required_with_context "SMTP_HOST" "${SMTP_HOST:-}" "${smtp_host_example}" "SMTP server hostname for notification emails.")"
+  SMTP_USER="$(prompt_required_with_context "SMTP_USER" "${SMTP_USER:-}" "${smtp_user_example}" "SMTP username used by middleware mailer.")"
+  SMTP_PASSWORD="$(prompt_required_secret_with_context "SMTP_PASSWORD" "${SMTP_PASSWORD:-}" "${smtp_password_example}" "SMTP password used by middleware mailer.")"
+  DISPALY_NAME="$(prompt_required_with_context "DISPALY_NAME" "${DISPALY_NAME:-}" "${display_name_example}" "Email display name shown in outbound notifications.")"
 
   validate_required_env
   write_env_file
@@ -686,9 +723,9 @@ stage_env() {
     set_derived_defaults
   else
     if [[ -f "${EXAMPLE_ENV_FILE}" ]]; then
-      report_warn "${stage}" "Env source" "No env file found; interactive prompts will show examples from ${EXAMPLE_ENV_FILE} but values are not auto-filled"
+      report_warn "${stage}" "Env source" "No env file found; interactive prompts will show examples from ${EXAMPLE_ENV_FILE} and prefill common participant-registry defaults"
     else
-      report_warn "${stage}" "Env source" "No env file found; interactive prompts will require manual input"
+      report_warn "${stage}" "Env source" "No env file found; interactive prompts will require manual input except built-in defaults for common participant-registry values"
     fi
     set_defaults
     set_derived_defaults

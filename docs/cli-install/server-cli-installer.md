@@ -6,8 +6,9 @@ This guide explains how to run the server installer workflow through `scripts/in
 
 - Interactive mode (`bash scripts/install-server.sh`):
   - prompts for required values,
+  - pre-fills recommended defaults for common participant-registry values,
   - creates/updates `.env.server` (or the `--env-file` target),
-  - uses examples in prompts as guidance only.
+  - shows a short explanation for each requested value.
 
 - Non-interactive mode (`--non-interactive`):
   - does not prompt,
@@ -46,11 +47,11 @@ cp .env.server.example .env.server
 
 4. Edit `.env.server` with your real values.
 
-The installer uses strict input behavior:
+The installer prompts include:
 
-- required deployment fields are not auto-filled from `.env.server.example`,
-- interactive prompts show example values, but you must provide real values,
-- non-interactive mode requires a complete `.env.server`.
+- a short explanation for each value (what it is and why it is needed),
+- example values,
+- recommended defaults for common network values you can accept with Enter.
 
 ## Interactive Run
 
