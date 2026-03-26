@@ -22,7 +22,7 @@ if [[ ${UIHostName} = " " || ${UIHostName} = "" ]]; then
    exit 1
 fi
 
-if [[ ${MiddliewareHostName} = " " || ${MiddlewareHostName} = "" ]]; then 
+if [[ ${MiddlewareHostName} = " " || ${MiddlewareHostName} = "" ]]; then 
    errorln " MiddlewareHostName is not specified "
    exit 1
 fi

@@ -4,6 +4,29 @@
 . ./global.sh
 . ./fabric-var.sh
 
+function resolveChaincodePackageID(){
+if [[ -n "${CC_PACKAGE_ID:-}" ]]; then
+   echo "${CC_PACKAGE_ID}"
+   return
+fi
+
+local label="${CHAINCODE_LABEL:-isharecc_1.0}"
+local package_id
+package_id=$(
+  peer lifecycle chaincode queryinstalled \
+    | grep "Label: ${label}$" \
+    | sed -E 's/^Package ID: ([^,]+),.*$/\1/' \
+    | head -n 1
+)
+
+if [[ -z "${package_id}" ]]; then
+   echo "Unable to resolve chaincode package ID for label ${label}. Set CC_PACKAGE_ID or CHAINCODE_LABEL in your ENV_FILE." >&2
+   return 1
+fi
+
+echo "${package_id}"
+}
+
 function approveAndCommitReadinessChaincode (){
 
 export CORE_PEER_TLS_ENABLED=true
@@ -71,8 +94,10 @@ if [[ ${CC_SEQUENCE} = " " || ${CC_SEQUENCE} = "" ]]; then
    exit 1
 fi
 
-
-CC_PACKAGE_ID=isharecc_1.0:4094fd1d66b8d3878f8e94ccc4b8a926485003a867f41aebba477459ebcfaad5
+if ! CC_PACKAGE_ID=$(resolveChaincodePackageID); then
+   exit 1
+fi
+infoln "Using chaincode package ID ${CC_PACKAGE_ID}"
 infoln "Performing Chaincode Approve "
 set -x
 peer lifecycle chaincode approveformyorg -o $ORDERER_ENDPOINT --tls --cafile $ORDERER_TLS_CA_FILE --channelID $CH_NAME --name $CC_NAME --version ${CHAINCODE_VERSION} --package-id $CC_PACKAGE_ID --sequence $CC_SEQUENCE --signature-policy "${CC_POLICY}" --waitForEvent
