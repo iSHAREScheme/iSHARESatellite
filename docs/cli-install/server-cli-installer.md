@@ -7,6 +7,7 @@ This guide explains how to run the server installer workflow through `scripts/in
 - Interactive mode (`bash scripts/install-server.sh`):
   - prompts for required values,
   - pre-fills recommended defaults for common participant-registry values,
+  - lets you accept defaults by pressing Enter,
   - creates/updates `.env.server` (or the `--env-file` target),
   - shows a short explanation for each requested value.
 

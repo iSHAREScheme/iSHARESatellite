@@ -56,7 +56,7 @@ REQUIRED_ENV_VARS=(
   SMTP_HOST
   SMTP_USER
   SMTP_PASSWORD
-  DISPALY_NAME
+  DISPLAY_NAME
 )
 
 ALL_ENV_VARS=(
@@ -89,7 +89,7 @@ ALL_ENV_VARS=(
   SMTP_HOST
   SMTP_USER
   SMTP_PASSWORD
-  DISPALY_NAME
+  DISPLAY_NAME
 )
 
 init_report() {
@@ -460,7 +460,7 @@ prompt_required_with_context() {
   local current_value="$2"
   local example_value="$3"
   local explanation="$4"
-  log_info "${label}: ${explanation}"
+  log_info "${label}: ${explanation}" >&2
   prompt_required_with_example "${label}" "${current_value}" "${example_value}"
 }
 
@@ -469,7 +469,7 @@ prompt_required_secret_with_context() {
   local current_value="$2"
   local example_value="$3"
   local explanation="$4"
-  log_info "${label}: ${explanation}"
+  log_info "${label}: ${explanation}" >&2
   prompt_required_secret_with_example "${label}" "${current_value}" "${example_value}"
 }
 
@@ -606,6 +606,7 @@ interactive_capture_env() {
   local orderer_tls_ca_default
 
   log_info "Collecting server deployment inputs"
+  log_info "For prompts with a default value, press Enter to accept it."
   ORG_NAME="$(prompt_required_with_context "ORG_NAME" "${ORG_NAME:-}" "${org_example}" "Organization identifier used in peer/orderer identities and policy values.")"
   SUB_DOMAIN="$(prompt_required_with_context "SUB_DOMAIN" "${SUB_DOMAIN:-}" "${sub_domain_example}" "Base DNS suffix for generated hostnames.")"
   ENVIRONMENT="$(prompt_required_with_context "ENVIRONMENT" "${ENVIRONMENT:-}" "${environment_example}" "Environment folder namespace used in generated paths and artifacts.")"
@@ -645,7 +646,7 @@ interactive_capture_env() {
   SMTP_HOST="$(prompt_required_with_context "SMTP_HOST" "${SMTP_HOST:-}" "${smtp_host_example}" "SMTP server hostname for notification emails.")"
   SMTP_USER="$(prompt_required_with_context "SMTP_USER" "${SMTP_USER:-}" "${smtp_user_example}" "SMTP username used by middleware mailer.")"
   SMTP_PASSWORD="$(prompt_required_secret_with_context "SMTP_PASSWORD" "${SMTP_PASSWORD:-}" "${smtp_password_example}" "SMTP password used by middleware mailer.")"
-  DISPALY_NAME="$(prompt_required_with_context "DISPALY_NAME" "${DISPALY_NAME:-}" "${display_name_example}" "Email display name shown in outbound notifications.")"
+  DISPLAY_NAME="$(prompt_required_with_context "DISPLAY_NAME" "${DISPLAY_NAME:-}" "${display_name_example}" "Email display name shown in outbound notifications.")"
 
   validate_required_env
   write_env_file

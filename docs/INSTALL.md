@@ -465,7 +465,7 @@ export SMTP_PORT=<smtp-port>
 export SMTP_HOST=<smtp-host>
 export SMTP_USER=<my-email-id>
 export SMTP_PASSWORD=<my-email-passowrd>
-export DISPALY_NAME=<email-id-display-name>
+export DISPLAY_NAME=<email-id-display-name>
 ```
 
 ### Configure HTTPS (SSL/TLS)

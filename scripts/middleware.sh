@@ -14,12 +14,13 @@ function ParseHLFMiddlewareConfig(){
 function ParseAPPMiddlewareConfig(){
     local PartyId=${PARTY_ID}
     local PartyName=${PARTY_NAME}
+    local DisplayName="${DISPLAY_NAME}"
     set -e
     cp ../templates/app-mw-config-template.yaml ../middleware/app-mw-config.yaml
     sed -i -e "s/<orgDomain>/${orgDomain}/g" -e "s/<orgName>/${orgName}/g" -e "s/<CHANNEL_NAME>/${CHANNEL_NAME}/g" -e "s/<CHAINCODE_NAME>/${CHAINCODE_NAME}/g" \
 -e "s/<KeycloakHostName>/${KeycloakHostName}/g" -e "s/<UIHostName>/${UIHostName}/g" -e "s/<PartyId>/${PartyId}/g" -e "s/<PartyName>/${PartyName}/g" ../middleware/app-mw-config.yaml
     sed -i -e "s/<SMTP_PASSWORD>/${SMTP_PASSWORD}/g" -e "s/<SMTP_PORT>/${SMTP_PORT}/g" -e "s/<SMTP_HOST>/${SMTP_HOST}/g" -e "s/<SMTP_USER>/${SMTP_USER}/g" \
--e "s/<DISPALY_NAME>/${DISPALY_NAME}/g" ../middleware/app-mw-config.yaml
+-e "s/<DISPLAY_NAME>/${DisplayName}/g" ../middleware/app-mw-config.yaml
    if [[ "$ENVIRONMENT" == "uat" || "$ENVIRONMENT" == "test" || "$ENVIRONMENT" == "prod" ]]; then
         if [[ "$ENVIRONMENT" == "test" ]]; then
             ENVIRONMENT="uat"

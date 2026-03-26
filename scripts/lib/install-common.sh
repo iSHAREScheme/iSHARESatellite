@@ -46,7 +46,7 @@ prompt_value() {
   local default_value="$2"
   local input
   if [[ -n "$default_value" ]]; then
-    read -r -p "${prompt} [${default_value}]: " input
+    read -r -p "${prompt} [default: ${default_value}] (press Enter to accept): " input
     if [[ -z "$input" ]]; then
       printf "%s" "$default_value"
       return
@@ -54,7 +54,7 @@ prompt_value() {
     printf "%s" "$input"
     return
   fi
-  read -r -p "${prompt}: " input
+  read -r -p "${prompt} (required): " input
   printf "%s" "$input"
 }
 
