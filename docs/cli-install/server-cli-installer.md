@@ -14,7 +14,8 @@ This guide explains how to run the server installer workflow through `scripts/in
 - Non-interactive mode (`--non-interactive`):
   - does not prompt,
   - requires a pre-existing complete env file,
-  - fails fast if required values are missing.
+  - fails fast if required values are missing,
+  - fails with explicit external-requirement messages when manual onboarding steps are pending.
 
 ## What It Does
 
@@ -27,6 +28,36 @@ The installer orchestrates the existing server deployment scripts in stages:
 5. `join-network`
 6. `app-deploy`
 
+## External Requirements By Stage
+
+Some steps depend on actions outside the VM. This is the expected order:
+
+### Before `org-artifact`
+
+- Ensure peer DNS records and firewall/NAT exposure are ready for `peer0.<ORG_NAME>.<SUB_DOMAIN>` and `peer1.<ORG_NAME>.<SUB_DOMAIN>`.
+- Ensure peer ports `7051` and `8051` are reachable.
+
+### After `org-artifact`
+
+- Send `hlf/<ENVIRONMENT>/<ORG_NAME>/<ORG_NAME>.json` securely to iSHARE Foundation.
+- This organization definition is used to admit your org to the shared channel.
+- If admission is not completed yet, join operations can fail with `FORBIDDEN`.
+
+### Before `join-network`
+
+- Receive and place required onboarding artifacts: `<repo>/ca-ishareord.pem`, `<repo>/middleware/genesis.block`, `<repo>/middleware/isharechannel.tx`.
+- Confirm onboarding values from Foundation are set correctly in `.env.server`: `ORDERER_ADDRESS`, `CHANNEL_NAME`, `CHAINCODE_*`, `PARTY_ID`, `PARTY_NAME`.
+
+### Before `app-deploy`
+
+- Provide `ssl/tls.crt` and `ssl/tls.key`.
+- The certificate must cover all configured public hostnames: `UIHostName`, `MiddlewareHostName`, and `KeycloakHostName`.
+- Valid options are one SAN certificate listing all required hostnames, or one wildcard certificate for the shared zone (for example `*.example.com`).
+- Provide `jwt-rsa/jwtRSA256-public.pem` and `jwt-rsa/jwtRSA256-private.pem`.
+- In production, this should come from your qualified eIDAS seal signing material.
+- App DNS records should resolve for `UIHostName`, `MiddlewareHostName`, and `KeycloakHostName`.
+- SMTP values should be valid: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`.
+
 It also writes a stage-by-stage validation report under:
 
 - `.local-state/server-install/reports/report-<timestamp>.txt`
@@ -34,6 +65,7 @@ It also writes a stage-by-stage validation report under:
 And persists installer run state under:
 
 - `.local-state/server-install/state.env`
+- `.local-state/server-install/external-gates.env`
 - `.local-state/server-install/last-error.log` (only when a run fails)
 
 ## Before You Start
@@ -78,6 +110,8 @@ If a stage already completed and checkpointed:
 bash scripts/install-server.sh --resume
 ```
 
+If the installer pauses in `WAITING_EXTERNAL` state, resolve the external requirement and rerun the same resume command.
+
 ## Run One Stage
 
 Useful for targeted retries:
@@ -108,6 +142,14 @@ bash scripts/install-server.sh --reset-state --resume
 bash scripts/install-server.sh --list-stages
 ```
 
+## Show External Gate Status
+
+Print persisted external gate statuses without running installer stages:
+
+```bash
+bash scripts/install-server.sh --show-external-gates
+```
+
 ## Validation Report Contents
 
 Each report includes:
@@ -120,6 +162,7 @@ Each report includes:
 Typical checks include:
 
 - command availability and Docker access,
+- `docker-compose` is Compose v2 (v1 is rejected),
 - required env variables,
 - stricter format checks for hostnames, host:port values, integer ports/sequences, and path syntax,
 - required files (TLS/JWT/network artifacts),

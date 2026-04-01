@@ -12,6 +12,7 @@ STATE_DIR="${REPO_ROOT}/.local-state/server-install"
 REPORT_DIR="${STATE_DIR}/reports"
 STATE_FILE="${STATE_DIR}/state.env"
 LAST_ERROR_FILE="${STATE_DIR}/last-error.log"
+EXTERNAL_STATE_FILE="${STATE_DIR}/external-gates.env"
 EXAMPLE_ENV_FILE="${REPO_ROOT}/.env.server.example"
 ENV_FILE="${REPO_ROOT}/.env.server"
 NON_INTERACTIVE=false
@@ -20,9 +21,50 @@ TARGET_STAGE=""
 FORCE_STAGE=""
 RESET_STATE=false
 TARGET_STAGE_RAN=false
+SHOW_EXTERNAL_GATES=false
 REPORT_FILE=""
 RUN_STARTED_AT="$(date +"%Y-%m-%dT%H:%M:%S%z")"
 CURRENT_STAGE="bootstrap"
+WAIT_EXIT_CODE=88
+FINAL_STATUS_OVERRIDE=""
+FINAL_STATUS_MESSAGE=""
+PAUSE_AFTER_STAGE=false
+PAUSE_GATE_ID=""
+PAUSE_REASON=""
+LAST_SCRIPT_NAME=""
+LAST_SCRIPT_OUTPUT=""
+
+EXTERNAL_GATE_KEYS=(
+  EXT_ORG_JSON
+  EXT_FOUNDATION_PACKAGE
+  EXT_CHANNEL_ADMISSION
+  EXT_TLS_MATERIAL
+  EXT_JWT_MATERIAL
+  EXT_APP_DNS
+  EXT_SMTP
+)
+
+EXT_ORG_JSON_STATUS="pending"
+EXT_ORG_JSON_NOTE=""
+EXT_ORG_JSON_UPDATED_AT=""
+EXT_FOUNDATION_PACKAGE_STATUS="pending"
+EXT_FOUNDATION_PACKAGE_NOTE=""
+EXT_FOUNDATION_PACKAGE_UPDATED_AT=""
+EXT_CHANNEL_ADMISSION_STATUS="pending"
+EXT_CHANNEL_ADMISSION_NOTE=""
+EXT_CHANNEL_ADMISSION_UPDATED_AT=""
+EXT_TLS_MATERIAL_STATUS="pending"
+EXT_TLS_MATERIAL_NOTE=""
+EXT_TLS_MATERIAL_UPDATED_AT=""
+EXT_JWT_MATERIAL_STATUS="pending"
+EXT_JWT_MATERIAL_NOTE=""
+EXT_JWT_MATERIAL_UPDATED_AT=""
+EXT_APP_DNS_STATUS="pending"
+EXT_APP_DNS_NOTE=""
+EXT_APP_DNS_UPDATED_AT=""
+EXT_SMTP_STATUS="pending"
+EXT_SMTP_NOTE=""
+EXT_SMTP_UPDATED_AT=""
 
 STAGE_KEYS=(
   "preflight"
@@ -186,9 +228,21 @@ report_assert_compose_running() {
 run_script_with_report() {
   local stage="$1"
   local script_name="$2"
-  if run_repo_script "${REPO_ROOT}" "${ENV_FILE}" "${script_name}"; then
+  local output
+
+  LAST_SCRIPT_NAME="${script_name}"
+  LAST_SCRIPT_OUTPUT=""
+  if output="$(run_repo_script "${REPO_ROOT}" "${ENV_FILE}" "${script_name}" 2>&1)"; then
+    LAST_SCRIPT_OUTPUT="${output}"
+    if [[ -n "${output}" ]]; then
+      printf "%s\n" "${output}"
+    fi
     report_pass "${stage}" "scripts/${script_name}" "completed"
   else
+    LAST_SCRIPT_OUTPUT="${output}"
+    if [[ -n "${output}" ]]; then
+      printf "%s\n" "${output}" >&2
+    fi
     report_fail "${stage}" "scripts/${script_name}" "failed"
     return 1
   fi
@@ -210,7 +264,205 @@ write_state_file() {
     printf "export INSTALL_TARGET_STAGE=%s\n" "$(shell_quote "${TARGET_STAGE}")"
     printf "export INSTALL_FORCE_STAGE=%s\n" "$(shell_quote "${FORCE_STAGE}")"
     printf "export INSTALL_REPORT_FILE=%s\n" "$(shell_quote "${REPORT_FILE}")"
+    printf "export INSTALL_EXTERNAL_STATE_FILE=%s\n" "$(shell_quote "${EXTERNAL_STATE_FILE}")"
   } >"${STATE_FILE}"
+}
+
+resume_command() {
+  local cmd="bash scripts/install-server.sh --resume"
+  if [[ "${ENV_FILE}" != "${REPO_ROOT}/.env.server" ]]; then
+    cmd="${cmd} --env-file ${ENV_FILE}"
+  fi
+  if [[ "${NON_INTERACTIVE}" == "true" ]]; then
+    cmd="${cmd} --non-interactive"
+  fi
+  printf "%s" "${cmd}"
+}
+
+resume_stage_command() {
+  local stage="$1"
+  printf "%s --force-stage %s" "$(resume_command)" "${stage}"
+}
+
+persist_external_state() {
+  local gate
+  local status_var
+  local note_var
+  local updated_var
+
+  mkdir -p "${STATE_DIR}"
+  {
+    printf "# External gate state for install-server.sh\n"
+    printf "# Updated on %s\n\n" "$(date +"%Y-%m-%d %H:%M:%S")"
+    for gate in "${EXTERNAL_GATE_KEYS[@]}"; do
+      status_var="${gate}_STATUS"
+      note_var="${gate}_NOTE"
+      updated_var="${gate}_UPDATED_AT"
+      printf "export %s=%s\n" "${status_var}" "$(shell_quote "${!status_var:-pending}")"
+      printf "export %s=%s\n" "${note_var}" "$(shell_quote "${!note_var:-}")"
+      printf "export %s=%s\n" "${updated_var}" "$(shell_quote "${!updated_var:-}")"
+    done
+  } >"${EXTERNAL_STATE_FILE}"
+}
+
+load_external_state() {
+  if [[ -f "${EXTERNAL_STATE_FILE}" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "${EXTERNAL_STATE_FILE}"
+    set +a
+  fi
+}
+
+init_external_state() {
+  if [[ ! -f "${EXTERNAL_STATE_FILE}" ]]; then
+    persist_external_state
+    return
+  fi
+  load_external_state
+}
+
+external_gate_title() {
+  local gate="$1"
+  case "${gate}" in
+    EXT_ORG_JSON) printf "Org JSON Handoff" ;;
+    EXT_FOUNDATION_PACKAGE) printf "Foundation Package" ;;
+    EXT_CHANNEL_ADMISSION) printf "Channel Admission" ;;
+    EXT_TLS_MATERIAL) printf "TLS Material" ;;
+    EXT_JWT_MATERIAL) printf "JWT Material" ;;
+    EXT_APP_DNS) printf "App DNS" ;;
+    EXT_SMTP) printf "SMTP" ;;
+    *) printf "%s" "${gate}" ;;
+  esac
+}
+
+print_external_gates() {
+  local gate
+  local status_var
+  local note_var
+  local updated_var
+  local status
+  local note
+  local updated_at
+
+  printf "External Gate Status\n"
+  printf "State file: %s\n" "${EXTERNAL_STATE_FILE}"
+  printf "\n"
+  printf "%-24s %-18s %-25s %s\n" "Gate" "Status" "Updated At" "Note"
+  printf "%-24s %-18s %-25s %s\n" "----" "------" "----------" "----"
+
+  for gate in "${EXTERNAL_GATE_KEYS[@]}"; do
+    status_var="${gate}_STATUS"
+    note_var="${gate}_NOTE"
+    updated_var="${gate}_UPDATED_AT"
+    status="${!status_var:-pending}"
+    note="${!note_var:-}"
+    updated_at="${!updated_var:-}"
+    if [[ -z "${updated_at}" ]]; then
+      updated_at="-"
+    fi
+    if [[ -z "${note}" ]]; then
+      note="-"
+    fi
+    printf "%-24s %-18s %-25s %s\n" "$(external_gate_title "${gate}")" "${status}" "${updated_at}" "${note}"
+  done
+}
+
+set_external_gate() {
+  local gate="$1"
+  local status="$2"
+  local note="${3:-}"
+  local status_var="${gate}_STATUS"
+  local note_var="${gate}_NOTE"
+  local updated_var="${gate}_UPDATED_AT"
+
+  printf -v "${status_var}" "%s" "${status}"
+  printf -v "${note_var}" "%s" "${note}"
+  printf -v "${updated_var}" "%s" "$(date +"%Y-%m-%dT%H:%M:%S%z")"
+  persist_external_state
+}
+
+get_external_gate_status() {
+  local gate="$1"
+  local status_var="${gate}_STATUS"
+  printf "%s" "${!status_var:-pending}"
+}
+
+request_external_pause_after_stage() {
+  local gate_id="$1"
+  local reason="$2"
+  PAUSE_AFTER_STAGE=true
+  PAUSE_GATE_ID="${gate_id}"
+  PAUSE_REASON="${reason}"
+}
+
+wait_for_external_and_return() {
+  local gate_id="$1"
+  local reason="$2"
+  FINAL_STATUS_OVERRIDE="WAITING_EXTERNAL"
+  FINAL_STATUS_MESSAGE="${reason}"
+  write_state_file "WAITING_EXTERNAL" "${reason}"
+  log_warn "External gate ${gate_id} is waiting: ${reason}"
+  log_info "Resume command: $(resume_command)"
+  return "${WAIT_EXIT_CODE}"
+}
+
+require_external_file_or_die() {
+  local stage="$1"
+  local gate="$2"
+  local file_path="$3"
+  local label="$4"
+  local why="$5"
+  local next_action="$6"
+
+  if [[ -f "${file_path}" ]]; then
+    report_pass "${stage}" "${label}" "${file_path}"
+    return
+  fi
+
+  set_external_gate "${gate}" "blocked" "Missing ${file_path}"
+  report_fail "${stage}" "${label}" "Missing file: ${file_path}"
+  die "External requirement missing (${label}): ${file_path}. Why: ${why}. Next: ${next_action}. Rerun: $(resume_stage_command "${stage}")"
+}
+
+report_dns_resolution_warning() {
+  local stage="$1"
+  local host="$2"
+  local label="$3"
+  if getent hosts "${host}" >/dev/null 2>&1; then
+    report_pass "${stage}" "${label}" "Resolves: ${host}"
+  else
+    report_warn "${stage}" "${label}" "Cannot resolve ${host} yet"
+  fi
+}
+
+report_smtp_connectivity_warning() {
+  local stage="$1"
+  local host="$2"
+  local port="$3"
+  if command -v nc >/dev/null 2>&1; then
+    if nc -z -w 3 "${host}" "${port}" >/dev/null 2>&1; then
+      report_pass "${stage}" "SMTP connectivity" "${host}:${port} reachable"
+    else
+      report_warn "${stage}" "SMTP connectivity" "Cannot connect to ${host}:${port} (continuing as warning)"
+    fi
+  else
+    report_warn "${stage}" "SMTP connectivity" "nc not available; skipped connectivity probe for ${host}:${port}"
+  fi
+}
+
+handle_join_network_script_failure() {
+  local stage="$1"
+  local script_name="$2"
+  local output="${LAST_SCRIPT_OUTPUT}"
+
+  if printf "%s" "${output}" | grep -Eq "FORBIDDEN|can't read the block"; then
+    set_external_gate "EXT_CHANNEL_ADMISSION" "waiting_external" "Orderer denied channel block access (likely org not admitted yet)"
+    report_fail "${stage}" "External gate EXT-04 channel admission" "Orderer denied channel access while running ${script_name}"
+    die "Join failed with FORBIDDEN while running ${script_name}. Your org is likely not yet admitted to channel '${CHANNEL_NAME}'. Ask Foundation to confirm channel admission, then rerun: $(resume_stage_command "${stage}")"
+  fi
+
+  die "Stage ${stage} failed while running scripts/${script_name}. Review the output above and rerun: $(resume_stage_command "${stage}")"
 }
 
 write_last_error_file() {
@@ -310,6 +562,7 @@ Options:
   --stage <name>          Run only one stage
   --force-stage <name>    Re-run a stage even if checkpoint exists
   --reset-state           Clear checkpoints before execution
+  --show-external-gates   Print external gate statuses and exit
   --list-stages           Print stage names and exit
   -h, --help              Show this help
 
@@ -357,6 +610,10 @@ parse_args() {
         ;;
       --reset-state)
         RESET_STATE=true
+        shift
+        ;;
+      --show-external-gates)
+        SHOW_EXTERNAL_GATES=true
         shift
         ;;
       --list-stages)
@@ -415,6 +672,30 @@ validate_required_env() {
     fi
   done
   validate_org_name
+}
+
+extract_semver() {
+  local raw="$1"
+  printf "%s\n" "${raw}" | sed -nE 's/.*v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -n 1
+}
+
+normalize_version() {
+  local raw="$1"
+  local major minor patch
+
+  if [[ ! "${raw}" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]; then
+    printf ""
+    return
+  fi
+
+  IFS='.' read -r major minor patch <<<"${raw}"
+  printf "%s.%s.%s" "${major:-0}" "${minor:-0}" "${patch:-0}"
+}
+
+version_lt() {
+  local left="$1"
+  local right="$2"
+  [[ "$(printf "%s\n%s\n" "${left}" "${right}" | sort -V | head -n 1)" == "${left}" && "${left}" != "${right}" ]]
 }
 
 prompt_required_with_example() {
@@ -657,6 +938,11 @@ stage_preflight() {
   local stage="preflight"
   local missing=()
   local cmd
+  local compose_version_raw
+  local compose_version
+  local compose_major
+  local server_min_api
+  local requested_api
 
   if is_debian_like; then
     report_pass "${stage}" "OS check" "Debian-like distribution detected"
@@ -709,6 +995,33 @@ stage_preflight() {
     die "Docker daemon is not reachable for current user."
   fi
   report_pass "${stage}" "Docker daemon access" "docker info succeeded"
+
+  compose_version_raw="$(docker-compose version 2>&1 | head -n 1)"
+  compose_version="$(extract_semver "${compose_version_raw}")"
+  if [[ -z "${compose_version}" ]]; then
+    report_fail "${stage}" "docker-compose version" "Unable to parse version from: ${compose_version_raw}"
+    die "Unable to determine docker-compose version. Install Docker Compose v2."
+  fi
+  compose_major="${compose_version%%.*}"
+  if [[ "${compose_major}" -lt 2 ]]; then
+    report_fail "${stage}" "docker-compose version" "Detected v${compose_version}; v2+ required"
+    die "Docker Compose v2 is required. Install docker compose plugin and expose docker-compose command."
+  fi
+  report_pass "${stage}" "docker-compose version" "v${compose_version}"
+
+  if [[ -n "${DOCKER_API_VERSION:-}" ]]; then
+    server_min_api="$(docker version --format '{{.Server.MinAPIVersion}}' 2>/dev/null || true)"
+    requested_api="$(normalize_version "${DOCKER_API_VERSION}")"
+    if [[ -n "${server_min_api}" && -n "${requested_api}" ]]; then
+      if version_lt "${requested_api}" "$(normalize_version "${server_min_api}")"; then
+        report_fail "${stage}" "DOCKER_API_VERSION" "Requested ${DOCKER_API_VERSION}, server minimum ${server_min_api}"
+        die "DOCKER_API_VERSION is lower than the Docker daemon minimum API. Unset DOCKER_API_VERSION or use a newer value."
+      fi
+      report_pass "${stage}" "DOCKER_API_VERSION" "Requested ${DOCKER_API_VERSION}, server minimum ${server_min_api}"
+    else
+      report_warn "${stage}" "DOCKER_API_VERSION" "Set to '${DOCKER_API_VERSION}', unable to validate against server minimum API"
+    fi
+  fi
 }
 
 stage_env() {
@@ -794,12 +1107,24 @@ stage_fabric_base() {
 stage_org_artifact() {
   local stage="org-artifact"
   local org_definition_file
+  local gate_note
 
   load_env_file
   run_script_with_report "${stage}" "orgDefinition.sh"
   org_definition_file="${REPO_ROOT}/hlf/${ENVIRONMENT}/${ORG_NAME}/${ORG_NAME}.json"
   report_assert_nonempty_file "${stage}" "${org_definition_file}" "Org definition artifact"
   log_info "Org definition should now be available in hlf/<ENVIRONMENT>/<ORG_NAME>/<ORG_NAME>.json"
+
+  gate_note="Send ${org_definition_file} securely to iSHARE Foundation for channel onboarding."
+  set_external_gate "EXT_ORG_JSON" "waiting_external" "${gate_note}"
+  report_warn "${stage}" "External gate EXT-02 org JSON handoff" "${gate_note}"
+
+  if [[ "${NON_INTERACTIVE}" == "true" ]]; then
+    report_fail "${stage}" "External gate EXT-02 org JSON handoff" "Pending external action in non-interactive mode"
+    die "External requirement pending: send ${org_definition_file} to iSHARE Foundation, then rerun: $(resume_command)"
+  fi
+
+  request_external_pause_after_stage "EXT-02" "${gate_note}"
 }
 
 stage_join_network() {
@@ -809,15 +1134,62 @@ stage_join_network() {
   local channel_tx
   local channel_block
   local anchor_update
+  local org_definition_file
+  local org_json_status
+  local foundation_note
 
   load_env_file
   orderer_ca="$(resolve_path "${REPO_ROOT}" "${ORDERER_TLS_CA_CERT}")"
   genesis_block="${REPO_ROOT}/middleware/genesis.block"
   channel_tx="${REPO_ROOT}/middleware/isharechannel.tx"
+  org_definition_file="${REPO_ROOT}/hlf/${ENVIRONMENT}/${ORG_NAME}/${ORG_NAME}.json"
 
-  report_assert_file "${stage}" "${orderer_ca}" "ORDERER_TLS_CA_CERT file"
-  report_assert_file "${stage}" "${genesis_block}" "middleware/genesis.block"
-  report_assert_file "${stage}" "${channel_tx}" "middleware/isharechannel.tx"
+  org_json_status="$(get_external_gate_status "EXT_ORG_JSON")"
+  if [[ "${org_json_status}" != "validated" ]]; then
+    if [[ "${NON_INTERACTIVE}" == "true" ]]; then
+      set_external_gate "EXT_ORG_JSON" "waiting_external" "Pending confirmation that ${org_definition_file} was sent"
+      report_fail "${stage}" "External gate EXT-02 org JSON handoff" "Pending in non-interactive mode"
+      die "External requirement pending: confirm ${org_definition_file} was sent to iSHARE Foundation, then rerun: $(resume_stage_command "${stage}")"
+    fi
+
+    report_warn "${stage}" "External gate EXT-02 org JSON handoff" "Confirm org definition was sent: ${org_definition_file}"
+    if confirm "Have you securely sent ${org_definition_file} to iSHARE Foundation?"; then
+      set_external_gate "EXT_ORG_JSON" "validated" "Operator confirmed org JSON handoff"
+      report_pass "${stage}" "External gate EXT-02 org JSON handoff" "Confirmed by operator"
+    else
+      set_external_gate "EXT_ORG_JSON" "waiting_external" "Awaiting org JSON handoff"
+      wait_for_external_and_return "EXT-02" "Send ${org_definition_file} to iSHARE Foundation."
+      return "${WAIT_EXIT_CODE}"
+    fi
+  fi
+
+  require_external_file_or_die \
+    "${stage}" \
+    "EXT_FOUNDATION_PACKAGE" \
+    "${orderer_ca}" \
+    "ORDERER_TLS_CA_CERT file" \
+    "Join operations require the ordering service TLS CA certificate." \
+    "Copy ca-ishareord.pem and set ORDERER_TLS_CA_CERT in ${ENV_FILE}"
+
+  require_external_file_or_die \
+    "${stage}" \
+    "EXT_FOUNDATION_PACKAGE" \
+    "${genesis_block}" \
+    "middleware/genesis.block" \
+    "Join and middleware network sync require foundation-provided genesis.block." \
+    "Copy genesis.block to ${REPO_ROOT}/middleware/genesis.block"
+
+  require_external_file_or_die \
+    "${stage}" \
+    "EXT_FOUNDATION_PACKAGE" \
+    "${channel_tx}" \
+    "middleware/isharechannel.tx" \
+    "Join and middleware network sync require foundation-provided isharechannel.tx." \
+    "Copy isharechannel.tx to ${REPO_ROOT}/middleware/isharechannel.tx"
+
+  foundation_note="Foundation package present (ca-ishareord.pem, genesis.block, isharechannel.tx)."
+  set_external_gate "EXT_FOUNDATION_PACKAGE" "validated" "${foundation_note}"
+  report_pass "${stage}" "External gate EXT-03 foundation package" "${foundation_note}"
 
   if [[ "${NON_INTERACTIVE}" != "true" ]]; then
     confirm "Have you completed onboarding and received required network values/artifacts?" || \
@@ -829,8 +1201,15 @@ stage_join_network() {
 
   report_pass "${stage}" "Chaincode package ID strategy" "approveChaincode.sh resolves package ID dynamically (CC_PACKAGE_ID override supported)"
 
-  run_script_with_report "${stage}" "joinchannel.sh"
-  run_script_with_report "${stage}" "anchorPeer.sh"
+  if ! run_script_with_report "${stage}" "joinchannel.sh"; then
+    handle_join_network_script_failure "${stage}" "joinchannel.sh"
+  fi
+  set_external_gate "EXT_CHANNEL_ADMISSION" "validated" "joinchannel.sh succeeded; channel access confirmed"
+
+  if ! run_script_with_report "${stage}" "anchorPeer.sh"; then
+    handle_join_network_script_failure "${stage}" "anchorPeer.sh"
+  fi
+
   run_script_with_report "${stage}" "installChaincode.sh"
   run_script_with_report "${stage}" "approveChaincode.sh"
   run_script_with_report "${stage}" "chaincode.sh"
@@ -844,26 +1223,74 @@ stage_join_network() {
 
 stage_app_deploy() {
   local stage="app-deploy"
-  local required_files=(
-    "${REPO_ROOT}/ssl/tls.crt"
-    "${REPO_ROOT}/ssl/tls.key"
-    "${REPO_ROOT}/jwt-rsa/jwtRSA256-public.pem"
-    "${REPO_ROOT}/jwt-rsa/jwtRSA256-private.pem"
-    "${REPO_ROOT}/middleware/genesis.block"
-    "${REPO_ROOT}/middleware/isharechannel.tx"
-  )
-  local file
+  local tls_crt="${REPO_ROOT}/ssl/tls.crt"
+  local tls_key="${REPO_ROOT}/ssl/tls.key"
+  local jwt_pub="${REPO_ROOT}/jwt-rsa/jwtRSA256-public.pem"
+  local jwt_priv="${REPO_ROOT}/jwt-rsa/jwtRSA256-private.pem"
+  local genesis_block="${REPO_ROOT}/middleware/genesis.block"
+  local channel_tx="${REPO_ROOT}/middleware/isharechannel.tx"
   local keycloak_compose
   local middleware_compose
   local ui_compose
 
   load_env_file
 
-  for file in "${required_files[@]}"; do
-    report_assert_file "${stage}" "${file}" "Required file"
-  done
-  report_key_permission_warning "${stage}" "${REPO_ROOT}/ssl/tls.key" "TLS private key"
-  report_key_permission_warning "${stage}" "${REPO_ROOT}/jwt-rsa/jwtRSA256-private.pem" "JWT private key"
+  require_external_file_or_die \
+    "${stage}" \
+    "EXT_TLS_MATERIAL" \
+    "${tls_crt}" \
+    "TLS certificate" \
+    "UI/Keycloak ingress requires ssl/tls.crt." \
+    "Copy your TLS certificate chain to ${tls_crt}"
+  require_external_file_or_die \
+    "${stage}" \
+    "EXT_TLS_MATERIAL" \
+    "${tls_key}" \
+    "TLS private key" \
+    "UI/Keycloak ingress requires ssl/tls.key." \
+    "Copy your TLS private key to ${tls_key}"
+  set_external_gate "EXT_TLS_MATERIAL" "validated" "TLS files present"
+
+  require_external_file_or_die \
+    "${stage}" \
+    "EXT_JWT_MATERIAL" \
+    "${jwt_pub}" \
+    "JWT public certificate" \
+    "Middleware token signing requires jwtRSA256-public.pem." \
+    "Copy JWT public cert to ${jwt_pub}"
+  require_external_file_or_die \
+    "${stage}" \
+    "EXT_JWT_MATERIAL" \
+    "${jwt_priv}" \
+    "JWT private key" \
+    "Middleware token signing requires jwtRSA256-private.pem." \
+    "Copy JWT private key to ${jwt_priv}"
+  set_external_gate "EXT_JWT_MATERIAL" "validated" "JWT key pair present"
+
+  require_external_file_or_die \
+    "${stage}" \
+    "EXT_FOUNDATION_PACKAGE" \
+    "${genesis_block}" \
+    "middleware/genesis.block" \
+    "Middleware startup mounts genesis.block for blockchain middleware config." \
+    "Copy genesis.block to ${genesis_block}"
+  require_external_file_or_die \
+    "${stage}" \
+    "EXT_FOUNDATION_PACKAGE" \
+    "${channel_tx}" \
+    "middleware/isharechannel.tx" \
+    "Middleware startup mounts isharechannel.tx for blockchain middleware config." \
+    "Copy isharechannel.tx to ${channel_tx}"
+
+  report_key_permission_warning "${stage}" "${tls_key}" "TLS private key"
+  report_key_permission_warning "${stage}" "${jwt_priv}" "JWT private key"
+  report_dns_resolution_warning "${stage}" "${UIHostName}" "DNS resolution UIHostName"
+  report_dns_resolution_warning "${stage}" "${MiddlewareHostName}" "DNS resolution MiddlewareHostName"
+  report_dns_resolution_warning "${stage}" "${KeycloakHostName}" "DNS resolution KeycloakHostName"
+  set_external_gate "EXT_APP_DNS" "warned" "DNS checks reported as warning-only"
+
+  report_smtp_connectivity_warning "${stage}" "${SMTP_HOST}" "${SMTP_PORT}"
+  set_external_gate "EXT_SMTP" "warned" "SMTP connectivity is warning-only"
 
   run_script_with_report "${stage}" "keycloak.sh"
   run_script_with_report "${stage}" "middleware.sh"
@@ -887,6 +1314,7 @@ run_stage() {
   local key="$1"
   local title="$2"
   local fn="$3"
+  local rc
   CURRENT_STAGE="${key}"
 
   if [[ -n "${TARGET_STAGE}" && "${TARGET_STAGE}" != "${key}" ]]; then
@@ -904,23 +1332,51 @@ run_stage() {
   log_info "=== Stage: ${title} (${key}) ==="
   report_stage_header "${key}" "${title}"
   write_state_file "RUNNING" "Executing stage ${key}"
-  "${fn}"
+  if ! "${fn}"; then
+    rc=$?
+    if [[ "${rc}" -eq "${WAIT_EXIT_CODE}" ]]; then
+      report_warn "${key}" "Stage execution" "Paused for external requirement"
+      return "${WAIT_EXIT_CODE}"
+    fi
+    return "${rc}"
+  fi
   report_pass "${key}" "Stage execution" "completed"
   mark_checkpoint "${STATE_DIR}" "${key}"
   write_state_file "RUNNING" "Completed stage ${key}"
 }
 
+execute_stage() {
+  local key="$1"
+  local title="$2"
+  local fn="$3"
+  local rc
+
+  if run_stage "${key}" "${title}" "${fn}"; then
+    return 0
+  fi
+  rc=$?
+  return "${rc}"
+}
+
 on_exit() {
   local exit_code=$?
   if [[ -n "${REPORT_FILE}" && -f "${REPORT_FILE}" ]]; then
-    if [[ "${exit_code}" -eq 0 ]]; then
+    if [[ "${exit_code}" -eq 0 && "${FINAL_STATUS_OVERRIDE}" == "WAITING_EXTERNAL" ]]; then
+      printf "\nFinal status: WAITING_EXTERNAL (%s)\n" "${FINAL_STATUS_MESSAGE}" >>"${REPORT_FILE}"
+    elif [[ "${exit_code}" -eq 0 ]]; then
       printf "\nFinal status: SUCCESS\n" >>"${REPORT_FILE}"
     else
       printf "\nFinal status: FAILED (exit code %s)\n" "${exit_code}" >>"${REPORT_FILE}"
     fi
   fi
 
-  if [[ "${exit_code}" -eq 0 ]]; then
+  if [[ "${exit_code}" -eq 0 && "${FINAL_STATUS_OVERRIDE}" == "WAITING_EXTERNAL" ]]; then
+    write_state_file "WAITING_EXTERNAL" "${FINAL_STATUS_MESSAGE}"
+    rm -f "${LAST_ERROR_FILE}"
+    log_warn "Installer paused: ${FINAL_STATUS_MESSAGE}"
+    log_info "Resume command: $(resume_command)"
+    log_info "Validation report: ${REPORT_FILE}"
+  elif [[ "${exit_code}" -eq 0 ]]; then
     write_state_file "SUCCESS" "Installer completed successfully"
     rm -f "${LAST_ERROR_FILE}"
     log_info "Validation report: ${REPORT_FILE}"
@@ -932,7 +1388,16 @@ on_exit() {
 }
 
 main() {
+  local stage_rc
+
   parse_args "$@"
+
+  if [[ "${SHOW_EXTERNAL_GATES}" == "true" ]]; then
+    init_state_dir "${STATE_DIR}"
+    init_external_state
+    print_external_gates
+    exit 0
+  fi
 
   if [[ -n "${TARGET_STAGE}" ]] && ! is_valid_stage "${TARGET_STAGE}"; then
     die "Invalid --stage value: ${TARGET_STAGE}"
@@ -945,19 +1410,54 @@ main() {
   trap on_exit EXIT
 
   init_state_dir "${STATE_DIR}"
+  init_external_state
   write_state_file "RUNNING" "Installer initialized"
   if [[ "${RESET_STATE}" == "true" ]]; then
     clear_checkpoints "${STATE_DIR}"
+    rm -f "${EXTERNAL_STATE_FILE}"
+    init_external_state
     write_state_file "RUNNING" "Checkpoints cleared via --reset-state"
     log_info "Cleared checkpoints in ${STATE_DIR}"
   fi
 
-  run_stage "preflight" "Bootstrap/Preflight" stage_preflight
-  run_stage "env" "Input/Env Materialization" stage_env
-  run_stage "fabric-base" "Fabric Base Bring-up" stage_fabric_base
-  run_stage "org-artifact" "Org Registration Artifact" stage_org_artifact
-  run_stage "join-network" "Join Shared Network" stage_join_network
-  run_stage "app-deploy" "App Layer Deploy" stage_app_deploy
+  if ! execute_stage "preflight" "Bootstrap/Preflight" stage_preflight; then
+    stage_rc=$?
+    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
+    return "${stage_rc}"
+  fi
+  if ! execute_stage "env" "Input/Env Materialization" stage_env; then
+    stage_rc=$?
+    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
+    return "${stage_rc}"
+  fi
+  if ! execute_stage "fabric-base" "Fabric Base Bring-up" stage_fabric_base; then
+    stage_rc=$?
+    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
+    return "${stage_rc}"
+  fi
+  if ! execute_stage "org-artifact" "Org Registration Artifact" stage_org_artifact; then
+    stage_rc=$?
+    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
+    return "${stage_rc}"
+  fi
+  if [[ "${PAUSE_AFTER_STAGE}" == "true" ]]; then
+    FINAL_STATUS_OVERRIDE="WAITING_EXTERNAL"
+    FINAL_STATUS_MESSAGE="${PAUSE_REASON}"
+    write_state_file "WAITING_EXTERNAL" "${PAUSE_REASON}"
+    log_warn "External gate ${PAUSE_GATE_ID} is waiting: ${PAUSE_REASON}"
+    log_info "Resume command: $(resume_command)"
+    return 0
+  fi
+  if ! execute_stage "join-network" "Join Shared Network" stage_join_network; then
+    stage_rc=$?
+    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
+    return "${stage_rc}"
+  fi
+  if ! execute_stage "app-deploy" "App Layer Deploy" stage_app_deploy; then
+    stage_rc=$?
+    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
+    return "${stage_rc}"
+  fi
 
   if [[ -n "${TARGET_STAGE}" && "${TARGET_STAGE_RAN}" != "true" ]]; then
     die "Requested stage was not executed: ${TARGET_STAGE}"
