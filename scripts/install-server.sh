@@ -13,6 +13,7 @@ REPORT_DIR="${STATE_DIR}/reports"
 STATE_FILE="${STATE_DIR}/state.env"
 LAST_ERROR_FILE="${STATE_DIR}/last-error.log"
 EXTERNAL_STATE_FILE="${STATE_DIR}/external-gates.env"
+INSTALL_BIN_DIR="${STATE_DIR}/bin"
 EXAMPLE_ENV_FILE="${REPO_ROOT}/.env.server.example"
 ENV_FILE="${REPO_ROOT}/.env.server"
 NON_INTERACTIVE=false
@@ -25,12 +26,13 @@ SHOW_EXTERNAL_GATES=false
 REPORT_FILE=""
 RUN_STARTED_AT="$(date +"%Y-%m-%dT%H:%M:%S%z")"
 CURRENT_STAGE="bootstrap"
-WAIT_EXIT_CODE=88
 FINAL_STATUS_OVERRIDE=""
 FINAL_STATUS_MESSAGE=""
 PAUSE_AFTER_STAGE=false
 PAUSE_GATE_ID=""
 PAUSE_REASON=""
+STAGE_PAUSE_REQUESTED=false
+INSTALLER_PAUSED=false
 LAST_SCRIPT_NAME=""
 LAST_SCRIPT_OUTPUT=""
 
@@ -401,10 +403,12 @@ wait_for_external_and_return() {
   local reason="$2"
   FINAL_STATUS_OVERRIDE="WAITING_EXTERNAL"
   FINAL_STATUS_MESSAGE="${reason}"
+  STAGE_PAUSE_REQUESTED=true
+  INSTALLER_PAUSED=true
   write_state_file "WAITING_EXTERNAL" "${reason}"
   log_warn "External gate ${gate_id} is waiting: ${reason}"
   log_info "Resume command: $(resume_command)"
-  return "${WAIT_EXIT_CODE}"
+  return 0
 }
 
 require_external_file_or_die() {
@@ -941,6 +945,10 @@ stage_preflight() {
   local compose_version_raw
   local compose_version
   local compose_major
+  local plugin_compose_version_raw
+  local plugin_compose_version
+  local plugin_compose_major
+  local compose_wrapper
   local server_min_api
   local requested_api
 
@@ -965,7 +973,7 @@ stage_preflight() {
     die "Missing prerequisite installer at ${REPO_ROOT}/prerequsites.sh"
   fi
 
-  for cmd in bash docker docker-compose jq openssl; do
+  for cmd in bash docker jq openssl; do
     if require_cmd "$cmd"; then
       report_pass "${stage}" "Command available" "${cmd}"
     else
@@ -996,18 +1004,42 @@ stage_preflight() {
   fi
   report_pass "${stage}" "Docker daemon access" "docker info succeeded"
 
-  compose_version_raw="$(docker-compose version 2>&1 | head -n 1)"
-  compose_version="$(extract_semver "${compose_version_raw}")"
-  if [[ -z "${compose_version}" ]]; then
-    report_fail "${stage}" "docker-compose version" "Unable to parse version from: ${compose_version_raw}"
-    die "Unable to determine docker-compose version. Install Docker Compose v2."
+  plugin_compose_version_raw="$(docker compose version 2>/dev/null | head -n 1 || true)"
+  plugin_compose_version="$(extract_semver "${plugin_compose_version_raw}")"
+  plugin_compose_major="${plugin_compose_version%%.*}"
+  if [[ -n "${plugin_compose_version}" && "${plugin_compose_major}" -ge 2 ]]; then
+    mkdir -p "${INSTALL_BIN_DIR}"
+    compose_wrapper="${INSTALL_BIN_DIR}/docker-compose"
+    cat >"${compose_wrapper}" <<'EOF'
+#!/usr/bin/env sh
+exec docker compose "$@"
+EOF
+    chmod +x "${compose_wrapper}"
+    case ":${PATH}:" in
+      *":${INSTALL_BIN_DIR}:"*) ;;
+      *) PATH="${INSTALL_BIN_DIR}:${PATH}" ;;
+    esac
+    export PATH
+    report_pass "${stage}" "Compose implementation" "docker compose plugin v${plugin_compose_version} (docker-compose wrapper active)"
+  else
+    if ! require_cmd docker-compose; then
+      report_fail "${stage}" "Compose implementation" "Neither docker compose plugin nor docker-compose command is available"
+      die "Docker Compose v2 is required. Install docker compose plugin."
+    fi
+
+    compose_version_raw="$(docker-compose version 2>&1 | head -n 1)"
+    compose_version="$(extract_semver "${compose_version_raw}")"
+    if [[ -z "${compose_version}" ]]; then
+      report_fail "${stage}" "docker-compose version" "Unable to parse version from: ${compose_version_raw}"
+      die "Unable to determine docker-compose version. Install Docker Compose v2."
+    fi
+    compose_major="${compose_version%%.*}"
+    if [[ "${compose_major}" -lt 2 ]]; then
+      report_fail "${stage}" "docker-compose version" "Detected v${compose_version}; v2+ required"
+      die "docker-compose v1 detected. Install docker compose plugin (v2) or replace docker-compose with a v2-compatible wrapper."
+    fi
+    report_pass "${stage}" "Compose implementation" "docker-compose v${compose_version}"
   fi
-  compose_major="${compose_version%%.*}"
-  if [[ "${compose_major}" -lt 2 ]]; then
-    report_fail "${stage}" "docker-compose version" "Detected v${compose_version}; v2+ required"
-    die "Docker Compose v2 is required. Install docker compose plugin and expose docker-compose command."
-  fi
-  report_pass "${stage}" "docker-compose version" "v${compose_version}"
 
   if [[ -n "${DOCKER_API_VERSION:-}" ]]; then
     server_min_api="$(docker version --format '{{.Server.MinAPIVersion}}' 2>/dev/null || true)"
@@ -1159,7 +1191,7 @@ stage_join_network() {
     else
       set_external_gate "EXT_ORG_JSON" "waiting_external" "Awaiting org JSON handoff"
       wait_for_external_and_return "EXT-02" "Send ${org_definition_file} to iSHARE Foundation."
-      return "${WAIT_EXIT_CODE}"
+      return 0
     fi
   fi
 
@@ -1314,7 +1346,6 @@ run_stage() {
   local key="$1"
   local title="$2"
   local fn="$3"
-  local rc
   CURRENT_STAGE="${key}"
 
   if [[ -n "${TARGET_STAGE}" && "${TARGET_STAGE}" != "${key}" ]]; then
@@ -1332,30 +1363,15 @@ run_stage() {
   log_info "=== Stage: ${title} (${key}) ==="
   report_stage_header "${key}" "${title}"
   write_state_file "RUNNING" "Executing stage ${key}"
-  if ! "${fn}"; then
-    rc=$?
-    if [[ "${rc}" -eq "${WAIT_EXIT_CODE}" ]]; then
-      report_warn "${key}" "Stage execution" "Paused for external requirement"
-      return "${WAIT_EXIT_CODE}"
-    fi
-    return "${rc}"
+  STAGE_PAUSE_REQUESTED=false
+  "${fn}"
+  if [[ "${STAGE_PAUSE_REQUESTED}" == "true" ]]; then
+    report_warn "${key}" "Stage execution" "Paused for external requirement"
+    return 0
   fi
   report_pass "${key}" "Stage execution" "completed"
   mark_checkpoint "${STATE_DIR}" "${key}"
   write_state_file "RUNNING" "Completed stage ${key}"
-}
-
-execute_stage() {
-  local key="$1"
-  local title="$2"
-  local fn="$3"
-  local rc
-
-  if run_stage "${key}" "${title}" "${fn}"; then
-    return 0
-  fi
-  rc=$?
-  return "${rc}"
 }
 
 on_exit() {
@@ -1388,8 +1404,6 @@ on_exit() {
 }
 
 main() {
-  local stage_rc
-
   parse_args "$@"
 
   if [[ "${SHOW_EXTERNAL_GATES}" == "true" ]]; then
@@ -1420,43 +1434,38 @@ main() {
     log_info "Cleared checkpoints in ${STATE_DIR}"
   fi
 
-  if ! execute_stage "preflight" "Bootstrap/Preflight" stage_preflight; then
-    stage_rc=$?
-    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
-    return "${stage_rc}"
+  run_stage "preflight" "Bootstrap/Preflight" stage_preflight
+  if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
+    return 0
   fi
-  if ! execute_stage "env" "Input/Env Materialization" stage_env; then
-    stage_rc=$?
-    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
-    return "${stage_rc}"
+  run_stage "env" "Input/Env Materialization" stage_env
+  if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
+    return 0
   fi
-  if ! execute_stage "fabric-base" "Fabric Base Bring-up" stage_fabric_base; then
-    stage_rc=$?
-    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
-    return "${stage_rc}"
+  run_stage "fabric-base" "Fabric Base Bring-up" stage_fabric_base
+  if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
+    return 0
   fi
-  if ! execute_stage "org-artifact" "Org Registration Artifact" stage_org_artifact; then
-    stage_rc=$?
-    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
-    return "${stage_rc}"
+  run_stage "org-artifact" "Org Registration Artifact" stage_org_artifact
+  if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
+    return 0
   fi
   if [[ "${PAUSE_AFTER_STAGE}" == "true" ]]; then
     FINAL_STATUS_OVERRIDE="WAITING_EXTERNAL"
     FINAL_STATUS_MESSAGE="${PAUSE_REASON}"
+    INSTALLER_PAUSED=true
     write_state_file "WAITING_EXTERNAL" "${PAUSE_REASON}"
     log_warn "External gate ${PAUSE_GATE_ID} is waiting: ${PAUSE_REASON}"
     log_info "Resume command: $(resume_command)"
     return 0
   fi
-  if ! execute_stage "join-network" "Join Shared Network" stage_join_network; then
-    stage_rc=$?
-    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
-    return "${stage_rc}"
+  run_stage "join-network" "Join Shared Network" stage_join_network
+  if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
+    return 0
   fi
-  if ! execute_stage "app-deploy" "App Layer Deploy" stage_app_deploy; then
-    stage_rc=$?
-    [[ "${stage_rc}" -eq "${WAIT_EXIT_CODE}" ]] && return 0
-    return "${stage_rc}"
+  run_stage "app-deploy" "App Layer Deploy" stage_app_deploy
+  if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
+    return 0
   fi
 
   if [[ -n "${TARGET_STAGE}" && "${TARGET_STAGE_RAN}" != "true" ]]; then
