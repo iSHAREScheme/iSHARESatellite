@@ -4,6 +4,32 @@
 . ./global.sh
 . ./fabric-var.sh
 
+function installChaincodeOnPeer() {
+local PEER_ADDR=$1
+local CC_PATH=$2
+local install_output
+local res
+
+export CORE_PEER_ADDRESS=${PEER_ADDR}
+install_output=$(peer lifecycle chaincode install "${CC_PATH}" 2>&1)
+res=$?
+
+printf "%s\n" "${install_output}"
+
+if [ $res -eq 0 ]; then
+   infoln "Chaincode installed on ${CORE_PEER_ADDRESS}"
+   return 0
+fi
+
+if printf "%s" "${install_output}" | grep -q "chaincode already successfully installed"; then
+   infoln "Chaincode already installed on ${CORE_PEER_ADDRESS}; continuing."
+   return 0
+fi
+
+errorln "Error while installing chaincode on ${CORE_PEER_ADDRESS}"
+return 1
+}
+
 function installChaincode (){
 
 export CORE_PEER_TLS_ENABLED=true
@@ -18,28 +44,9 @@ local CH_NAME=${CHANNEL_NAME}
 export CORE_PEER_ADDRESS=peer0.${orgDomain}:7051
 
 CC_PATH=$(cd ../chaincode && echo $(pwd))/ishare.tgz
-set -e
-set -x
-peer lifecycle chaincode install $CC_PATH
-res=$?
-set +x
-if [ $res -ne 0 ]; then 
-   errorln " Error while Installing the Chaincode "
-   exit 1
-fi
 
-export CORE_PEER_ADDRESS=peer1.${orgDomain}:8051
-
-set -x
-peer lifecycle chaincode install $CC_PATH
-res=$?
-set +x
-if [ $res -ne 0 ]; then 
-   errorln " Error while Installing the Chaincode "
-   exit 1
-fi
-
-set +e
+installChaincodeOnPeer "peer0.${orgDomain}:7051" "${CC_PATH}" || exit 1
+installChaincodeOnPeer "peer1.${orgDomain}:8051" "${CC_PATH}" || exit 1
 
 }
 

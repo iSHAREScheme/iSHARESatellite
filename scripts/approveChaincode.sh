@@ -4,6 +4,28 @@
 . ./global.sh
 . ./fabric-var.sh
 
+function isChaincodeAlreadyApproved() {
+local CH_NAME=$1
+local CC_NAME=$2
+local CC_SEQUENCE=$3
+local query_output
+local query_res
+
+query_output=$(peer lifecycle chaincode queryapproved --channelID "${CH_NAME}" --name "${CC_NAME}" --sequence "${CC_SEQUENCE}" 2>&1)
+query_res=$?
+printf "%s\n" "${query_output}"
+
+if [ $query_res -ne 0 ]; then
+   return 1
+fi
+
+if printf "%s" "${query_output}" | grep -q "Approved chaincode definition"; then
+   return 0
+fi
+
+return 1
+}
+
 function resolveChaincodePackageID(){
 if [[ -n "${CC_PACKAGE_ID:-}" ]]; then
    echo "${CC_PACKAGE_ID}"
@@ -97,6 +119,12 @@ fi
 if ! CC_PACKAGE_ID=$(resolveChaincodePackageID); then
    exit 1
 fi
+
+if isChaincodeAlreadyApproved "${CH_NAME}" "${CC_NAME}" "${CC_SEQUENCE}"; then
+   infoln "Chaincode definition already approved for ${CORE_PEER_LOCALMSPID}; skipping approve step."
+   return 0
+fi
+
 infoln "Using chaincode package ID ${CC_PACKAGE_ID}"
 infoln "Performing Chaincode Approve "
 set -x
@@ -104,6 +132,10 @@ peer lifecycle chaincode approveformyorg -o $ORDERER_ENDPOINT --tls --cafile $OR
 res=$?
 set +x
 if [ $res -ne 0 ]; then 
+   if isChaincodeAlreadyApproved "${CH_NAME}" "${CC_NAME}" "${CC_SEQUENCE}"; then
+      infoln "Chaincode definition is already approved for ${CORE_PEER_LOCALMSPID}; continuing."
+      return 0
+   fi
    errorln " Error while approving the Chaincode "
    exit 1
 fi

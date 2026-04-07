@@ -4,6 +4,33 @@
 . ./global.sh
 . ./fabric-var.sh
 
+function joinPeerIfNeeded() {
+local PEER_ADDR=$1
+local CH_NAME=$2
+local join_output
+local res
+
+export CORE_PEER_ADDRESS=${PEER_ADDR}
+
+join_output=$(peer channel join -b ../channelops/${CH_NAME}.pb 2>&1)
+res=$?
+
+printf "%s\n" "${join_output}"
+
+if [ $res -eq 0 ]; then
+      infoln "Peer ${CORE_PEER_ADDRESS} Successfully joined channel ${CH_NAME}"
+      return 0
+fi
+
+if printf "%s" "${join_output}" | grep -q "already exists with state \\[ACTIVE\\]"; then
+      infoln "Peer ${CORE_PEER_ADDRESS} is already joined to channel ${CH_NAME}; continuing."
+      return 0
+fi
+
+fatalln "Peer ${CORE_PEER_ADDRESS} failed to join channel ${CH_NAME}."
+return 1
+}
+
 function fetchBlockAndJoinChannel(){
 
 export CORE_PEER_TLS_ENABLED=true
@@ -64,27 +91,8 @@ fi
 
 infoln "Successfully fetched block for peers to join"
 
-set -x
-peer channel join -b ../channelops/${CH_NAME}.pb
-res=$?
-set +x
-if [ $res -ne 0 ]; then
-      fatalln "Peer ${CORE_PEER_ADDRESS} failed to join channel $CH_NAME ...."
-      exit 1
-fi
-infoln "Peer ${CORE_PEER_ADDRESS} Successfully joined  channel $CH_NAME"
-
-export CORE_PEER_ADDRESS=peer1.${orgDomain}:8051
-set -x
-peer channel join -b ../channelops/${CH_NAME}.pb
-res=$?
-set +x
-if [ $res -ne 0 ]; then
-      fatalln "Peer ${CORE_PEER_ADDRESS} failed to join channel $CH_NAME ...."
-      exit 1
-fi
-
-infoln "Peer ${CORE_PEER_ADDRESS} Successfully joined  channel $CH_NAME"
+joinPeerIfNeeded "peer0.${orgDomain}:7051" "${CH_NAME}" || exit 1
+joinPeerIfNeeded "peer1.${orgDomain}:8051" "${CH_NAME}" || exit 1
 
 
 }

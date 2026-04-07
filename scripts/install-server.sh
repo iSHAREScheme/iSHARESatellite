@@ -134,6 +134,9 @@ ALL_ENV_VARS=(
   SMTP_USER
   SMTP_PASSWORD
   DISPLAY_NAME
+  SATELLITE_ADMIN_USERNAME
+  SATELLITE_ADMIN_EMAIL
+  SATELLITE_ADMIN_PASSWORD
 )
 
 init_report() {
@@ -650,10 +653,16 @@ set_defaults() {
   : "${PEER_COUNT:=2}"
   : "${ORDERER_COUNT:=0}"
   : "${CHAINCODE_LABEL:=isharecc_1.0}"
+  : "${SATELLITE_ADMIN_USERNAME:=satelliteadmin}"
+  : "${SATELLITE_ADMIN_PASSWORD:=}"
 }
 
 set_derived_defaults() {
-  :
+  if [[ -n "${SUB_DOMAIN:-}" ]]; then
+    : "${SATELLITE_ADMIN_EMAIL:=satelliteadmin@${SUB_DOMAIN}}"
+  else
+    : "${SATELLITE_ADMIN_EMAIL:=satelliteadmin@example.com}"
+  fi
 }
 
 validate_org_name() {
@@ -880,6 +889,9 @@ interactive_capture_env() {
   local smtp_user_example="noreply@example.com"
   local smtp_password_example="change-me"
   local display_name_example="iSHARE Satellite"
+  local satellite_admin_username_example="satelliteadmin"
+  local satellite_admin_email_example
+  local satellite_admin_password_example="ChangeMe123!"
   local channel_default
   local anchor_peer_default
   local anchor_peer_port_default
@@ -889,6 +901,8 @@ interactive_capture_env() {
   local chaincode_policy_default
   local peer_admin_msp_default
   local orderer_tls_ca_default
+  local satellite_admin_username_default
+  local satellite_admin_email_default
 
   log_info "Collecting server deployment inputs"
   log_info "For prompts with a default value, press Enter to accept it."
@@ -900,6 +914,7 @@ interactive_capture_env() {
   orderer_tls_ca_example="${REPO_ROOT}/ca-ishareord.pem"
   anchor_peer_example="peer0.${ORG_NAME}.${SUB_DOMAIN}"
   chaincode_policy_example="OR('${ORG_NAME}.member')"
+  satellite_admin_email_example="satelliteadmin@${SUB_DOMAIN}"
   peer_admin_msp_example="${REPO_ROOT}/app/${ENVIRONMENT}/${ORG_NAME}/crypto/peerOrganizations/${ORG_NAME}.${SUB_DOMAIN}/users/Admin@${ORG_NAME}.${SUB_DOMAIN}/msp"
   channel_default="${CHANNEL_NAME:-appchannel}"
   anchor_peer_default="${ANCHOR_PEER_HOSTNAME:-peer0.${ORG_NAME}.${SUB_DOMAIN}}"
@@ -910,6 +925,8 @@ interactive_capture_env() {
   chaincode_policy_default="${CHAINCODE_POLICY:-OR('${ORG_NAME}.member')}"
   peer_admin_msp_default="${PEER_ADMIN_MSP_DIR:-${REPO_ROOT}/app/${ENVIRONMENT}/${ORG_NAME}/crypto/peerOrganizations/${ORG_NAME}.${SUB_DOMAIN}/users/Admin@${ORG_NAME}.${SUB_DOMAIN}/msp}"
   orderer_tls_ca_default="${ORDERER_TLS_CA_CERT:-${REPO_ROOT}/ca-ishareord.pem}"
+  satellite_admin_username_default="${SATELLITE_ADMIN_USERNAME:-satelliteadmin}"
+  satellite_admin_email_default="${SATELLITE_ADMIN_EMAIL:-satelliteadmin@${SUB_DOMAIN}}"
 
   ORDERER_ADDRESS="$(prompt_required_with_context "ORDERER_ADDRESS" "${ORDERER_ADDRESS:-}" "${orderer_address_example}" "Remote orderer endpoint used by channel and chaincode lifecycle operations.")"
   ORDERER_TLS_CA_CERT="$(prompt_required_with_context "ORDERER_TLS_CA_CERT" "${orderer_tls_ca_default}" "${orderer_tls_ca_example}" "CA certificate file used to trust the remote orderer TLS certificate.")"
@@ -932,6 +949,9 @@ interactive_capture_env() {
   SMTP_USER="$(prompt_required_with_context "SMTP_USER" "${SMTP_USER:-}" "${smtp_user_example}" "SMTP username used by middleware mailer.")"
   SMTP_PASSWORD="$(prompt_required_secret_with_context "SMTP_PASSWORD" "${SMTP_PASSWORD:-}" "${smtp_password_example}" "SMTP password used by middleware mailer.")"
   DISPLAY_NAME="$(prompt_required_with_context "DISPLAY_NAME" "${DISPLAY_NAME:-}" "${display_name_example}" "Email display name shown in outbound notifications.")"
+  SATELLITE_ADMIN_USERNAME="$(prompt_required_with_context "SATELLITE_ADMIN_USERNAME" "${satellite_admin_username_default}" "${satellite_admin_username_example}" "Initial Keycloak user that will receive the SatelliteAdmin portal role.")"
+  SATELLITE_ADMIN_EMAIL="$(prompt_required_with_context "SATELLITE_ADMIN_EMAIL" "${satellite_admin_email_default}" "${satellite_admin_email_example}" "Email address for the initial SatelliteAdmin portal user.")"
+  SATELLITE_ADMIN_PASSWORD="$(prompt_required_secret_with_context "SATELLITE_ADMIN_PASSWORD" "${SATELLITE_ADMIN_PASSWORD:-}" "${satellite_admin_password_example}" "Password for the initial SatelliteAdmin portal user. Change it after first login.")"
 
   validate_required_env
   write_env_file
@@ -973,7 +993,7 @@ stage_preflight() {
     die "Missing prerequisite installer at ${REPO_ROOT}/prerequsites.sh"
   fi
 
-  for cmd in bash docker jq openssl; do
+  for cmd in bash docker jq openssl curl; do
     if require_cmd "$cmd"; then
       report_pass "${stage}" "Command available" "${cmd}"
     else
@@ -1087,6 +1107,13 @@ stage_env() {
     write_env_file
   else
     interactive_capture_env
+  fi
+
+  if [[ -z "${SATELLITE_ADMIN_PASSWORD:-}" ]]; then
+    SATELLITE_ADMIN_PASSWORD="$(openssl rand -base64 24 | tr -d '\n' | tr -d '/+=' | cut -c1-20)Aa1!"
+    report_warn "${stage}" "SATELLITE_ADMIN_PASSWORD" "Not set; generated a temporary password and wrote it to ${ENV_FILE}"
+    log_warn "SATELLITE_ADMIN_PASSWORD was not set; generated a temporary password. Update it after first login."
+    write_env_file
   fi
 
   validate_required_env
@@ -1264,6 +1291,8 @@ stage_app_deploy() {
   local keycloak_compose
   local middleware_compose
   local ui_compose
+  local app_mw_config
+  local keycloak_domain
 
   load_env_file
 
@@ -1326,7 +1355,20 @@ stage_app_deploy() {
 
   run_script_with_report "${stage}" "keycloak.sh"
   run_script_with_report "${stage}" "middleware.sh"
+  app_mw_config="${REPO_ROOT}/middleware/app-mw-config.yaml"
+  report_assert_file "${stage}" "${app_mw_config}" "Rendered middleware app config"
+  keycloak_domain="$(awk -F': ' '/^[[:space:]]*domain:[[:space:]]*/ {print $2; exit}' "${app_mw_config}" | tr -d '\r')"
+  if [[ -z "${keycloak_domain}" ]]; then
+    report_fail "${stage}" "Middleware Keycloak domain" "Unable to parse keyCloakConfig.domain from ${app_mw_config}"
+    die "Unable to parse keyCloakConfig.domain from ${app_mw_config}"
+  fi
+  if [[ "${keycloak_domain}" == *":8443"* ]]; then
+    report_fail "${stage}" "Middleware Keycloak domain" "Unsupported value '${keycloak_domain}' in ${app_mw_config}; use https://${KeycloakHostName} without :8443"
+    die "Middleware keycloak domain must not include :8443; expected https://${KeycloakHostName}"
+  fi
+  report_pass "${stage}" "Middleware Keycloak domain" "${keycloak_domain}"
   run_script_with_report "${stage}" "deployUI.sh"
+  run_script_with_report "${stage}" "provisionSatelliteAdmin.sh"
 
   keycloak_compose="${REPO_ROOT}/keycloak/keycloak-docker-compose.yaml"
   middleware_compose="${REPO_ROOT}/middleware/docker-compose-mw.yaml"

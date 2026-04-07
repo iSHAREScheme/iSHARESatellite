@@ -11,7 +11,7 @@ ishareConfig:
     emailSecret: "<SMTP_PASSWORD>"
     emailPort: "<SMTP_PORT>"
     emailHost: "<SMTP_HOST>"
-    displayName: "<DISPALY_NAME>"
+    displayName: "<DISPLAY_NAME>"
     emailForceUpdate: false
     # If the emailForceUpdate values are true, then the middleware application will update the above email setup in the keycloak. (restart the ishare middleware service once the changes are incorporated)
 #Sceduler Configuration to send Email Notifications for Network status ENDS    
@@ -26,7 +26,7 @@ ishareConfig:
     partyName: <PartyName>
   platformURL: ""
   keyCloakConfig:
-    domain: https://<KeycloakHostName>:8443
+    domain: https://<KeycloakHostName>
     clientId: frontend
     clientSecret: ""
     adminId: admin
@@ -44,4 +44,3 @@ ishareConfig:
     enable: false
     sslCertPath: ""
     sslKeyPath: ""
-

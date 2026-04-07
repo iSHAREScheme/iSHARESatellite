@@ -4,18 +4,25 @@ networks:
   net:
     name: fabric_network
 
+volumes:
+  keycloakpostgres_data:
+    name: keycloak_keycloakpostgres_data
+
 services:
   keycloak:
-    image: isharefoundation/ishare-satellite-keycloak:v22.0.1
+    image: <KEYCLOAK_IMAGE>
     container_name: keycloak
     ports:
       - 8443:8443
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HTTP_ENABLED=true
       - KC_HTTPS_PORT=8443
+      - KC_HTTP_RELATIVE_PATH=/auth
+      - QUARKUS_HTTP_HTTP2=false
 #      - KC_FILE=/tmp/realm-test.json
-      - KC_HTTPS_CERTIFICATE_FILE=etc/x509/https/tls.crt
+      - KC_HTTPS_CERTIFICATE_FILE=/etc/x509/https/tls.crt
       - KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/x509/https/tls.key
       - KC_DB=postgres
       - KC_DB_USERNAME=keycloak
@@ -23,7 +30,7 @@ services:
       - KC_DB_URL_HOST=keycloakpostgres
       - KC_DB_URL=jdbc:postgresql://keycloakpostgres/keycloak
       - KC_HOSTNAME=<KEY_CLOAK_HOST_NAME>
-      - KC_HOSTNAME_ADMIN_URL=https://<KEY_CLOAK_HOST_NAME>:8443/
+      - KC_HOSTNAME_ADMIN_URL=https://<KEY_CLOAK_HOST_NAME>:8443/auth/
       - KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_LEGACY_LOGOUT_REDIRECT_URI=true
     volumes:
 #      - ./realm-test.json:/tmp/realm-test.json
@@ -40,7 +47,7 @@ services:
     - net       
 
   keycloakpostgres:
-    image: isharefoundation/postgressql:v14-alpine
+    image: <POSTGRES_IMAGE>
     container_name: keycloakpostgres
     ports:
       - 1432:5432
@@ -49,7 +56,7 @@ services:
       - POSTGRES_PASSWORD=postgres
     restart: always      
     volumes:
-      - ./keycloakpostgres:/var/lib/postgresql/data
+      - keycloakpostgres_data:/var/lib/postgresql/data
       - ./postgres:/docker-entrypoint-initdb.d
     networks:
     - net 

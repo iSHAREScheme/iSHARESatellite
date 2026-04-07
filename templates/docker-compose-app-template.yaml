@@ -1,0 +1,196 @@
+version: "3.7"
+
+networks:
+  net:
+    name: fabric_network
+
+volumes:
+  keycloakpostgres_data:
+    name: keycloak_keycloakpostgres_data
+
+services:
+  offchain_sat:
+    image: <POSTGRES_IMAGE>
+    container_name: offchain_sat
+    restart: always
+    ports:
+      - 6432:5432
+    environment:
+      - DATABASE_DATABASE=offchaindata
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+    volumes:
+      - ./middleware/postgresdata:/var/lib/postgresql/data
+      - ./middleware/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - net
+
+  keycloakpostgres:
+    image: <POSTGRES_IMAGE>
+    container_name: keycloakpostgres
+    ports:
+      - 1432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    restart: always
+    volumes:
+      - keycloakpostgres_data:/var/lib/postgresql/data
+      - ./keycloak/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - net
+
+  keycloak:
+    image: <KEYCLOAK_IMAGE>
+    container_name: keycloak
+    ports:
+      - 8443:8443
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HTTP_ENABLED=true
+      - KC_HTTPS_PORT=8443
+      - KC_HTTP_RELATIVE_PATH=/auth
+      - QUARKUS_HTTP_HTTP2=false
+      - KC_HTTPS_CERTIFICATE_FILE=/etc/x509/https/tls.crt
+      - KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/x509/https/tls.key
+      - KC_DB=postgres
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+      - KC_DB_URL_HOST=keycloakpostgres
+      - KC_DB_URL=jdbc:postgresql://keycloakpostgres/keycloak
+      - KC_HOSTNAME=<KeycloakHostName>
+      - KC_HOSTNAME_ADMIN_URL=https://<KeycloakHostName>:8443/auth/
+      - KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_LEGACY_LOGOUT_REDIRECT_URI=true
+    volumes:
+      - ./keycloak/realm-test.json:/opt/keycloak/data/import/realm-test.json
+      - ./ssl:/etc/x509/https
+    command:
+      - start --import-realm
+    restart: always
+    depends_on:
+      - keycloakpostgres
+    networks:
+      - net
+
+  explorerdb:
+    image: <EXPLORER_DB_IMAGE>
+    container_name: explorerdb
+    hostname: explorerdb
+    profiles:
+      - explorer
+    environment:
+      - DATABASE_DATABASE=fabricexplorer
+      - DATABASE_USERNAME=hppoc
+      - DATABASE_PASSWORD=password
+    healthcheck:
+      test: "pg_isready -h localhost -p 5432 -q -U postgres"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ports:
+      - 4432:5432
+    restart: always
+    volumes:
+      - ./explorer/docker_data/explorer_ishare:/var/lib/postgresql/data
+    networks:
+      - net
+
+  explorer:
+    image: <EXPLORER_IMAGE>
+    container_name: explorer
+    hostname: explorer
+    profiles:
+      - explorer
+    environment:
+      - DATABASE_HOST=explorerdb
+      - DATABASE_DATABASE=fabricexplorer
+      - DATABASE_USERNAME=hppoc
+      - DATABASE_PASSWD=password
+      - LOG_LEVEL_APP=debug
+      - LOG_LEVEL_DB=debug
+      - LOG_LEVEL_CONSOLE=info
+      - LOG_CONSOLE_STDOUT=true
+      - DISCOVERY_AS_LOCALHOST=false
+    volumes:
+      - ./explorer/explorer-config.json:/opt/explorer/app/platform/fabric/config.json
+      - ./explorer:/opt/explorer/app/platform/fabric/connection-profile
+      - <EXPLORER_CRYPTO_PATH>:/tmp/crypto
+      - ./explorer/docker_data/walletstore_ishare:/opt/explorer/wallet
+    restart: always
+    ports:
+      - <EXPLORER_PORT>:8080
+    depends_on:
+      explorerdb:
+        condition: service_healthy
+    networks:
+      - net
+
+  ishare_hlf:
+    image: <HLF_MIDDLEWARE_IMAGE>
+    container_name: middleware-ishare_hlf-1
+    ports:
+      - 4001:21001
+    volumes:
+      - <APP_CRYPTO_PATH>:/var/hyperledger/crypto
+      - ./middleware/hlf-mw-config.yaml:/config/hlf-mw-config.yaml
+      - ./middleware/genesis.block:/tmp/channel/genesis.block
+      - ./middleware/isharechannel.tx:/tmp/channel/channel.tx
+    environment:
+      - CONFIG_FILE_PATH=/config/hlf-mw-config.yaml
+      - GODEBUG=x509ignoreCN=0
+    restart: always
+    networks:
+      - net
+
+  ishare_mw:
+    image: <MIDDLEWARE_IMAGE>
+    container_name: middleware-ishare_mw-1
+    ports:
+      - 5001:21001
+    volumes:
+      - ./middleware/app-mw-config.yaml:/test/config/app-mw-config.yaml
+      - ./jwt-rsa/jwtRSA256-private.pem:/home/appuser/ishare-middleware/jwtRSA256-private.pem
+      - ./jwt-rsa/jwtRSA256-public.pem:/home/appuser/ishare-middleware/jwtRSA256-public.pem
+    restart: always
+    environment:
+      - CONFIG_FILE_PATH=/test/config/app-mw-config.yaml
+    depends_on:
+      - offchain_sat
+      - ishare_hlf
+      - keycloak
+    networks:
+      - net
+
+  ishare_ui:
+    image: <UI_IMAGE>
+    container_name: ishare_ui
+    ports:
+      - 4200:80
+    environment:
+      - API_URL=https://<UIHostName>/api
+      - AUTH_REDIRECT_URI=https://<UIHostName>
+      - PROXY_ADDRESS_FORWARDING=true
+      - KEYCLOAK_FRONTEND_URL=https://<KeycloakHostName>:8443/auth/
+      - REALM_NAME=<ORG_NAME>
+    restart: always
+    networks:
+      - net
+
+  nginx-proxy:
+    image: <NGINX_IMAGE>
+    container_name: ui-nginx-proxy-1
+    ports:
+      - 443:443
+    volumes:
+      - ./ssl:/etc/ssl
+      - ./ui/nginx.conf:/etc/nginx/nginx.conf
+    restart: always
+    depends_on:
+      - ishare_ui
+      - ishare_mw
+      - keycloak
+    networks:
+      - net

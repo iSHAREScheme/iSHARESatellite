@@ -57,15 +57,17 @@
   {
   "id": "e6fb9897-b209-4eed-b88b-900c360816e1",
   "clientId": "frontend",
-  "rootUrl": "https://<KEY_CLOAK_HOST_NAME>:8443",
+  "rootUrl": "https://<UI_HOST_NAME>",
   "enabled": true,
   "clientAuthenticatorType": "client-secret",
   "secret": "",
   "redirectUris": [
-  "*"
+  "https://<UI_HOST_NAME>",
+  "https://<UI_HOST_NAME>/",
+  "https://<UI_HOST_NAME>/*"
   ],
   "webOrigins": [
-  "+"
+  "https://<UI_HOST_NAME>"
   ],
   "notBefore": 0,
   "standardFlowEnabled": true,

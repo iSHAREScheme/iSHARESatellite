@@ -71,6 +71,16 @@ configtxlator proto_decode --input ../channelops/config_block.pb --type common.B
 jq .data.data[0].payload.data.config ../channelops/config_block.json > ../channelops/config.json
 set +x
 
+if jq -e \
+  --arg org "${orgName}" \
+  --arg host "${PEER_ID}" \
+  --argjson port "${PORT}" \
+  '.channel_group.groups.Application.groups[$org].values.AnchorPeers.value.anchor_peers // [] | any(.host == $host and .port == $port)' \
+  ../channelops/config.json >/dev/null 2>&1; then
+      infoln "Anchor peer ${PEER_ID}:${PORT} is already configured for ${orgName}; skipping channel update."
+      return 0
+fi
+
 set -e
 set -x
 jq '.channel_group.groups.Application.groups.'${orgName}'.values += {"AnchorPeers":{"mod_policy": "Admins","value":{"anchor_peers": [{"host": "'${PEER_ID}'","port": '${PORT}'}]},"version": "0"}}' ../channelops/config.json > ../channelops/modified_config.json

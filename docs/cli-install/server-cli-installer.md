@@ -57,6 +57,12 @@ Some steps depend on actions outside the VM. This is the expected order:
 - In production, this should come from your qualified eIDAS seal signing material.
 - App DNS records should resolve for `UIHostName`, `MiddlewareHostName`, and `KeycloakHostName`.
 - SMTP values should be valid: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`.
+- The installer will also create/update one initial Keycloak portal user and assign the `SatelliteAdmin` role in your org realm.
+- Configure this via `.env.server`:
+  - `SATELLITE_ADMIN_USERNAME`
+  - `SATELLITE_ADMIN_EMAIL`
+  - `SATELLITE_ADMIN_PASSWORD`
+- If `SATELLITE_ADMIN_PASSWORD` is left empty, the installer generates a temporary password and writes it to `.env.server`.
 
 It also writes a stage-by-stage validation report under:
 
