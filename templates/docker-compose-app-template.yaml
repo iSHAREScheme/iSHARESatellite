@@ -62,7 +62,7 @@ services:
       - KC_DB_URL_HOST=keycloakpostgres
       - KC_DB_URL=jdbc:postgresql://keycloakpostgres/keycloak
       - KC_HOSTNAME=<KeycloakHostName>
-      - KC_HOSTNAME_ADMIN_URL=https://<KeycloakHostName>:8443/auth/
+      - KC_HOSTNAME_ADMIN_URL=https://<KeycloakHostName>/auth/
       - KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_LEGACY_LOGOUT_REDIRECT_URI=true
     volumes:
       - ./keycloak/realm-test.json:/opt/keycloak/data/import/realm-test.json
@@ -173,7 +173,7 @@ services:
       - API_URL=https://<UIHostName>/api
       - AUTH_REDIRECT_URI=https://<UIHostName>
       - PROXY_ADDRESS_FORWARDING=true
-      - KEYCLOAK_FRONTEND_URL=https://<KeycloakHostName>:8443/auth/
+      - KEYCLOAK_FRONTEND_URL=https://<KeycloakHostName>/auth/
       - REALM_NAME=<ORG_NAME>
     restart: always
     networks:

@@ -5,7 +5,7 @@ set -euo pipefail
 . ./utils.sh
 . ./global.sh
 
-KEYCLOAK_BASE_URL="${KEYCLOAK_BASE_URL:-https://localhost:8443}"
+KEYCLOAK_BASE_URL="${KEYCLOAK_BASE_URL:-https://${KeycloakHostName}}"
 KEYCLOAK_PATH_PREFIX="${KEYCLOAK_PATH_PREFIX:-/auth}"
 KEYCLOAK_ADMIN_USER="${KEYCLOAK_ADMIN_USER:-admin}"
 KEYCLOAK_ADMIN_PASSWORD="${KEYCLOAK_ADMIN_PASSWORD:-admin}"
@@ -27,6 +27,7 @@ fi
 
 KEYCLOAK_PATH_PREFIX="/${KEYCLOAK_PATH_PREFIX#/}"
 KEYCLOAK_PATH_PREFIX="${KEYCLOAK_PATH_PREFIX%/}"
+KEYCLOAK_PUBLIC_FRONTEND_URL="https://${KeycloakHostName}${KEYCLOAK_PATH_PREFIX}"
 KEYCLOAK_API_BASE=""
 
 infoln "Provisioning SatelliteAdmin portal user '${SATELLITE_ADMIN_USERNAME}' in realm '${TARGET_REALM}'"
@@ -36,6 +37,8 @@ keycloak_candidates+=("${KEYCLOAK_BASE_URL}${KEYCLOAK_PATH_PREFIX}")
 if [[ "${KEYCLOAK_BASE_URL}${KEYCLOAK_PATH_PREFIX}" != "${KEYCLOAK_BASE_URL}" ]]; then
   keycloak_candidates+=("${KEYCLOAK_BASE_URL}")
 fi
+keycloak_candidates+=("https://localhost:8443${KEYCLOAK_PATH_PREFIX}")
+keycloak_candidates+=("https://localhost:8443")
 
 for candidate in "${keycloak_candidates[@]}"; do
   for _ in $(seq 1 20); do
@@ -71,6 +74,40 @@ if [[ -z "${access_token}" ]]; then
 fi
 
 auth_header=("Authorization: Bearer ${access_token}")
+
+upsert_realm_frontend_url() {
+  local realm_name="$1"
+  local realm_payload
+  local update_status
+
+  realm_payload="$(
+    curl -ksS \
+      -H "${auth_header[0]}" \
+      "${KEYCLOAK_API_BASE}/admin/realms/${realm_name}" \
+      | jq --arg frontend_url "${KEYCLOAK_PUBLIC_FRONTEND_URL}" \
+        '.attributes = (.attributes // {}) | .attributes.frontendUrl = $frontend_url'
+  )"
+
+  update_status="$(
+    curl -ksS \
+      -o "/tmp/satellite-admin-realm-${realm_name}.out" \
+      -w "%{http_code}" \
+      -X PUT \
+      -H "${auth_header[0]}" \
+      -H "Content-Type: application/json" \
+      -d "${realm_payload}" \
+      "${KEYCLOAK_API_BASE}/admin/realms/${realm_name}"
+  )"
+
+  if [[ "${update_status}" != "204" ]]; then
+    errorln "Realm '${realm_name}' frontend URL update response body:"
+    cat "/tmp/satellite-admin-realm-${realm_name}.out" >&2 || true
+    fatalln "Failed setting realm '${realm_name}' frontendUrl to '${KEYCLOAK_PUBLIC_FRONTEND_URL}' (HTTP ${update_status})."
+  fi
+}
+
+upsert_realm_frontend_url "master"
+upsert_realm_frontend_url "${TARGET_REALM}"
 
 client_internal_id="$(
   curl -ksS \

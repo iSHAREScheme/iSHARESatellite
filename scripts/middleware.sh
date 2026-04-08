@@ -35,10 +35,22 @@ function ParseAPPMiddlewareConfig(){
 
 function ParseCompose(){
     set -e
+   local tls_mode="${TLS_MODE:-manual}"
+   local tls_volume_line="      - ../ssl/tls.crt:/etc/ssl/local/tls.crt:ro"
+   local tls_env_line="      - SSL_CERT_FILE=/etc/ssl/local/tls.crt"
+
    cp ../templates/docker-compose-mw-template.yaml ../middleware/docker-compose-mw.yaml
    
    cryptoPath=$(cd ../app/${RUNNER_MODE}/${orgName}/crypto && echo $(pwd))
-   sed -i -e "s%<path-to-crypto>%${cryptoPath}%g" ../middleware/docker-compose-mw.yaml
+   if [[ "${tls_mode,,}" == "acme" ]]; then
+     tls_volume_line=""
+     tls_env_line=""
+   fi
+   sed -i \
+     -e "s%<path-to-crypto>%${cryptoPath}%g" \
+     -e "s%<OPTIONAL_TLS_CERT_VOLUME>%${tls_volume_line}%g" \
+     -e "s%<OPTIONAL_SSL_CERT_ENV>%${tls_env_line}%g" \
+     ../middleware/docker-compose-mw.yaml
    sudo mkdir -p ../middleware/postgresdata
    sudo chmod -R 777 ../middleware/postgresdata
    sudo chown -R 1001:1001 ../middleware/postgresdata

@@ -41,6 +41,7 @@ EXTERNAL_GATE_KEYS=(
   EXT_FOUNDATION_PACKAGE
   EXT_CHANNEL_ADMISSION
   EXT_TLS_MATERIAL
+  EXT_ACME_READY
   EXT_JWT_MATERIAL
   EXT_APP_DNS
   EXT_SMTP
@@ -58,6 +59,9 @@ EXT_CHANNEL_ADMISSION_UPDATED_AT=""
 EXT_TLS_MATERIAL_STATUS="pending"
 EXT_TLS_MATERIAL_NOTE=""
 EXT_TLS_MATERIAL_UPDATED_AT=""
+EXT_ACME_READY_STATUS="pending"
+EXT_ACME_READY_NOTE=""
+EXT_ACME_READY_UPDATED_AT=""
 EXT_JWT_MATERIAL_STATUS="pending"
 EXT_JWT_MATERIAL_NOTE=""
 EXT_JWT_MATERIAL_UPDATED_AT=""
@@ -93,6 +97,7 @@ REQUIRED_ENV_VARS=(
   PEER_ADMIN_MSP_DIR
   PARTY_ID
   PARTY_NAME
+  TLS_MODE
   UIHostName
   MiddlewareHostName
   KeycloakHostName
@@ -126,6 +131,13 @@ ALL_ENV_VARS=(
   PEER_ADMIN_MSP_DIR
   PARTY_ID
   PARTY_NAME
+  TLS_MODE
+  ACME_EMAIL
+  ACME_STAGING
+  ACME_CA_SERVER
+  ACME_STORAGE_PATH
+  ACME_HTTP_PORT
+  ACME_HTTPS_PORT
   UIHostName
   MiddlewareHostName
   KeycloakHostName
@@ -334,6 +346,7 @@ external_gate_title() {
     EXT_FOUNDATION_PACKAGE) printf "Foundation Package" ;;
     EXT_CHANNEL_ADMISSION) printf "Channel Admission" ;;
     EXT_TLS_MATERIAL) printf "TLS Material" ;;
+    EXT_ACME_READY) printf "ACME Ready" ;;
     EXT_JWT_MATERIAL) printf "JWT Material" ;;
     EXT_APP_DNS) printf "App DNS" ;;
     EXT_SMTP) printf "SMTP" ;;
@@ -515,6 +528,11 @@ is_valid_host_port() {
   is_valid_hostname "${host}" && is_valid_port "${port}"
 }
 
+is_boolean_string() {
+  local value="${1,,}"
+  [[ "${value}" == "true" || "${value}" == "false" ]]
+}
+
 has_no_newline() {
   local value="$1"
   [[ "${value}" != *$'\n'* ]]
@@ -653,6 +671,13 @@ set_defaults() {
   : "${PEER_COUNT:=2}"
   : "${ORDERER_COUNT:=0}"
   : "${CHAINCODE_LABEL:=isharecc_1.0}"
+  : "${TLS_MODE:=manual}"
+  : "${ACME_EMAIL:=}"
+  : "${ACME_STAGING:=false}"
+  : "${ACME_CA_SERVER:=}"
+  : "${ACME_STORAGE_PATH:=.local-state/acme}"
+  : "${ACME_HTTP_PORT:=80}"
+  : "${ACME_HTTPS_PORT:=443}"
   : "${SATELLITE_ADMIN_USERNAME:=satelliteadmin}"
   : "${SATELLITE_ADMIN_PASSWORD:=}"
 }
@@ -679,11 +704,19 @@ validate_org_name() {
 
 validate_required_env() {
   local key
+  local tls_mode_normalized
   for key in "${REQUIRED_ENV_VARS[@]}"; do
     if [[ -z "${!key:-}" ]]; then
       die "Missing required env var: ${key}"
     fi
   done
+  tls_mode_normalized="${TLS_MODE,,}"
+  if [[ "${tls_mode_normalized}" != "manual" && "${tls_mode_normalized}" != "acme" ]]; then
+    die "TLS_MODE must be either 'manual' or 'acme'"
+  fi
+  if [[ "${tls_mode_normalized}" == "acme" && -z "${ACME_EMAIL:-}" ]]; then
+    die "Missing required env var for ACME mode: ACME_EMAIL"
+  fi
   validate_org_name
 }
 
@@ -769,6 +802,16 @@ prompt_required_secret_with_context() {
 
 validate_env_format_with_report() {
   local stage="$1"
+  local tls_mode_normalized
+
+  tls_mode_normalized="${TLS_MODE,,}"
+
+  if [[ "${tls_mode_normalized}" == "manual" || "${tls_mode_normalized}" == "acme" ]]; then
+    report_pass "${stage}" "TLS_MODE format" "${tls_mode_normalized}"
+  else
+    report_fail "${stage}" "TLS_MODE format" "Expected 'manual' or 'acme', got '${TLS_MODE}'"
+    die "TLS_MODE must be either 'manual' or 'acme'"
+  fi
 
   if [[ "${ENVIRONMENT}" =~ ^[A-Za-z0-9._-]+$ ]]; then
     report_pass "${stage}" "ENVIRONMENT format" "${ENVIRONMENT}"
@@ -824,6 +867,53 @@ validate_env_format_with_report() {
   else
     report_fail "${stage}" "SMTP_PORT format" "Invalid port '${SMTP_PORT}'"
     die "SMTP_PORT must be an integer between 1 and 65535"
+  fi
+
+  if [[ "${tls_mode_normalized}" == "acme" ]]; then
+    if [[ "${ACME_EMAIL}" == *"@"* && "${ACME_EMAIL}" == *"."* ]]; then
+      report_pass "${stage}" "ACME_EMAIL format" "${ACME_EMAIL}"
+    else
+      report_fail "${stage}" "ACME_EMAIL format" "Invalid email '${ACME_EMAIL}'"
+      die "ACME_EMAIL must be a valid email address when TLS_MODE=acme"
+    fi
+
+    if is_boolean_string "${ACME_STAGING}"; then
+      report_pass "${stage}" "ACME_STAGING format" "${ACME_STAGING,,}"
+    else
+      report_fail "${stage}" "ACME_STAGING format" "Expected true/false, got '${ACME_STAGING}'"
+      die "ACME_STAGING must be true or false"
+    fi
+
+    if is_valid_port "${ACME_HTTP_PORT}"; then
+      report_pass "${stage}" "ACME_HTTP_PORT format" "${ACME_HTTP_PORT}"
+    else
+      report_fail "${stage}" "ACME_HTTP_PORT format" "Invalid port '${ACME_HTTP_PORT}'"
+      die "ACME_HTTP_PORT must be an integer between 1 and 65535"
+    fi
+    if [[ "${ACME_HTTP_PORT}" != "80" ]]; then
+      report_fail "${stage}" "ACME_HTTP_PORT support" "Unsupported value '${ACME_HTTP_PORT}' (only 80 is supported currently)"
+      die "ACME_HTTP_PORT must be 80 in the current implementation"
+    fi
+
+    if is_valid_port "${ACME_HTTPS_PORT}"; then
+      report_pass "${stage}" "ACME_HTTPS_PORT format" "${ACME_HTTPS_PORT}"
+    else
+      report_fail "${stage}" "ACME_HTTPS_PORT format" "Invalid port '${ACME_HTTPS_PORT}'"
+      die "ACME_HTTPS_PORT must be an integer between 1 and 65535"
+    fi
+    if [[ "${ACME_HTTPS_PORT}" != "443" ]]; then
+      report_fail "${stage}" "ACME_HTTPS_PORT support" "Unsupported value '${ACME_HTTPS_PORT}' (only 443 is supported currently)"
+      die "ACME_HTTPS_PORT must be 443 in the current implementation"
+    fi
+
+    if has_no_newline "${ACME_STORAGE_PATH}"; then
+      report_pass "${stage}" "ACME_STORAGE_PATH syntax" "${ACME_STORAGE_PATH}"
+    else
+      report_fail "${stage}" "ACME_STORAGE_PATH syntax" "Contains newline characters"
+      die "ACME_STORAGE_PATH must be a single-line path"
+    fi
+  else
+    report_pass "${stage}" "ACME mode checks" "Skipped (TLS_MODE=manual)"
   fi
 
   if is_positive_integer "${CHAINCODE_SEQUENCE}"; then
@@ -889,6 +979,12 @@ interactive_capture_env() {
   local smtp_user_example="noreply@example.com"
   local smtp_password_example="change-me"
   local display_name_example="iSHARE Satellite"
+  local tls_mode_example="manual"
+  local acme_email_example="ops@example.com"
+  local acme_staging_example="false"
+  local acme_http_port_example="80"
+  local acme_https_port_example="443"
+  local acme_storage_path_example=".local-state/acme"
   local satellite_admin_username_example="satelliteadmin"
   local satellite_admin_email_example
   local satellite_admin_password_example="ChangeMe123!"
@@ -903,6 +999,11 @@ interactive_capture_env() {
   local orderer_tls_ca_default
   local satellite_admin_username_default
   local satellite_admin_email_default
+  local tls_mode_default
+  local acme_staging_default
+  local acme_http_port_default
+  local acme_https_port_default
+  local acme_storage_path_default
 
   log_info "Collecting server deployment inputs"
   log_info "For prompts with a default value, press Enter to accept it."
@@ -927,6 +1028,11 @@ interactive_capture_env() {
   orderer_tls_ca_default="${ORDERER_TLS_CA_CERT:-${REPO_ROOT}/ca-ishareord.pem}"
   satellite_admin_username_default="${SATELLITE_ADMIN_USERNAME:-satelliteadmin}"
   satellite_admin_email_default="${SATELLITE_ADMIN_EMAIL:-satelliteadmin@${SUB_DOMAIN}}"
+  tls_mode_default="${TLS_MODE:-manual}"
+  acme_staging_default="${ACME_STAGING:-false}"
+  acme_http_port_default="${ACME_HTTP_PORT:-80}"
+  acme_https_port_default="${ACME_HTTPS_PORT:-443}"
+  acme_storage_path_default="${ACME_STORAGE_PATH:-.local-state/acme}"
 
   ORDERER_ADDRESS="$(prompt_required_with_context "ORDERER_ADDRESS" "${ORDERER_ADDRESS:-}" "${orderer_address_example}" "Remote orderer endpoint used by channel and chaincode lifecycle operations.")"
   ORDERER_TLS_CA_CERT="$(prompt_required_with_context "ORDERER_TLS_CA_CERT" "${orderer_tls_ca_default}" "${orderer_tls_ca_example}" "CA certificate file used to trust the remote orderer TLS certificate.")"
@@ -941,6 +1047,15 @@ interactive_capture_env() {
 
   PARTY_ID="$(prompt_required_with_context "PARTY_ID" "${PARTY_ID:-}" "${party_id_example}" "iSHARE party identifier used by app middleware.")"
   PARTY_NAME="$(prompt_required_with_context "PARTY_NAME" "${PARTY_NAME:-}" "${party_name_example}" "Display/legal organization name used by app middleware.")"
+  TLS_MODE="$(prompt_required_with_context "TLS_MODE" "${tls_mode_default}" "${tls_mode_example}" "TLS mode for public endpoints. 'manual' expects ssl/tls.crt + ssl/tls.key. 'acme' provisions certs automatically.")"
+  TLS_MODE="${TLS_MODE,,}"
+  if [[ "${TLS_MODE}" == "acme" ]]; then
+    ACME_EMAIL="$(prompt_required_with_context "ACME_EMAIL" "${ACME_EMAIL:-}" "${acme_email_example}" "Email address registered with ACME certificate authority for certificate issuance/renewal notices.")"
+    ACME_STAGING="$(prompt_required_with_context "ACME_STAGING" "${acme_staging_default}" "${acme_staging_example}" "Use Let's Encrypt staging endpoint for dry-runs (true/false). Set false for real certificates.")"
+    ACME_HTTP_PORT="$(prompt_required_with_context "ACME_HTTP_PORT" "${acme_http_port_default}" "${acme_http_port_example}" "Host port for ACME HTTP challenge traffic. Current implementation requires 80.")"
+    ACME_HTTPS_PORT="$(prompt_required_with_context "ACME_HTTPS_PORT" "${acme_https_port_default}" "${acme_https_port_example}" "Host port for HTTPS traffic. Current implementation requires 443.")"
+    ACME_STORAGE_PATH="$(prompt_required_with_context "ACME_STORAGE_PATH" "${acme_storage_path_default}" "${acme_storage_path_example}" "Directory where ACME account/certificate state is persisted for renewals.")"
+  fi
   UIHostName="$(prompt_required_with_context "UIHostName" "${UIHostName:-}" "${ui_hostname_example}" "Public hostname for the UI entrypoint.")"
   MiddlewareHostName="$(prompt_required_with_context "MiddlewareHostName" "${MiddlewareHostName:-}" "${mw_hostname_example}" "Public hostname for middleware APIs.")"
   KeycloakHostName="$(prompt_required_with_context "KeycloakHostName" "${KeycloakHostName:-}" "${kc_hostname_example}" "Public hostname for Keycloak identity provider.")"
@@ -971,6 +1086,9 @@ stage_preflight() {
   local compose_wrapper
   local server_min_api
   local requested_api
+  local preflight_tls_mode
+  local preflight_http_port
+  local preflight_https_port
 
   if is_debian_like; then
     report_pass "${stage}" "OS check" "Debian-like distribution detected"
@@ -1074,12 +1192,70 @@ EOF
       report_warn "${stage}" "DOCKER_API_VERSION" "Set to '${DOCKER_API_VERSION}', unable to validate against server minimum API"
     fi
   fi
+
+  if [[ -f "${ENV_FILE}" ]]; then
+    load_env_file
+    set_defaults
+    preflight_tls_mode="${TLS_MODE,,}"
+    if [[ "${preflight_tls_mode}" == "acme" ]]; then
+      preflight_http_port="${ACME_HTTP_PORT:-80}"
+      preflight_https_port="${ACME_HTTPS_PORT:-443}"
+
+      if ! is_valid_port "${preflight_http_port}" || ! is_valid_port "${preflight_https_port}"; then
+        report_fail "${stage}" "ACME ports" "Invalid ACME_HTTP_PORT='${preflight_http_port}' or ACME_HTTPS_PORT='${preflight_https_port}'"
+        die "Invalid ACME_HTTP_PORT/ACME_HTTPS_PORT in ${ENV_FILE}"
+      fi
+
+      if [[ -n "${ACME_EMAIL:-}" && "${ACME_EMAIL}" == *"@"* && "${ACME_EMAIL}" == *"."* ]]; then
+        report_pass "${stage}" "ACME email syntax" "${ACME_EMAIL}"
+      else
+        report_fail "${stage}" "ACME email syntax" "ACME_EMAIL is required and must look like an email when TLS_MODE=acme"
+        die "Set ACME_EMAIL in ${ENV_FILE} when TLS_MODE=acme"
+      fi
+
+      if command -v ss >/dev/null 2>&1; then
+        local edge_running="false"
+        if docker ps --format '{{.Names}}' | grep -qx "edge-acme"; then
+          edge_running="true"
+        fi
+        if ss -ltn "( sport = :${preflight_http_port} )" | awk 'NR>1{print $0}' | grep -q .; then
+          if [[ "${edge_running}" == "true" ]]; then
+            report_pass "${stage}" "ACME HTTP port availability" "Port ${preflight_http_port} already served by edge-acme"
+          else
+            report_fail "${stage}" "ACME HTTP port availability" "Port ${preflight_http_port} is already in use"
+            die "ACME mode requires port ${preflight_http_port} for edge proxy. Stop the conflicting listener and rerun."
+          fi
+        fi
+        if ss -ltn "( sport = :${preflight_https_port} )" | awk 'NR>1{print $0}' | grep -q .; then
+          if [[ "${edge_running}" == "true" ]]; then
+            report_pass "${stage}" "ACME HTTPS port availability" "Port ${preflight_https_port} already served by edge-acme"
+          else
+            report_fail "${stage}" "ACME HTTPS port availability" "Port ${preflight_https_port} is already in use"
+            die "ACME mode requires port ${preflight_https_port} for edge proxy. Stop the conflicting listener and rerun."
+          fi
+        fi
+        if [[ "${edge_running}" == "true" ]]; then
+          report_pass "${stage}" "ACME port availability" "Ports ${preflight_http_port}/${preflight_https_port} handled by existing edge-acme"
+        else
+          report_pass "${stage}" "ACME port availability" "Ports ${preflight_http_port}/${preflight_https_port} are free"
+        fi
+      else
+        report_warn "${stage}" "ACME port availability" "ss command not available; skipped port conflict check"
+      fi
+    else
+      report_pass "${stage}" "ACME preflight checks" "Skipped (TLS_MODE=${preflight_tls_mode:-manual})"
+    fi
+  else
+    report_warn "${stage}" "ACME preflight checks" "Skipped because env file does not exist yet (interactive capture happens in env stage)"
+  fi
 }
 
 stage_env() {
   local stage="env"
   local required_key
   local orderer_ca_path
+  local tls_mode_normalized
+  local edge_running="false"
 
   if [[ -f "${ENV_FILE}" ]]; then
     log_info "Loading existing env file: ${ENV_FILE}"
@@ -1118,6 +1294,27 @@ stage_env() {
 
   validate_required_env
   validate_env_format_with_report "${stage}"
+
+  tls_mode_normalized="${TLS_MODE,,}"
+  if [[ "${tls_mode_normalized}" == "acme" ]] && command -v ss >/dev/null 2>&1; then
+    if docker ps --format '{{.Names}}' | grep -qx "edge-acme"; then
+      edge_running="true"
+    fi
+    if ss -ltn "( sport = :${ACME_HTTP_PORT} )" | awk 'NR>1{print $0}' | grep -q . && [[ "${edge_running}" != "true" ]]; then
+      report_fail "${stage}" "ACME HTTP port availability" "Port ${ACME_HTTP_PORT} is already in use"
+      die "ACME mode requires port ${ACME_HTTP_PORT}. Stop conflicting listener before continuing."
+    fi
+    if ss -ltn "( sport = :${ACME_HTTPS_PORT} )" | awk 'NR>1{print $0}' | grep -q . && [[ "${edge_running}" != "true" ]]; then
+      report_fail "${stage}" "ACME HTTPS port availability" "Port ${ACME_HTTPS_PORT} is already in use"
+      die "ACME mode requires port ${ACME_HTTPS_PORT}. Stop conflicting listener before continuing."
+    fi
+    if [[ "${edge_running}" == "true" ]]; then
+      report_pass "${stage}" "ACME port readiness" "Existing edge-acme is using ${ACME_HTTP_PORT}/${ACME_HTTPS_PORT}"
+    else
+      report_pass "${stage}" "ACME port readiness" "Ports ${ACME_HTTP_PORT}/${ACME_HTTPS_PORT} available"
+    fi
+  fi
+
   for required_key in "${REQUIRED_ENV_VARS[@]}"; do
     report_pass "${stage}" "Required variable" "${required_key} is set"
   done
@@ -1282,6 +1479,7 @@ stage_join_network() {
 
 stage_app_deploy() {
   local stage="app-deploy"
+  local tls_mode
   local tls_crt="${REPO_ROOT}/ssl/tls.crt"
   local tls_key="${REPO_ROOT}/ssl/tls.key"
   local jwt_pub="${REPO_ROOT}/jwt-rsa/jwtRSA256-public.pem"
@@ -1291,26 +1489,36 @@ stage_app_deploy() {
   local keycloak_compose
   local middleware_compose
   local ui_compose
+  local edge_compose
   local app_mw_config
   local keycloak_domain
 
   load_env_file
+  tls_mode="${TLS_MODE,,}"
 
-  require_external_file_or_die \
-    "${stage}" \
-    "EXT_TLS_MATERIAL" \
-    "${tls_crt}" \
-    "TLS certificate" \
-    "UI/Keycloak ingress requires ssl/tls.crt." \
-    "Copy your TLS certificate chain to ${tls_crt}"
-  require_external_file_or_die \
-    "${stage}" \
-    "EXT_TLS_MATERIAL" \
-    "${tls_key}" \
-    "TLS private key" \
-    "UI/Keycloak ingress requires ssl/tls.key." \
-    "Copy your TLS private key to ${tls_key}"
-  set_external_gate "EXT_TLS_MATERIAL" "validated" "TLS files present"
+  report_pass "${stage}" "TLS mode" "${tls_mode}"
+
+  if [[ "${tls_mode}" == "manual" ]]; then
+    require_external_file_or_die \
+      "${stage}" \
+      "EXT_TLS_MATERIAL" \
+      "${tls_crt}" \
+      "TLS certificate" \
+      "UI/Keycloak ingress requires ssl/tls.crt." \
+      "Copy your TLS certificate chain to ${tls_crt}"
+    require_external_file_or_die \
+      "${stage}" \
+      "EXT_TLS_MATERIAL" \
+      "${tls_key}" \
+      "TLS private key" \
+      "UI/Keycloak ingress requires ssl/tls.key." \
+      "Copy your TLS private key to ${tls_key}"
+    set_external_gate "EXT_TLS_MATERIAL" "validated" "TLS files present"
+    set_external_gate "EXT_ACME_READY" "skipped" "Skipped (TLS_MODE=manual)"
+  else
+    report_pass "${stage}" "TLS files" "Skipped (TLS_MODE=acme)"
+    set_external_gate "EXT_TLS_MATERIAL" "skipped" "Skipped (TLS_MODE=acme)"
+  fi
 
   require_external_file_or_die \
     "${stage}" \
@@ -1343,7 +1551,11 @@ stage_app_deploy() {
     "Middleware startup mounts isharechannel.tx for blockchain middleware config." \
     "Copy isharechannel.tx to ${channel_tx}"
 
-  report_key_permission_warning "${stage}" "${tls_key}" "TLS private key"
+  if [[ "${tls_mode}" == "manual" ]]; then
+    report_key_permission_warning "${stage}" "${tls_key}" "TLS private key"
+  else
+    report_pass "${stage}" "TLS private key permissions" "Skipped (TLS_MODE=acme)"
+  fi
   report_key_permission_warning "${stage}" "${jwt_priv}" "JWT private key"
   report_dns_resolution_warning "${stage}" "${UIHostName}" "DNS resolution UIHostName"
   report_dns_resolution_warning "${stage}" "${MiddlewareHostName}" "DNS resolution MiddlewareHostName"
@@ -1368,11 +1580,16 @@ stage_app_deploy() {
   fi
   report_pass "${stage}" "Middleware Keycloak domain" "${keycloak_domain}"
   run_script_with_report "${stage}" "deployUI.sh"
+  if [[ "${tls_mode}" == "acme" ]]; then
+    run_script_with_report "${stage}" "deployEdgeAcme.sh"
+    set_external_gate "EXT_ACME_READY" "validated" "ACME edge stack deployed"
+  fi
   run_script_with_report "${stage}" "provisionSatelliteAdmin.sh"
 
   keycloak_compose="${REPO_ROOT}/keycloak/keycloak-docker-compose.yaml"
   middleware_compose="${REPO_ROOT}/middleware/docker-compose-mw.yaml"
   ui_compose="${REPO_ROOT}/ui/docker-compose-ui.yaml"
+  edge_compose="${REPO_ROOT}/edge/docker-compose-edge-acme.yaml"
 
   report_assert_file "${stage}" "${keycloak_compose}" "Rendered keycloak compose"
   report_assert_file "${stage}" "${middleware_compose}" "Rendered middleware compose"
@@ -1380,8 +1597,12 @@ stage_app_deploy() {
   report_assert_compose_running "${stage}" "${keycloak_compose}" "Keycloak stack running"
   report_assert_compose_running "${stage}" "${middleware_compose}" "Middleware stack running"
   report_assert_compose_running "${stage}" "${ui_compose}" "UI stack running"
+  if [[ "${tls_mode}" == "acme" ]]; then
+    report_assert_file "${stage}" "${edge_compose}" "Rendered edge ACME compose"
+    report_assert_compose_running "${stage}" "${edge_compose}" "Edge ACME stack running"
+  fi
 
-  report_pass "${stage}" "Endpoint summary" "https://${UIHostName} | https://${MiddlewareHostName} | https://${KeycloakHostName}:8443/auth"
+  report_pass "${stage}" "Endpoint summary" "https://${UIHostName} | https://${MiddlewareHostName} | https://${KeycloakHostName}/auth"
 }
 
 run_stage() {

@@ -7,7 +7,6 @@ networks:
 services:
  ishare_ui:
     image: isharefoundation/ishare-satellite-ui:v3.0.2
-
     container_name: ishare_ui
     ports:
     - 4200:80
@@ -17,17 +16,6 @@ services:
       - PROXY_ADDRESS_FORWARDING=true
       - KEYCLOAK_FRONTEND_URL=https://<KeycloakHostName>/auth/
       - REALM_NAME=<ORG_NAME>
-    restart: always      
+    restart: always
     networks:
-    - net       
- nginx-proxy:
-   image: nginx:1.25.1-alpine
-   ports:
-     - "443:443"
-   volumes:
-     - /var/run/docker.sock:/tmp/docker.sock:ro
-     - ../ssl:/etc/ssl
-     - ./nginx.conf:/etc/nginx/nginx.conf       
-   restart: always
-   network_mode: host     
-  
+    - net

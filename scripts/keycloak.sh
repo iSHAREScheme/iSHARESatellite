@@ -10,10 +10,17 @@ function createKeyCloakInstance(){
   local hostname=${KeycloakHostName}
   local uihost=${UIHostName}
   local orgname=${ORG_NAME}
+  local tls_mode="${TLS_MODE:-manual}"
   local keycloak_image="${KEYCLOAK_IMAGE:-isharefoundation/ishare-satellite-keycloak:v22.0.1}"
   local postgres_image="${POSTGRES_IMAGE:-isharefoundation/postgressql:v14-alpine}"
+  local compose_template="../templates/keycloak-docker-compose.yaml"
+
+  if [[ "${tls_mode,,}" == "acme" ]]; then
+    compose_template="../templates/keycloak-docker-compose-acme.yaml"
+  fi
+
   cp ../templates/realm-test.json ../keycloak/realm-test.json
-  cp ../templates/keycloak-docker-compose.yaml ../keycloak/keycloak-docker-compose.yaml
+  cp "${compose_template}" ../keycloak/keycloak-docker-compose.yaml
   sed -i \
     -e "s|<KEY_CLOAK_HOST_NAME>|${hostname}|g" \
     -e "s|<KEYCLOAK_IMAGE>|${keycloak_image}|g" \

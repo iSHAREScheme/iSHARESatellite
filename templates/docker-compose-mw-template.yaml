@@ -32,11 +32,11 @@ services:
       - ./app-mw-config.yaml:/test/config/app-mw-config.yaml
       - ../jwt-rsa/jwtRSA256-private.pem:/home/appuser/ishare-middleware/jwtRSA256-private.pem
       - ../jwt-rsa/jwtRSA256-public.pem:/home/appuser/ishare-middleware/jwtRSA256-public.pem
-      - ../ssl/tls.crt:/etc/ssl/local/tls.crt:ro
+<OPTIONAL_TLS_CERT_VOLUME>
     restart: always      
     environment:
       - CONFIG_FILE_PATH=/test/config/app-mw-config.yaml
-      - SSL_CERT_FILE=/etc/ssl/local/tls.crt
+<OPTIONAL_SSL_CERT_ENV>
 #      - GODEBUG=x509ignoreCN=0
     networks:
       - net 

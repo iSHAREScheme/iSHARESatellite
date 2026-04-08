@@ -4,21 +4,31 @@
 . ./global.sh
 
 function deployUI(){
+    local tls_mode="${TLS_MODE:-manual}"
+    local ui_template="../templates/docker-compose-ui.yaml"
+    local recreate_services="ishare_ui nginx-proxy"
 
     mkdir -p ../ui
-    cp ../templates/nginx-template.conf ../ui/nginx.conf
-    sed -i \
-      -e "s/<UIHostName>/${UIHostName}/g" \
-      -e "s/<MiddlewareHostName>/${MiddlewareHostName}/g" \
-      -e "s/<KeycloakHostName>/${KeycloakHostName}/g" \
-      ../ui/nginx.conf
+    if [[ "${tls_mode,,}" == "manual" ]]; then
+      cp ../templates/nginx-template.conf ../ui/nginx.conf
+      sed -i \
+        -e "s/<UIHostName>/${UIHostName}/g" \
+        -e "s/<MiddlewareHostName>/${MiddlewareHostName}/g" \
+        -e "s/<KeycloakHostName>/${KeycloakHostName}/g" \
+        ../ui/nginx.conf
+      ui_template="../templates/docker-compose-ui.yaml"
+      recreate_services="ishare_ui nginx-proxy"
+    else
+      ui_template="../templates/docker-compose-ui-acme.yaml"
+      recreate_services="ishare_ui"
+    fi
 
-    cp ../templates/docker-compose-ui.yaml ../ui/docker-compose-ui.yaml
+    cp "${ui_template}" ../ui/docker-compose-ui.yaml
     sed -i -e "s/<UIHostName>/${UIHostName}/g" -e "s/<MiddlewareHostName>/${MiddlewareHostName}/g" -e "s/<KeycloakHostName>/${KeycloakHostName}/g" -e "s/<ORG_NAME>/${ORG_NAME}/g" ../ui/docker-compose-ui.yaml
 
-    docker-compose -f ../ui/docker-compose-ui.yaml up -d
-    # Ensure updated nginx.conf and UI env values are applied on redeploy/resume runs.
-    docker-compose -f ../ui/docker-compose-ui.yaml up -d --force-recreate ishare_ui nginx-proxy
+    docker-compose -f ../ui/docker-compose-ui.yaml up -d --remove-orphans
+    # Ensure updated env values are applied on redeploy/resume runs.
+    docker-compose -f ../ui/docker-compose-ui.yaml up -d --force-recreate --remove-orphans ${recreate_services}
     infoln "deployment finished, use below command to check the status, if the status is showing Exited contact your support ...  "
     infoln "docker-compose -f ../ui/docker-compose-ui.yaml ps"
 }

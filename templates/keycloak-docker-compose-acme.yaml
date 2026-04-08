@@ -13,17 +13,15 @@ services:
     image: <KEYCLOAK_IMAGE>
     container_name: keycloak
     ports:
-      - 8443:8443
+      - 8080:8080
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
       - KC_HTTP_ENABLED=true
-      - KC_HTTPS_PORT=8443
+      - KC_HTTP_PORT=8080
       - KC_HTTP_RELATIVE_PATH=/auth
+      - KC_PROXY_HEADERS=xforwarded
       - QUARKUS_HTTP_HTTP2=false
-#      - KC_FILE=/tmp/realm-test.json
-      - KC_HTTPS_CERTIFICATE_FILE=/etc/x509/https/tls.crt
-      - KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/x509/https/tls.key
       - KC_DB=postgres
       - KC_DB_USERNAME=keycloak
       - KC_DB_PASSWORD=keycloak
@@ -33,18 +31,14 @@ services:
       - KC_HOSTNAME_ADMIN_URL=https://<KEY_CLOAK_HOST_NAME>/auth/
       - KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_LEGACY_LOGOUT_REDIRECT_URI=true
     volumes:
-#      - ./realm-test.json:/tmp/realm-test.json
-      - ./realm-test.json:/opt/keycloak/data/import/realm-test.json 
-      - ../ssl/:/etc/x509/https/    
-#      - ../ssl/tls.crt:/etc/x509/https/tls.crt
-#      - ../ssl/tls.key:/etc/x509/https/tls.key
+      - ./realm-test.json:/opt/keycloak/data/import/realm-test.json
     command:
-      - start --import-realm   
+      - start --import-realm
     restart: always
     depends_on:
       - keycloakpostgres
     networks:
-    - net       
+    - net
 
   keycloakpostgres:
     image: <POSTGRES_IMAGE>
@@ -54,9 +48,9 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    restart: always      
+    restart: always
     volumes:
       - keycloakpostgres_data:/var/lib/postgresql/data
       - ./postgres:/docker-entrypoint-initdb.d
     networks:
-    - net 
+    - net

@@ -1,0 +1,30 @@
+{
+  email <ACME_EMAIL>
+<ACME_CA_LINE>
+}
+
+http://<UIHostName>, http://<MiddlewareHostName>, http://<KeycloakHostName> {
+  redir https://{host}{uri} 308
+}
+
+https://<UIHostName> {
+  # Preserve same-origin /api behavior from nginx: strip the first /api prefix.
+  @api_root path /api
+  redir @api_root /api/ 308
+
+  handle_path /api/* {
+    reverse_proxy 127.0.0.1:5001
+  }
+
+  handle {
+    reverse_proxy 127.0.0.1:4200
+  }
+}
+
+https://<MiddlewareHostName> {
+  reverse_proxy 127.0.0.1:5001
+}
+
+https://<KeycloakHostName> {
+  reverse_proxy 127.0.0.1:8080
+}

@@ -17,6 +17,19 @@ This guide explains how to run the server installer workflow through `scripts/in
   - fails fast if required values are missing,
   - fails with explicit external-requirement messages when manual onboarding steps are pending.
 
+## TLS Modes
+
+- `TLS_MODE=manual` (default):
+  - you provide `ssl/tls.crt` and `ssl/tls.key`,
+  - installer keeps the existing local nginx TLS entrypoint.
+
+- `TLS_MODE=acme`:
+  - installer deploys an ACME edge proxy (`scripts/deployEdgeAcme.sh`) that issues/renews certificates automatically,
+  - requires `ACME_EMAIL`,
+  - requires public DNS for `UIHostName`, `MiddlewareHostName`, `KeycloakHostName`,
+  - requires ports `80` and `443` available for the edge proxy,
+  - current implementation supports fixed ACME ports only (`ACME_HTTP_PORT=80`, `ACME_HTTPS_PORT=443`).
+
 ## What It Does
 
 The installer orchestrates the existing server deployment scripts in stages:
@@ -50,9 +63,14 @@ Some steps depend on actions outside the VM. This is the expected order:
 
 ### Before `app-deploy`
 
-- Provide `ssl/tls.crt` and `ssl/tls.key`.
-- The certificate must cover all configured public hostnames: `UIHostName`, `MiddlewareHostName`, and `KeycloakHostName`.
-- Valid options are one SAN certificate listing all required hostnames, or one wildcard certificate for the shared zone (for example `*.example.com`).
+- Manual TLS mode (`TLS_MODE=manual`):
+  - provide `ssl/tls.crt` and `ssl/tls.key`,
+  - certificate must cover `UIHostName`, `MiddlewareHostName`, and `KeycloakHostName`,
+  - valid options are one SAN certificate listing all required hostnames, or one wildcard certificate for the shared zone (for example `*.example.com`).
+- ACME TLS mode (`TLS_MODE=acme`):
+  - set `ACME_EMAIL`,
+  - ensure DNS for `UIHostName`, `MiddlewareHostName`, `KeycloakHostName` points to this server,
+  - ensure inbound `80/tcp` and `443/tcp` are open and not occupied by another reverse proxy.
 - Provide `jwt-rsa/jwtRSA256-public.pem` and `jwt-rsa/jwtRSA256-private.pem`.
 - In production, this should come from your qualified eIDAS seal signing material.
 - App DNS records should resolve for `UIHostName`, `MiddlewareHostName`, and `KeycloakHostName`.
@@ -170,9 +188,11 @@ Typical checks include:
 - command availability and Docker access,
 - `docker-compose` is Compose v2 (v1 is rejected),
 - required env variables,
+- TLS mode validation (`manual|acme`) and ACME field validation when selected,
 - stricter format checks for hostnames, host:port values, integer ports/sequences, and path syntax,
-- required files (TLS/JWT/network artifacts),
+- required files (JWT/network artifacts always, TLS files in manual mode),
 - warning checks for private key file permissions (`tls.key`, `jwtRSA256-private.pem`),
+- ACME preflight checks for port availability (or existing `edge-acme` ownership on resume),
 - generated compose/artifact files,
 - running service checks after deployment stages.
 
