@@ -26,5 +26,8 @@ https://<MiddlewareHostName> {
 }
 
 https://<KeycloakHostName> {
+  @keycloak_admin_or_master path /auth/admin* /auth/realms/master*
+  respond @keycloak_admin_or_master 403
+
   reverse_proxy 127.0.0.1:8080
 }

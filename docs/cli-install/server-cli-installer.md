@@ -76,11 +76,16 @@ Some steps depend on actions outside the VM. This is the expected order:
 - App DNS records should resolve for `UIHostName`, `MiddlewareHostName`, and `KeycloakHostName`.
 - SMTP values should be valid: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`.
 - The installer will also create/update one initial Keycloak portal user and assign the `SatelliteAdmin` role in your org realm.
+- Public proxy templates block Keycloak admin console and master-realm login URLs (`/auth/admin*`, `/auth/realms/master*`) by default.
 - Configure this via `.env.server`:
   - `SATELLITE_ADMIN_USERNAME`
   - `SATELLITE_ADMIN_EMAIL`
   - `SATELLITE_ADMIN_PASSWORD`
+  - `SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE` (`true` by default)
+  - `SATELLITE_ADMIN_FORCE_OTP_SETUP` (`true` by default)
 - If `SATELLITE_ADMIN_PASSWORD` is left empty, the installer generates a temporary password and writes it to `.env.server`.
+- By default, the provisioned SatelliteAdmin account is forced to change password on first login.
+- By default, the provisioned SatelliteAdmin account is also forced to configure OTP/TOTP on first login.
 
 It also writes a stage-by-stage validation report under:
 

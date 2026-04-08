@@ -13,6 +13,8 @@ SATELLITE_ADMIN_ROLE_NAME="${SATELLITE_ADMIN_ROLE_NAME:-SatelliteAdmin}"
 SATELLITE_ADMIN_USERNAME="${SATELLITE_ADMIN_USERNAME:-satelliteadmin}"
 SATELLITE_ADMIN_EMAIL="${SATELLITE_ADMIN_EMAIL:-satelliteadmin@${SUB_DOMAIN}}"
 SATELLITE_ADMIN_PASSWORD="${SATELLITE_ADMIN_PASSWORD:-}"
+SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE="${SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE:-true}"
+SATELLITE_ADMIN_FORCE_OTP_SETUP="${SATELLITE_ADMIN_FORCE_OTP_SETUP:-true}"
 SATELLITE_ADMIN_FIRST_NAME="${SATELLITE_ADMIN_FIRST_NAME:-Satellite}"
 SATELLITE_ADMIN_LAST_NAME="${SATELLITE_ADMIN_LAST_NAME:-Admin}"
 TARGET_REALM="${ORG_NAME}"
@@ -30,15 +32,29 @@ KEYCLOAK_PATH_PREFIX="${KEYCLOAK_PATH_PREFIX%/}"
 KEYCLOAK_PUBLIC_FRONTEND_URL="https://${KeycloakHostName}${KEYCLOAK_PATH_PREFIX}"
 KEYCLOAK_API_BASE=""
 
+case "${SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE,,}" in
+  true|false) ;;
+  *)
+    fatalln "SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE must be true or false"
+    ;;
+esac
+
+case "${SATELLITE_ADMIN_FORCE_OTP_SETUP,,}" in
+  true|false) ;;
+  *)
+    fatalln "SATELLITE_ADMIN_FORCE_OTP_SETUP must be true or false"
+    ;;
+esac
+
 infoln "Provisioning SatelliteAdmin portal user '${SATELLITE_ADMIN_USERNAME}' in realm '${TARGET_REALM}'"
 
 declare -a keycloak_candidates=()
+keycloak_candidates+=("https://localhost:8443${KEYCLOAK_PATH_PREFIX}")
+keycloak_candidates+=("https://localhost:8443")
 keycloak_candidates+=("${KEYCLOAK_BASE_URL}${KEYCLOAK_PATH_PREFIX}")
 if [[ "${KEYCLOAK_BASE_URL}${KEYCLOAK_PATH_PREFIX}" != "${KEYCLOAK_BASE_URL}" ]]; then
   keycloak_candidates+=("${KEYCLOAK_BASE_URL}")
 fi
-keycloak_candidates+=("https://localhost:8443${KEYCLOAK_PATH_PREFIX}")
-keycloak_candidates+=("https://localhost:8443")
 
 for candidate in "${keycloak_candidates[@]}"; do
   for _ in $(seq 1 20); do
@@ -216,7 +232,10 @@ if [[ -z "${user_id}" ]]; then
 fi
 
 password_payload="$(
-  jq -n --arg value "${SATELLITE_ADMIN_PASSWORD}" '{type:"password", value:$value, temporary:false}'
+  jq -n \
+    --arg value "${SATELLITE_ADMIN_PASSWORD}" \
+    --argjson temporary "$( [[ "${SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE,,}" == "true" ]] && echo true || echo false )" \
+    '{type:"password", value:$value, temporary:$temporary}'
 )"
 
 password_status="$(
@@ -234,6 +253,43 @@ if [[ "${password_status}" != "204" ]]; then
   errorln "Keycloak reset-password response body:"
   cat /tmp/satellite-admin-password.out >&2 || true
   fatalln "Failed to set password for '${SATELLITE_ADMIN_USERNAME}' (HTTP ${password_status})."
+fi
+
+user_update_payload="$(
+  curl -ksS \
+    -H "${auth_header[0]}" \
+    "${KEYCLOAK_API_BASE}/admin/realms/${TARGET_REALM}/users/${user_id}" \
+    | jq \
+      --argjson force_change "$( [[ "${SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE,,}" == "true" ]] && echo true || echo false )" \
+      --argjson force_otp "$( [[ "${SATELLITE_ADMIN_FORCE_OTP_SETUP,,}" == "true" ]] && echo true || echo false )" \
+      '
+        .requiredActions = (.requiredActions // [])
+        | if $force_change
+          then .requiredActions = ((.requiredActions + ["UPDATE_PASSWORD"]) | unique)
+          else .requiredActions = (.requiredActions - ["UPDATE_PASSWORD"])
+          end
+        | if $force_otp
+          then .requiredActions = ((.requiredActions + ["CONFIGURE_TOTP"]) | unique)
+          else .requiredActions = (.requiredActions - ["CONFIGURE_TOTP"])
+          end
+      '
+)"
+
+user_update_status="$(
+  curl -ksS \
+    -o /tmp/satellite-admin-user-update.out \
+    -w "%{http_code}" \
+    -X PUT \
+    -H "${auth_header[0]}" \
+    -H "Content-Type: application/json" \
+    -d "${user_update_payload}" \
+    "${KEYCLOAK_API_BASE}/admin/realms/${TARGET_REALM}/users/${user_id}"
+)"
+
+if [[ "${user_update_status}" != "204" ]]; then
+  errorln "Keycloak user update response body:"
+  cat /tmp/satellite-admin-user-update.out >&2 || true
+  fatalln "Failed updating required actions for '${SATELLITE_ADMIN_USERNAME}' (HTTP ${user_update_status})."
 fi
 
 role_object="$(
