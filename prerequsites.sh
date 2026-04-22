@@ -1,88 +1,106 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
-#Docker check and installations
-IsDockerInstalledAlready=false
-if which docker && docker --version && docker-compose --version; then
-  echo "Docker is already installed"
-  IsDockerInstalledAlready=true
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export DEBIAN_FRONTEND=noninteractive
+
+if [[ "${EUID}" -eq 0 ]]; then
+  SUDO=""
 else
-  echo "Install docker and docker-compose"
-
-sudo apt-get update ||  { echo 'update existing list of packages failed' ; exit 1; }
-
-sudo apt install apt-transport-https ca-certificates curl software-properties-common -y ||  { echo 'installation of prerequisite packages which let apt use packages over HTTPS failed' ; exit 1; }
-
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - ||  { echo 'add the GPG key for the official Docker repository to your system failed' ; exit 1; }
-
-sudo apt-key fingerprint 0EBFCD88 ||  { echo 'Adding fingerprint failed' ; exit 1; }
-
-sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable" ||  { echo 'Adding Docker repository to APT sources failed' ; exit 1; }
-
-sudo apt-get update -y || { echo 'update the package database with the Docker packages failed' ; exit 1; }
-
-sudo apt-get install docker-ce docker-ce-cli containerd.io ||  { echo 'Downloading docker-ce adn docker-ce-cli failed' ; exit 1; }
-
-sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose ||  { echo 'Downloading of docker-compose failed' ; exit 1; }
-
-sudo chmod +x /usr/local/bin/docker-compose ||  { echo 'Moving file to root location failed' ; exit 1; }
-
-sudo gpasswd -a $USER docker ||  { echo 'Adding Docker user failed' ; exit 1; }
-
-docker version ;
+  SUDO="sudo"
 fi
 
-#Check jq and install
+docker_was_missing=false
 
-if jq --version; then
-  echo "jq is already installed"
-else
-  echo "jq does not exist. Install jq"
-sudo apt update ||  { echo 'update existing list of packages failed' ; exit 1; }
+ensure_docker_repo() {
+  ${SUDO} mkdir -p /etc/apt/keyrings
+  if [[ ! -f /etc/apt/keyrings/docker.asc ]]; then
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | ${SUDO} tee /etc/apt/keyrings/docker.asc >/dev/null
+    ${SUDO} chmod a+r /etc/apt/keyrings/docker.asc
+  fi
 
-sudo apt install -y jq ||  { echo 'Installing of jq failed' ; exit 1; }
-fi
-
-#Installation of HLF Binaries
-
-if [ -d "bin" ] && [ -d "config"  ] ;
-then
-    echo "Directory bin and config exists."  ||  { echo 'Binaries files already exist' ; exit 1; }
-else
-    echo "Error: Directory bin and config does not exists."
-curl https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash -s -- 2.5.4 1.5.7 -d -s
-fi
-
-# Function to install OpenSSL
-install_openssl() {
-  cd /usr/local/src/ || { echo 'Change directory failed' ; exit 1; }
-  wget --no-check-certificate https://www.openssl.org/source/openssl-3.2.0.tar.gz || { echo 'wget openssl failed' ; exit 1; }
-  tar -xf  openssl-3.2.0.tar.gz || { echo 'Extracting openssl tar file failed' ; exit 1; }
-  cd openssl-3.2.0 || { echo 'Change directory failed' ; exit 1; }
-  openssl version || { echo 'check openssl version failed' ; exit 1; }
-  sudo ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib || { echo 'configure and compile OpenSSL failed' ; exit 1; }
-  sudo make || { echo 'make command failed' ; exit 1; }
-  sudo make test
-  sudo make install
+  cat <<EOF | ${SUDO} tee /etc/apt/sources.list.d/docker.list >/dev/null
+deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "${VERSION_CODENAME}") stable
+EOF
 }
 
-# Check and install openssl
-if openssl version | grep -q "3.2.0"; then
-  echo "openssl 3.1.0 is already installed"
-else
-  echo "Install openssl 3.2.0"
-  sudo apt update || { echo 'update existing list of packages failed' ; exit 1; }
-  sudo apt install build-essential checkinstall zlib1g-dev -y || { echo 'install build-essential failed' ; exit 1; }
-  install_openssl
-fi
+ensure_docker() {
+  if command -v docker >/dev/null 2>&1 && docker --version >/dev/null 2>&1; then
+    echo "Docker is already installed"
+  else
+    echo "Installing Docker Engine and Compose plugin"
+    docker_was_missing=true
+    ${SUDO} apt-get update
+    ${SUDO} apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+    ensure_docker_repo
+    ${SUDO} apt-get update
+    ${SUDO} apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+  fi
 
+  if ! docker compose version >/dev/null 2>&1; then
+    echo "Installing Docker Compose plugin"
+    ${SUDO} apt-get update
+    ${SUDO} apt-get install -y docker-compose-plugin
+  fi
 
-# Log Rotation for Docker
+  ${SUDO} gpasswd -a "${USER}" docker >/dev/null 2>&1 || true
+  docker version
+  docker compose version
+}
 
-if [[ ${IsDockerInstalledAlready} = false ]]; then 
-sudo mv ./templates/daemon.json /etc/docker/
-#reboot vm to complete installation
-sudo reboot; 
+ensure_jq() {
+  if command -v jq >/dev/null 2>&1; then
+    jq --version
+    echo "jq is already installed"
+    return
+  fi
+  echo "Installing jq"
+  ${SUDO} apt-get update
+  ${SUDO} apt-get install -y jq
+}
+
+ensure_fabric_binaries() {
+  if [[ -x "${REPO_ROOT}/bin/fabric-ca-client" && -x "${REPO_ROOT}/bin/peer" && -x "${REPO_ROOT}/bin/configtxgen" && -d "${REPO_ROOT}/config" ]]; then
+    echo "Fabric binaries already exist"
+    return
+  fi
+
+  echo "Installing Hyperledger Fabric binaries into ${REPO_ROOT}/bin"
+  (
+    cd "${REPO_ROOT}"
+    curl -fsSL https://raw.githubusercontent.com/hyperledger/fabric/main/scripts/bootstrap.sh | bash -s -- 2.5.4 1.5.7 -d -s
+  )
+}
+
+ensure_openssl() {
+  if openssl version | grep -Eq '^OpenSSL 3\.'; then
+    openssl version
+    echo "OpenSSL 3.x is already installed"
+    return
+  fi
+
+  echo "Installing system OpenSSL"
+  ${SUDO} apt-get update
+  ${SUDO} apt-get install -y openssl
+  openssl version
+}
+
+configure_docker_daemon() {
+  if [[ ! -f "${REPO_ROOT}/templates/daemon.json" ]]; then
+    return
+  fi
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    ${SUDO} cp "${REPO_ROOT}/templates/daemon.json" /etc/docker/daemon.json
+    ${SUDO} systemctl restart docker
+  fi
+}
+
+ensure_docker
+ensure_jq
+ensure_fabric_binaries
+ensure_openssl
+
+if [[ "${docker_was_missing}" == "true" ]]; then
+  configure_docker_daemon
 fi
