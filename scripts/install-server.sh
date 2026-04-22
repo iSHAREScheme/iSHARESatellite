@@ -246,6 +246,46 @@ report_assert_compose_running() {
   fi
 }
 
+ensure_repo_bin_on_path() {
+  if [[ -d "${REPO_ROOT}/bin" ]]; then
+    case ":${PATH}:" in
+      *":${REPO_ROOT}/bin:"*) ;;
+      *) PATH="${REPO_ROOT}/bin:${PATH}" ;;
+    esac
+    export PATH
+  fi
+}
+
+ensure_compose_wrapper_on_path() {
+  local plugin_compose_version_raw
+  local plugin_compose_version
+  local plugin_compose_major
+  local compose_wrapper
+
+  plugin_compose_version_raw="$(docker compose version 2>/dev/null | head -n 1 || true)"
+  plugin_compose_version="$(extract_semver "${plugin_compose_version_raw}")"
+  plugin_compose_major="${plugin_compose_version%%.*}"
+  if [[ -n "${plugin_compose_version}" && "${plugin_compose_major}" -ge 2 ]]; then
+    mkdir -p "${INSTALL_BIN_DIR}"
+    compose_wrapper="${INSTALL_BIN_DIR}/docker-compose"
+    cat >"${compose_wrapper}" <<'EOF'
+#!/usr/bin/env sh
+exec docker compose "$@"
+EOF
+    chmod +x "${compose_wrapper}"
+    case ":${PATH}:" in
+      *":${INSTALL_BIN_DIR}:"*) ;;
+      *) PATH="${INSTALL_BIN_DIR}:${PATH}" ;;
+    esac
+    export PATH
+  fi
+}
+
+bootstrap_runtime_tools() {
+  ensure_repo_bin_on_path
+  ensure_compose_wrapper_on_path
+}
+
 run_script_with_report() {
   local stage="$1"
   local script_name="$2"
@@ -810,6 +850,23 @@ prompt_required_secret_with_context() {
   prompt_required_secret_with_example "${label}" "${current_value}" "${example_value}"
 }
 
+prompt_optional_with_context() {
+  local label="$1"
+  local current_value="$2"
+  local example_value="$3"
+  local explanation="$4"
+  local prompt
+
+  log_info "${label}: ${explanation}" >&2
+  prompt="${label} (example: ${example_value})"
+  if [[ -n "${current_value}" ]]; then
+    prompt_value "${prompt}" "${current_value}"
+  else
+    read -r -p "${prompt} (optional, press Enter to skip): " current_value
+    printf "%s" "${current_value}"
+  fi
+}
+
 validate_env_format_with_report() {
   local stage="$1"
   local tls_mode_normalized
@@ -982,6 +1039,7 @@ interactive_capture_env() {
   local sub_domain_example="test.example.com"
   local environment_example="test"
   local orderer_address_example="orderer1.example.aks.io:443"
+  local orderer_tls_hostname_override_example="orderer1.example.aks.io"
   local channel_example="appchannel"
   local chaincode_name_example="isharecode"
   local chaincode_version_example="v1"
@@ -1059,6 +1117,7 @@ interactive_capture_env() {
 
   ORDERER_ADDRESS="$(prompt_required_with_context "ORDERER_ADDRESS" "${ORDERER_ADDRESS:-}" "${orderer_address_example}" "Orderer endpoint used by channel and chaincode lifecycle operations.")"
   ORDERER_TLS_CA_CERT="$(prompt_required_with_context "ORDERER_TLS_CA_CERT" "${orderer_tls_ca_default}" "${orderer_tls_ca_example}" "CA certificate file used to trust the orderer TLS certificate.")"
+  ORDERER_TLS_HOSTNAME_OVERRIDE="$(prompt_optional_with_context "ORDERER_TLS_HOSTNAME_OVERRIDE" "${ORDERER_TLS_HOSTNAME_OVERRIDE:-}" "${orderer_tls_hostname_override_example}" "Optional TLS hostname override for orderer connections behind a mapped port or local proxy.")"
   CHANNEL_NAME="$(prompt_required_with_context "CHANNEL_NAME" "${channel_default}" "${channel_example}" "Fabric channel to join and use for ledger and chaincode operations.")"
   ANCHOR_PEER_HOSTNAME="$(prompt_required_with_context "ANCHOR_PEER_HOSTNAME" "${anchor_peer_default}" "${anchor_peer_example}" "Peer hostname published as your org anchor peer on the channel.")"
   ANCHOR_PEER_PORT_NUMBER="$(prompt_required_with_context "ANCHOR_PEER_PORT_NUMBER" "${anchor_peer_port_default}" "7051" "Anchor peer service port.")"
@@ -1107,7 +1166,6 @@ stage_preflight() {
   local plugin_compose_version_raw
   local plugin_compose_version
   local plugin_compose_major
-  local compose_wrapper
   local server_min_api
   local requested_api
   local preflight_tls_mode
@@ -1135,7 +1193,9 @@ stage_preflight() {
     die "Missing prerequisite installer at ${REPO_ROOT}/prerequsites.sh"
   fi
 
-  for cmd in bash docker jq openssl curl; do
+  bootstrap_runtime_tools
+
+  for cmd in bash docker jq openssl curl fabric-ca-client peer configtxgen; do
     if require_cmd "$cmd"; then
       report_pass "${stage}" "Command available" "${cmd}"
     else
@@ -1170,18 +1230,6 @@ stage_preflight() {
   plugin_compose_version="$(extract_semver "${plugin_compose_version_raw}")"
   plugin_compose_major="${plugin_compose_version%%.*}"
   if [[ -n "${plugin_compose_version}" && "${plugin_compose_major}" -ge 2 ]]; then
-    mkdir -p "${INSTALL_BIN_DIR}"
-    compose_wrapper="${INSTALL_BIN_DIR}/docker-compose"
-    cat >"${compose_wrapper}" <<'EOF'
-#!/usr/bin/env sh
-exec docker compose "$@"
-EOF
-    chmod +x "${compose_wrapper}"
-    case ":${PATH}:" in
-      *":${INSTALL_BIN_DIR}:"*) ;;
-      *) PATH="${INSTALL_BIN_DIR}:${PATH}" ;;
-    esac
-    export PATH
     report_pass "${stage}" "Compose implementation" "docker compose plugin v${plugin_compose_version} (docker-compose wrapper active)"
   else
     if ! require_cmd docker-compose; then
@@ -1718,6 +1766,7 @@ main() {
 
   init_state_dir "${STATE_DIR}"
   init_external_state
+  bootstrap_runtime_tools
   write_state_file "RUNNING" "Installer initialized"
   if [[ "${RESET_STATE}" == "true" ]]; then
     clear_checkpoints "${STATE_DIR}"

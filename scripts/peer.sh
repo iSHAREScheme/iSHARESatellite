@@ -52,7 +52,7 @@ function peerTemplateParse(){
 function peersUp(){
 set -e
 set -x
-docker-compose -f ../hlf/${RUNNER_MODE}/${orgName}/peers/docker-compose-hlf.yaml up -d
+run_compose -f ../hlf/${RUNNER_MODE}/${orgName}/peers/docker-compose-hlf.yaml up -d
 set +x
 set +e
 }

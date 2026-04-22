@@ -1,8 +1,7 @@
-version: "3.7"
-
 networks:
   net:
     name: fabric_network
+    external: true
 
 services:
   couchdb.peer0.<orgDomain>:
@@ -153,4 +152,3 @@ services:
     networks:
     - net 
   
-

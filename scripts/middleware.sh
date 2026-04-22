@@ -103,7 +103,7 @@ function ParseCompose(){
 
 function composeUp(){
     set -e
-    docker-compose -f ../middleware/docker-compose-mw.yaml up -d
+    run_compose -f ../middleware/docker-compose-mw.yaml up -d
 }
 
 infoln "Starting middleware Parser"

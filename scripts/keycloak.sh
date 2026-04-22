@@ -31,7 +31,7 @@ function createKeyCloakInstance(){
     -e "s/<UI_HOST_NAME>/${uihost}/g" \
     -e "s/<ORG_NAME>/${orgname}/g" \
     ../keycloak/realm-test.json
-  docker-compose -f ../keycloak/keycloak-docker-compose.yaml up -d 
+  run_compose -f ../keycloak/keycloak-docker-compose.yaml up -d 
   set +e
 }
 if [[ ${KeycloakHostName} = " " || ${KeycloakHostName} = "" ]]; then 

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+GLOBAL_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+: "${REPO_ROOT:=$(cd "${GLOBAL_SCRIPT_DIR}/.." && pwd)}"
+BIN_DIR="${REPO_ROOT}/bin"
+
 REGISTERAR_NAME="${REGISTERAR_NAME:-admin}"
 ENROLLMENT_SECRET="${ENROLLMENT_SECRET:-adminpw}"
 RUNNER_MODE="${ENVIRONMENT}"
@@ -41,4 +45,9 @@ if [[ ${ENVIRONMENT} = " " || ${ENVIRONMENT} = "" ]]; then
    exit 1
 fi
 orgDomain=${ORG_NAME}.${SUB_DOMAIN}
-export PATH=$PATH:$(cd ../bin && echo $(pwd))
+if [[ -d "${BIN_DIR}" ]]; then
+   case ":${PATH}:" in
+      *":${BIN_DIR}:"*) ;;
+      *) export PATH="${BIN_DIR}:${PATH}" ;;
+   esac
+fi

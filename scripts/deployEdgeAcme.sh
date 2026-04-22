@@ -87,7 +87,7 @@ function deploy_edge_acme() {
     -e "s/<ACME_CA_LINE>/${escaped_ca_line}/g" \
     ../edge/Caddyfile
 
-  docker-compose -f ../edge/docker-compose-edge-acme.yaml up -d --force-recreate --remove-orphans
+  run_compose -f ../edge/docker-compose-edge-acme.yaml up -d --force-recreate --remove-orphans
 
   probe_https_host "${UIHostName}"
   probe_https_host "${MiddlewareHostName}"

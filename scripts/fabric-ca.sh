@@ -22,9 +22,9 @@ sudo chmod -R 777 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/certs
 sudo chmod -R 777 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data
 
 infoln "Bringing Fabric CA UP ...."
-    docker-compose -f ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker-compose-fabric-ca.yaml up -d --force-recreate 2>&1
+    run_compose -f ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker-compose-fabric-ca.yaml up -d --force-recreate 2>&1
 sleep 5
-caContainer=$(docker-compose -f ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker-compose-fabric-ca.yaml logs ca.${orgDomain} | grep Listening )
+caContainer=$(run_compose -f ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker-compose-fabric-ca.yaml logs ca.${orgDomain} | grep Listening )
 if [ "${caContainer}" == "" ]; then
 errorln "Failed to bring Fabric CA up"
 exit 1

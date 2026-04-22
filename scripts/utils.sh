@@ -32,6 +32,18 @@ function warnln() {
   println "${C_YELLOW}${1}${C_RESET}"
 }
 
+function run_compose() {
+  if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    docker compose "$@"
+    return
+  fi
+  if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose "$@"
+    return
+  fi
+  fatalln "Docker Compose v2 is required but was not found"
+}
+
 # fatalln echos in red color and exits with fail status
 function fatalln() {
   errorln "$1"
@@ -86,3 +98,4 @@ export -f errorln
 export -f successln
 export -f infoln
 export -f warnln
+export -f run_compose

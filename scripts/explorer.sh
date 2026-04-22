@@ -37,7 +37,7 @@ mkdir -p ../explorer/docker_data/explorer_ishare
 chown -R 70:70 ../explorer/docker_data/explorer_ishare || true
 chmod -R 700 ../explorer/docker_data/explorer_ishare || true
 
-docker-compose -f ../explorer/explorer-docker-compose.yaml up -d 2>&1
+run_compose -f ../explorer/explorer-docker-compose.yaml up -d 2>&1
 }
 
 parseExplorerConfigAndUP

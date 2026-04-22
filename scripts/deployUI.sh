@@ -26,11 +26,11 @@ function deployUI(){
     cp "${ui_template}" ../ui/docker-compose-ui.yaml
     sed -i -e "s/<UIHostName>/${UIHostName}/g" -e "s/<MiddlewareHostName>/${MiddlewareHostName}/g" -e "s/<KeycloakHostName>/${KeycloakHostName}/g" -e "s/<ORG_NAME>/${ORG_NAME}/g" ../ui/docker-compose-ui.yaml
 
-    docker-compose -f ../ui/docker-compose-ui.yaml up -d --remove-orphans
+    run_compose -f ../ui/docker-compose-ui.yaml up -d --remove-orphans
     # Ensure updated env values are applied on redeploy/resume runs.
-    docker-compose -f ../ui/docker-compose-ui.yaml up -d --force-recreate --remove-orphans ${recreate_services}
+    run_compose -f ../ui/docker-compose-ui.yaml up -d --force-recreate --remove-orphans ${recreate_services}
     infoln "deployment finished, use below command to check the status, if the status is showing Exited contact your support ...  "
-    infoln "docker-compose -f ../ui/docker-compose-ui.yaml ps"
+    infoln "docker compose -f ../ui/docker-compose-ui.yaml ps"
 }
 
 if [[ ${UIHostName} = " " || ${UIHostName} = "" ]]; then 
