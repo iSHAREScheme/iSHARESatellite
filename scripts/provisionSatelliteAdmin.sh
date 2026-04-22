@@ -17,6 +17,8 @@ SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE="${SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE:-
 SATELLITE_ADMIN_FORCE_OTP_SETUP="${SATELLITE_ADMIN_FORCE_OTP_SETUP:-true}"
 SATELLITE_ADMIN_FIRST_NAME="${SATELLITE_ADMIN_FIRST_NAME:-Satellite}"
 SATELLITE_ADMIN_LAST_NAME="${SATELLITE_ADMIN_LAST_NAME:-Admin}"
+SATELLITE_ADMIN_PARTY_ID="${SATELLITE_ADMIN_PARTY_ID:-${PARTY_ID:-}}"
+SATELLITE_ADMIN_PARTY_NAME="${SATELLITE_ADMIN_PARTY_NAME:-${PARTY_NAME:-}}"
 TARGET_REALM="${ORG_NAME}"
 TARGET_CLIENT_ID="frontend"
 
@@ -46,9 +48,19 @@ case "${SATELLITE_ADMIN_FORCE_OTP_SETUP,,}" in
     ;;
 esac
 
+if [[ -z "${SATELLITE_ADMIN_PARTY_ID}" ]]; then
+  fatalln "SATELLITE_ADMIN_PARTY_ID (or PARTY_ID) must be set"
+fi
+
+if [[ -z "${SATELLITE_ADMIN_PARTY_NAME}" ]]; then
+  fatalln "SATELLITE_ADMIN_PARTY_NAME (or PARTY_NAME) must be set"
+fi
+
 infoln "Provisioning SatelliteAdmin portal user '${SATELLITE_ADMIN_USERNAME}' in realm '${TARGET_REALM}'"
 
 declare -a keycloak_candidates=()
+keycloak_candidates+=("http://localhost:8080${KEYCLOAK_PATH_PREFIX}")
+keycloak_candidates+=("http://localhost:8080")
 keycloak_candidates+=("https://localhost:8443${KEYCLOAK_PATH_PREFIX}")
 keycloak_candidates+=("https://localhost:8443")
 keycloak_candidates+=("${KEYCLOAK_BASE_URL}${KEYCLOAK_PATH_PREFIX}")
@@ -59,7 +71,7 @@ fi
 for candidate in "${keycloak_candidates[@]}"; do
   for _ in $(seq 1 20); do
     status_code="$(curl -ksS -o /dev/null -w "%{http_code}" "${candidate}/realms/master" || true)"
-    if [[ "${status_code}" == "200" ]]; then
+    if [[ "${status_code}" =~ ^[23][0-9][0-9]$ ]]; then
       KEYCLOAK_API_BASE="${candidate}"
       break
     fi
@@ -189,13 +201,19 @@ if [[ -z "${user_id}" ]]; then
       --arg email "${SATELLITE_ADMIN_EMAIL}" \
       --arg first_name "${SATELLITE_ADMIN_FIRST_NAME}" \
       --arg last_name "${SATELLITE_ADMIN_LAST_NAME}" \
+      --arg party_id "${SATELLITE_ADMIN_PARTY_ID}" \
+      --arg party_name "${SATELLITE_ADMIN_PARTY_NAME}" \
       '{
         username: $username,
         enabled: true,
         emailVerified: true,
         email: $email,
         firstName: $first_name,
-        lastName: $last_name
+        lastName: $last_name,
+        attributes: {
+          partyId: [$party_id],
+          partyName: [$party_name]
+        }
       }'
   )"
 
@@ -260,10 +278,15 @@ user_update_payload="$(
     -H "${auth_header[0]}" \
     "${KEYCLOAK_API_BASE}/admin/realms/${TARGET_REALM}/users/${user_id}" \
     | jq \
+      --arg party_id "${SATELLITE_ADMIN_PARTY_ID}" \
+      --arg party_name "${SATELLITE_ADMIN_PARTY_NAME}" \
       --argjson force_change "$( [[ "${SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE,,}" == "true" ]] && echo true || echo false )" \
       --argjson force_otp "$( [[ "${SATELLITE_ADMIN_FORCE_OTP_SETUP,,}" == "true" ]] && echo true || echo false )" \
       '
         .requiredActions = (.requiredActions // [])
+        | .attributes = (.attributes // {})
+        | .attributes.partyId = [$party_id]
+        | .attributes.partyName = [$party_name]
         | if $force_change
           then .requiredActions = ((.requiredActions + ["UPDATE_PASSWORD"]) | unique)
           else .requiredActions = (.requiredActions - ["UPDATE_PASSWORD"])

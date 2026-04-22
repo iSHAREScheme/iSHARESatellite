@@ -50,6 +50,10 @@ set -x
 mkdir -p $CRYPTO_PATH/msp/{admincerts,cacerts,tlscacerts}
 cp $CA_CRYPTO_PATH/ca-admin/msp/cacerts/*  $CRYPTO_PATH/msp/cacerts/      
 cp $CA_CRYPTO_PATH/ca-admin/tls/tlscacerts/* $CRYPTO_PATH/msp/tlscacerts/
+first_tls_ca=$(ls -t "$CRYPTO_PATH/msp/tlscacerts" | head -n 1)
+if [ -n "$first_tls_ca" ]; then
+  cp "$CRYPTO_PATH/msp/tlscacerts/$first_tls_ca" "$CRYPTO_PATH/msp/tlscacerts/tlscacert.pem"
+fi
 mkdir -p $CA_CRYPTO_PATH/ca-admin/msp/admincerts
 cp $CRYPTO_PATH/users/Admin@${orgName}/msp/signcerts/*  $CRYPTO_PATH/msp/admincerts/
 set +x
@@ -58,12 +62,22 @@ set +e
 
 function createOrgAdminSDKDir(){
   set -e
+  local admin_signcert
+  local admin_key
+  local admin_cacert
   mkdir -p ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/{admincerts,cacerts,keystore,signcerts,tlscacerts}
-  cp $CRYPTO_PATH/users/Admin@${orgName}/msp/signcerts/* ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/signcerts/Admin@${orgDomain}-cert.pem
-  cp $CRYPTO_PATH/users/Admin@${orgName}/msp/keystore/*  ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/keystore/priv_sk
-  cp $CRYPTO_PATH/users/Admin@${orgName}/msp/cacerts/*  ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/cacerts/cacert.pem
-  cp $CRYPTO_PATH/users/Admin@${orgName}/msp/signcerts/* ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/signcerts/Admin@${orgDomain}-cert.pem
-  cp $CRYPTO_PATH/msp/tlscacerts/* ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/tlscacerts/tlscacert.pem
+  admin_signcert=$(ls -t "$CRYPTO_PATH/users/Admin@${orgName}/msp/signcerts" | head -n 1)
+  admin_key=$(ls -t "$CRYPTO_PATH/users/Admin@${orgName}/msp/keystore" | head -n 1)
+  admin_cacert=$(ls -t "$CRYPTO_PATH/users/Admin@${orgName}/msp/cacerts" | head -n 1)
+  cp "$CRYPTO_PATH/users/Admin@${orgName}/msp/signcerts/$admin_signcert" ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/signcerts/Admin@${orgDomain}-cert.pem
+  cp "$CRYPTO_PATH/users/Admin@${orgName}/msp/keystore/$admin_key" ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/keystore/priv_sk
+  cp "$CRYPTO_PATH/users/Admin@${orgName}/msp/cacerts/$admin_cacert" ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/cacerts/cacert.pem
+  if [ -f "$CRYPTO_PATH/msp/tlscacerts/tlscacert.pem" ]; then
+    cp "$CRYPTO_PATH/msp/tlscacerts/tlscacert.pem" ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/tlscacerts/tlscacert.pem
+  else
+    first_tls_ca=$(ls -t "$CRYPTO_PATH/msp/tlscacerts" | head -n 1)
+    cp "$CRYPTO_PATH/msp/tlscacerts/$first_tls_ca" ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/tlscacerts/tlscacert.pem
+  fi
   cp ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/signcerts/Admin@${orgDomain}-cert.pem ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp/admincerts/Admin@${orgDomain}-cert.pem
   set +e
 }

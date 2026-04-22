@@ -1,14 +1,14 @@
 #!/bin/bash
 
-REGISTERAR_NAME=admin
-ENROLLMENT_SECRET=adminpw
+REGISTERAR_NAME="${REGISTERAR_NAME:-admin}"
+ENROLLMENT_SECRET="${ENROLLMENT_SECRET:-adminpw}"
 RUNNER_MODE="${ENVIRONMENT}"
-FABRIC_CA_ADDRESS=localhost:7054
+FABRIC_CA_ADDRESS="${FABRIC_CA_ADDRESS:-localhost:7054}"
 orgName="${ORG_NAME}"
 domain="${SUB_DOMAIN}"
 domainName="${SUB_DOMAIN}"
-peerCount=2
-ordererCount=0
+peerCount="${PEER_COUNT:-2}"
+ordererCount="${ORDERER_COUNT:-0}"
 if [[ ${ORG_NAME} = " " || ${ORG_NAME} = "" ]]; then 
    echo " ORG_NAME is not specified "
    exit 1
@@ -42,4 +42,3 @@ if [[ ${ENVIRONMENT} = " " || ${ENVIRONMENT} = "" ]]; then
 fi
 orgDomain=${ORG_NAME}.${SUB_DOMAIN}
 export PATH=$PATH:$(cd ../bin && echo $(pwd))
-

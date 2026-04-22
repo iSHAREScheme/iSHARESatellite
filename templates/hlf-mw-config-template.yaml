@@ -38,9 +38,9 @@ client:
   cryptoconfig:
     path: /var/hyperledger/crypto
   credentialStore:
-    path: /var/hyperledger/crypto
+    path: /tmp/fabric-client-kvs
     cryptoStore:
-      path: /var/hyperledger/crypto
+      path: /tmp/fabric-client-crypto
   BCCSP:
     security:
       enabled: true
@@ -61,11 +61,6 @@ channels:
   _default:
     peers:
       peer0.<orgDomain>:
-        endorsingPeer: true
-        chaincodeQuery: true
-        ledgerQuery: true
-        eventSource: true
-      peer1.<orgDomain>:
         endorsingPeer: true
         chaincodeQuery: true
         ledgerQuery: true
@@ -96,7 +91,6 @@ organizations:
     cryptoPath: peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp
     peers:
     - peer0.<orgDomain>
-    - peer1.<orgDomain>
     certificateAuthorities:
     - ca.<orgDomain>
 peers:
@@ -112,18 +106,6 @@ peers:
       allow-insecure: false
     tlsCACerts:
       path: /var/hyperledger/crypto/peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp/tlscacerts/tlscacert.pem
-  peer1.<orgDomain>:
-    url: peer1.<orgDomain>:8051
-    eventUrl: peer1.<orgDomain>:8053
-    grpcOptions:
-      ssl-target-name-override: peer1.<orgDomain>
-      keep-alive-time: 0s
-      keep-alive-timeout: 20s
-      keep-alive-permit: false
-      fail-fast: false
-      allow-insecure: false
-    tlsCACerts:
-      path: /var/hyperledger/crypto/peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp/tlscacerts/tlscacert.pem
 certificateAuthorities:
   ca.<orgDomain>:
     url: https://ca.<orgDomain>:7054
@@ -131,9 +113,6 @@ certificateAuthorities:
       verify: true
     tlsCACerts:
       path: /var/hyperledger/crypto/peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp/tlscacerts/tlscacert.pem
-      client:
-        keyfile: /test/peerOrganizations/<orgDomain>/users/User1@<orgName>.com/tls/client.crt
-        certfile: /test/peerOrganizations/<orgDomain>/users/User1@<orgName>.com/tls/client.key
     registrar:
       enrollId: admin
       enrollSecret: adminpw
@@ -161,6 +140,6 @@ ishareConfig:
   bootChannelConfigs:
     <CHANNEL_NAME>:
       channelId: <CHANNEL_NAME>
-      configTxFile: /tmp/channel/isharechannel.tx
+      configTxFile: /tmp/channel/channel.tx
       genesisBlockFile: /tmp/channel/genesis.block
       isEnabled: true

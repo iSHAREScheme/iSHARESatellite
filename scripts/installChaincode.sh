@@ -45,9 +45,16 @@ export CORE_PEER_ADDRESS=peer0.${orgDomain}:7051
 
 CC_PATH=$(cd ../chaincode && echo $(pwd))/ishare.tgz
 
-installChaincodeOnPeer "peer0.${orgDomain}:7051" "${CC_PATH}" || exit 1
-installChaincodeOnPeer "peer1.${orgDomain}:8051" "${CC_PATH}" || exit 1
+	local i
+	local peer_addr
+	local peer_port
 
-}
+	for ((i=0; i<${peerCount}; i++)); do
+	   peer_port=$((7051 + (i * 1000)))
+	   peer_addr="peer${i}.${orgDomain}:${peer_port}"
+	   installChaincodeOnPeer "${peer_addr}" "${CC_PATH}" || exit 1
+	done
+
+	}
 
 installChaincode

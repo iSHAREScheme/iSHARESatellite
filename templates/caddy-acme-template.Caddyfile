@@ -26,6 +26,11 @@ https://<MiddlewareHostName> {
 }
 
 https://<KeycloakHostName> {
+  @master_token path /auth/realms/master/protocol/openid-connect/token
+  handle @master_token {
+    reverse_proxy 127.0.0.1:8080
+  }
+
   @keycloak_admin_or_master path /auth/admin* /auth/realms/master*
   respond @keycloak_admin_or_master 403
 

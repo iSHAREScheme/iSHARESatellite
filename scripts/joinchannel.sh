@@ -40,6 +40,8 @@ export CORE_PEER_MSPCONFIGPATH=${PEER_ADMIN_MSP_DIR}
 export CORE_PEER_TLS_ROOTCERT_FILE=${fabricCACert}
 local ORDERER_TLS_CA_FILE=${ORDERER_TLS_CA_CERT}
 local ORDERER_ENDPOINT=${ORDERER_ADDRESS}
+local ORDERER_TLS_HOSTNAME=${ORDERER_TLS_HOSTNAME_OVERRIDE}
+local ORDERER_TLS_HOSTNAME_ARGS=()
 local CH_NAME=${CHANNEL_NAME}
 
 if [[ ${CHANNEL_NAME} = " " || ${CHANNEL_NAME} = "" ]]; then 
@@ -75,12 +77,16 @@ fi
 
 export CORE_PEER_ADDRESS=peer0.${orgDomain}:7051
 
+if [[ -n "${ORDERER_TLS_HOSTNAME}" ]]; then
+   ORDERER_TLS_HOSTNAME_ARGS=(--ordererTLSHostnameOverride "${ORDERER_TLS_HOSTNAME}")
+fi
+
 
 infoln "Fetching the 0th block for the channel's ledger"
 
 mkdir -p ../channelops
 set -x
-peer channel fetch 0 ../channelops/${CH_NAME}.pb  -o $ORDERER_ENDPOINT --tls --cafile $ORDERER_TLS_CA_FILE -c ${CH_NAME}
+peer channel fetch 0 ../channelops/${CH_NAME}.pb  -o $ORDERER_ENDPOINT --tls --cafile $ORDERER_TLS_CA_FILE "${ORDERER_TLS_HOSTNAME_ARGS[@]}" -c ${CH_NAME}
 res=$?
 set +x
 
@@ -91,8 +97,15 @@ fi
 
 infoln "Successfully fetched block for peers to join"
 
-joinPeerIfNeeded "peer0.${orgDomain}:7051" "${CH_NAME}" || exit 1
-joinPeerIfNeeded "peer1.${orgDomain}:8051" "${CH_NAME}" || exit 1
+	local i
+	local peer_addr
+	local peer_port
+
+	for ((i=0; i<${peerCount}; i++)); do
+	      peer_port=$((7051 + (i * 1000)))
+	      peer_addr="peer${i}.${orgDomain}:${peer_port}"
+	      joinPeerIfNeeded "${peer_addr}" "${CH_NAME}" || exit 1
+	done
 
 
 }

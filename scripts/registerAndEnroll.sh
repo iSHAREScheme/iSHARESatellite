@@ -38,15 +38,21 @@ infoln " Reg admin TLS is Enrolled successfully .......... "
 }
 
 function registerOrgAdmin(){
+local output
 
 set -x 
-fabric-ca-client register --id.name Admin --id.secret ${ENROLLMENT_SECRET} --id.type admin \
+output=$(fabric-ca-client register --id.name Admin --id.secret ${ENROLLMENT_SECRET} --id.type admin \
 --id.attrs "hf.Registrar.Roles=*,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert" \
--u https://${caAddress}
+-u https://${caAddress} 2>&1)
 
 res=$?
 set +x
+printf "%s\n" "${output}"
 if [ $res -ne 0 ]; then 
+   if printf "%s" "${output}" | grep -qi "already registered"; then
+      warnln " Org Admin is already registered; continuing "
+      return 0
+   fi
    errorln " Error while registering Org Admin  "
    exit 1
 fi
@@ -100,13 +106,19 @@ function registerPeerIdentity(){
 local peerNum=peer$1
 local peerID=${peerNum}.${orgName}.${domainName}
 local caAddress=$2
+local output
 set -x 
-fabric-ca-client register --id.name ${peerID} --id.secret ${ENROLLMENT_SECRET} --id.type peer \
---id.affiliation org1.department1 -u https://${caAddress}
+output=$(fabric-ca-client register --id.name ${peerID} --id.secret ${ENROLLMENT_SECRET} --id.type peer \
+--id.affiliation org1.department1 -u https://${caAddress} 2>&1)
 
 res=$?
 set +x
+printf "%s\n" "${output}"
 if [ $res -ne 0 ]; then 
+   if printf "%s" "${output}" | grep -qi "already registered"; then
+      warnln " peer ${peerID} is already registered; continuing "
+      return 0
+   fi
    errorln " Error while registering peer ${peerID} "
    exit 1
 fi
@@ -158,10 +170,16 @@ if [ $res -ne 0 ]; then
    errorln " Error while Enrolling peer identity ${peerID} "
    exit 1
 fi
-mkdir -p $CRYPTO_PATH/peers/${peerID}/tls/server
-cp $CRYPTO_PATH/peers/${peerID}/tls/signcerts/* $CRYPTO_PATH/peers/${peerID}/tls/server/cert.pem
-cp $CRYPTO_PATH/peers/${peerID}/tls/keystore/*  $CRYPTO_PATH/peers/${peerID}/tls/server/key.pem
-cp $CRYPTO_PATH/peers/${peerID}/tls/tlscacerts/*   $CRYPTO_PATH/peers/${peerID}/tls/server/ca.pem
+	mkdir -p $CRYPTO_PATH/peers/${peerID}/tls/server
+	local peer_tls_signcert
+	local peer_tls_key
+	local peer_tls_ca
+	peer_tls_signcert=$(ls -t "$CRYPTO_PATH/peers/${peerID}/tls/signcerts" | head -n 1)
+	peer_tls_key=$(ls -t "$CRYPTO_PATH/peers/${peerID}/tls/keystore" | head -n 1)
+	peer_tls_ca=$(ls -t "$CRYPTO_PATH/peers/${peerID}/tls/tlscacerts" | head -n 1)
+	cp "$CRYPTO_PATH/peers/${peerID}/tls/signcerts/$peer_tls_signcert" "$CRYPTO_PATH/peers/${peerID}/tls/server/cert.pem"
+	cp "$CRYPTO_PATH/peers/${peerID}/tls/keystore/$peer_tls_key" "$CRYPTO_PATH/peers/${peerID}/tls/server/key.pem"
+	cp "$CRYPTO_PATH/peers/${peerID}/tls/tlscacerts/$peer_tls_ca" "$CRYPTO_PATH/peers/${peerID}/tls/server/ca.pem"
 
 infoln " Peer identity ${peerID} is Enrolled ..........  "
 
@@ -172,13 +190,19 @@ function registerOrdererIdentity(){
 local ordererNum=orderer$1
 local ordererID=${ordererNum}.${orgName}.${domainName}
 local caAddress=$2
+local output
 set -x 
-fabric-ca-client register --id.name ${ordererID} --id.secret ${ENROLLMENT_SECRET} --id.type orderer \
---id.affiliation org1.department1 -u https://${caAddress}
+output=$(fabric-ca-client register --id.name ${ordererID} --id.secret ${ENROLLMENT_SECRET} --id.type orderer \
+--id.affiliation org1.department1 -u https://${caAddress} 2>&1)
 
 res=$?
 set +x
+printf "%s\n" "${output}"
 if [ $res -ne 0 ]; then 
+   if printf "%s" "${output}" | grep -qi "already registered"; then
+      warnln " orderer ${ordererID} is already registered; continuing "
+      return 0
+   fi
    errorln " Error while registering orderer ${ordererID} "
    exit 1
 fi
@@ -230,6 +254,17 @@ if [ $res -ne 0 ]; then
    errorln " Error while Enrolling orderer identity ${ordererID} "
    exit 1
 fi
+
+	mkdir -p $CRYPTO_PATH/orderers/${ordererID}/tls/server
+	local orderer_tls_signcert
+	local orderer_tls_key
+	local orderer_tls_ca
+	orderer_tls_signcert=$(ls -t "$CRYPTO_PATH/orderers/${ordererID}/tls/signcerts" | head -n 1)
+	orderer_tls_key=$(ls -t "$CRYPTO_PATH/orderers/${ordererID}/tls/keystore" | head -n 1)
+	orderer_tls_ca=$(ls -t "$CRYPTO_PATH/orderers/${ordererID}/tls/tlscacerts" | head -n 1)
+	cp "$CRYPTO_PATH/orderers/${ordererID}/tls/signcerts/$orderer_tls_signcert" "$CRYPTO_PATH/orderers/${ordererID}/tls/server/cert.pem"
+	cp "$CRYPTO_PATH/orderers/${ordererID}/tls/keystore/$orderer_tls_key" "$CRYPTO_PATH/orderers/${ordererID}/tls/server/key.pem"
+	cp "$CRYPTO_PATH/orderers/${ordererID}/tls/tlscacerts/$orderer_tls_ca" "$CRYPTO_PATH/orderers/${ordererID}/tls/server/ca.pem"
 
 infoln " Orderer identity ${ordererID} is Enrolled with TLS profile..........  "
 

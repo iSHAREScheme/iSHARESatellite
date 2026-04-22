@@ -119,6 +119,7 @@ ALL_ENV_VARS=(
   ORDERER_COUNT
   ORDERER_ADDRESS
   ORDERER_TLS_CA_CERT
+  ORDERER_TLS_HOSTNAME_OVERRIDE
   CHANNEL_NAME
   ANCHOR_PEER_HOSTNAME
   ANCHOR_PEER_PORT_NUMBER
@@ -148,6 +149,7 @@ ALL_ENV_VARS=(
   DISPLAY_NAME
   SATELLITE_ADMIN_USERNAME
   SATELLITE_ADMIN_EMAIL
+  SATELLITE_ADMIN_ROLE_NAME
   SATELLITE_ADMIN_PASSWORD
   SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE
   SATELLITE_ADMIN_FORCE_OTP_SETUP
@@ -672,6 +674,7 @@ set_defaults() {
   : "${FABRIC_CA_ADDRESS:=localhost:7054}"
   : "${PEER_COUNT:=2}"
   : "${ORDERER_COUNT:=0}"
+  : "${ORDERER_TLS_HOSTNAME_OVERRIDE:=}"
   : "${CHAINCODE_LABEL:=isharecc_1.0}"
   : "${TLS_MODE:=manual}"
   : "${ACME_EMAIL:=}"
@@ -681,12 +684,15 @@ set_defaults() {
   : "${ACME_HTTP_PORT:=80}"
   : "${ACME_HTTPS_PORT:=443}"
   : "${SATELLITE_ADMIN_USERNAME:=satelliteadmin}"
+  : "${SATELLITE_ADMIN_ROLE_NAME:=}"
   : "${SATELLITE_ADMIN_PASSWORD:=}"
   : "${SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE:=true}"
   : "${SATELLITE_ADMIN_FORCE_OTP_SETUP:=true}"
 }
 
 set_derived_defaults() {
+  : "${SATELLITE_ADMIN_ROLE_NAME:=SatelliteAdmin}"
+
   if [[ -n "${SUB_DOMAIN:-}" ]]; then
     : "${SATELLITE_ADMIN_EMAIL:=satelliteadmin@${SUB_DOMAIN}}"
   else
@@ -947,6 +953,17 @@ validate_env_format_with_report() {
   if [[ ! "${PEER_ADMIN_MSP_DIR}" = /* ]]; then
     report_warn "${stage}" "PEER_ADMIN_MSP_DIR style" "Relative path detected; interpreted by scripts at runtime"
   fi
+
+  if [[ -n "${ORDERER_TLS_HOSTNAME_OVERRIDE:-}" ]]; then
+    if is_valid_hostname "${ORDERER_TLS_HOSTNAME_OVERRIDE}"; then
+      report_pass "${stage}" "ORDERER_TLS_HOSTNAME_OVERRIDE format" "${ORDERER_TLS_HOSTNAME_OVERRIDE}"
+    else
+      report_fail "${stage}" "ORDERER_TLS_HOSTNAME_OVERRIDE format" "Invalid hostname '${ORDERER_TLS_HOSTNAME_OVERRIDE}'"
+      die "ORDERER_TLS_HOSTNAME_OVERRIDE must be a valid hostname"
+    fi
+  else
+    report_pass "${stage}" "ORDERER_TLS_HOSTNAME_OVERRIDE format" "not set (optional)"
+  fi
 }
 
 write_env_file() {
@@ -991,6 +1008,7 @@ interactive_capture_env() {
   local acme_storage_path_example=".local-state/acme"
   local satellite_admin_username_example="satelliteadmin"
   local satellite_admin_email_example
+  local satellite_admin_role_example="SatelliteAdmin"
   local satellite_admin_password_example="ChangeMe123!"
   local channel_default
   local anchor_peer_default
@@ -1003,6 +1021,7 @@ interactive_capture_env() {
   local orderer_tls_ca_default
   local satellite_admin_username_default
   local satellite_admin_email_default
+  local satellite_admin_role_default
   local tls_mode_default
   local acme_staging_default
   local acme_http_port_default
@@ -1015,7 +1034,6 @@ interactive_capture_env() {
   SUB_DOMAIN="$(prompt_required_with_context "SUB_DOMAIN" "${SUB_DOMAIN:-}" "${sub_domain_example}" "Base DNS suffix for generated hostnames.")"
   ENVIRONMENT="$(prompt_required_with_context "ENVIRONMENT" "${ENVIRONMENT:-}" "${environment_example}" "Environment folder namespace used in generated paths and artifacts.")"
   set_derived_defaults
-
   orderer_tls_ca_example="${REPO_ROOT}/ca-ishareord.pem"
   anchor_peer_example="peer0.${ORG_NAME}.${SUB_DOMAIN}"
   chaincode_policy_example="OR('${ORG_NAME}.member')"
@@ -1032,14 +1050,15 @@ interactive_capture_env() {
   orderer_tls_ca_default="${ORDERER_TLS_CA_CERT:-${REPO_ROOT}/ca-ishareord.pem}"
   satellite_admin_username_default="${SATELLITE_ADMIN_USERNAME:-satelliteadmin}"
   satellite_admin_email_default="${SATELLITE_ADMIN_EMAIL:-satelliteadmin@${SUB_DOMAIN}}"
+  satellite_admin_role_default="${SATELLITE_ADMIN_ROLE_NAME:-SatelliteAdmin}"
   tls_mode_default="${TLS_MODE:-manual}"
   acme_staging_default="${ACME_STAGING:-false}"
   acme_http_port_default="${ACME_HTTP_PORT:-80}"
   acme_https_port_default="${ACME_HTTPS_PORT:-443}"
   acme_storage_path_default="${ACME_STORAGE_PATH:-.local-state/acme}"
 
-  ORDERER_ADDRESS="$(prompt_required_with_context "ORDERER_ADDRESS" "${ORDERER_ADDRESS:-}" "${orderer_address_example}" "Remote orderer endpoint used by channel and chaincode lifecycle operations.")"
-  ORDERER_TLS_CA_CERT="$(prompt_required_with_context "ORDERER_TLS_CA_CERT" "${orderer_tls_ca_default}" "${orderer_tls_ca_example}" "CA certificate file used to trust the remote orderer TLS certificate.")"
+  ORDERER_ADDRESS="$(prompt_required_with_context "ORDERER_ADDRESS" "${ORDERER_ADDRESS:-}" "${orderer_address_example}" "Orderer endpoint used by channel and chaincode lifecycle operations.")"
+  ORDERER_TLS_CA_CERT="$(prompt_required_with_context "ORDERER_TLS_CA_CERT" "${orderer_tls_ca_default}" "${orderer_tls_ca_example}" "CA certificate file used to trust the orderer TLS certificate.")"
   CHANNEL_NAME="$(prompt_required_with_context "CHANNEL_NAME" "${channel_default}" "${channel_example}" "Fabric channel to join and use for ledger and chaincode operations.")"
   ANCHOR_PEER_HOSTNAME="$(prompt_required_with_context "ANCHOR_PEER_HOSTNAME" "${anchor_peer_default}" "${anchor_peer_example}" "Peer hostname published as your org anchor peer on the channel.")"
   ANCHOR_PEER_PORT_NUMBER="$(prompt_required_with_context "ANCHOR_PEER_PORT_NUMBER" "${anchor_peer_port_default}" "7051" "Anchor peer service port.")"
@@ -1051,7 +1070,7 @@ interactive_capture_env() {
 
   PARTY_ID="$(prompt_required_with_context "PARTY_ID" "${PARTY_ID:-}" "${party_id_example}" "iSHARE party identifier used by app middleware.")"
   PARTY_NAME="$(prompt_required_with_context "PARTY_NAME" "${PARTY_NAME:-}" "${party_name_example}" "Display/legal organization name used by app middleware.")"
-  TLS_MODE="$(prompt_required_with_context "TLS_MODE" "${tls_mode_default}" "${tls_mode_example}" "TLS mode for public endpoints. 'manual' expects ssl/tls.crt + ssl/tls.key. 'acme' provisions certs automatically.")"
+  TLS_MODE="$(prompt_required_with_context "TLS_MODE" "${tls_mode_default}" "${tls_mode_example}" "HTTPS mode for public endpoints only. 'manual' expects ssl/tls.crt + ssl/tls.key. 'acme' provisions/renews HTTPS certs automatically via Caddy. (Separate from jwt-rsa signing material.)")"
   TLS_MODE="${TLS_MODE,,}"
   if [[ "${TLS_MODE}" == "acme" ]]; then
     ACME_EMAIL="$(prompt_required_with_context "ACME_EMAIL" "${ACME_EMAIL:-}" "${acme_email_example}" "Email address registered with ACME certificate authority for certificate issuance/renewal notices.")"
@@ -1068,9 +1087,10 @@ interactive_capture_env() {
   SMTP_USER="$(prompt_required_with_context "SMTP_USER" "${SMTP_USER:-}" "${smtp_user_example}" "SMTP username used by middleware mailer.")"
   SMTP_PASSWORD="$(prompt_required_secret_with_context "SMTP_PASSWORD" "${SMTP_PASSWORD:-}" "${smtp_password_example}" "SMTP password used by middleware mailer.")"
   DISPLAY_NAME="$(prompt_required_with_context "DISPLAY_NAME" "${DISPLAY_NAME:-}" "${display_name_example}" "Email display name shown in outbound notifications.")"
-  SATELLITE_ADMIN_USERNAME="$(prompt_required_with_context "SATELLITE_ADMIN_USERNAME" "${satellite_admin_username_default}" "${satellite_admin_username_example}" "Initial Keycloak user that will receive the SatelliteAdmin portal role.")"
-  SATELLITE_ADMIN_EMAIL="$(prompt_required_with_context "SATELLITE_ADMIN_EMAIL" "${satellite_admin_email_default}" "${satellite_admin_email_example}" "Email address for the initial SatelliteAdmin portal user.")"
-  SATELLITE_ADMIN_PASSWORD="$(prompt_required_secret_with_context "SATELLITE_ADMIN_PASSWORD" "${SATELLITE_ADMIN_PASSWORD:-}" "${satellite_admin_password_example}" "Password for the initial SatelliteAdmin portal user. Change it after first login.")"
+  SATELLITE_ADMIN_USERNAME="$(prompt_required_with_context "SATELLITE_ADMIN_USERNAME" "${satellite_admin_username_default}" "${satellite_admin_username_example}" "Initial Keycloak portal admin username.")"
+  SATELLITE_ADMIN_EMAIL="$(prompt_required_with_context "SATELLITE_ADMIN_EMAIL" "${satellite_admin_email_default}" "${satellite_admin_email_example}" "Email address for the initial portal admin user.")"
+  SATELLITE_ADMIN_ROLE_NAME="$(prompt_required_with_context "SATELLITE_ADMIN_ROLE_NAME" "${satellite_admin_role_default}" "${satellite_admin_role_example}" "Role assigned to the initial portal admin user in the Keycloak frontend client.")"
+  SATELLITE_ADMIN_PASSWORD="$(prompt_required_secret_with_context "SATELLITE_ADMIN_PASSWORD" "${SATELLITE_ADMIN_PASSWORD:-}" "${satellite_admin_password_example}" "Password for the initial portal admin user. Change it after first login.")"
 
   validate_required_env
   write_env_file
@@ -1200,6 +1220,7 @@ EOF
   if [[ -f "${ENV_FILE}" ]]; then
     load_env_file
     set_defaults
+    set_derived_defaults
     preflight_tls_mode="${TLS_MODE,,}"
     if [[ "${preflight_tls_mode}" == "acme" ]]; then
       preflight_http_port="${ACME_HTTP_PORT:-80}"
@@ -1269,9 +1290,9 @@ stage_env() {
     set_derived_defaults
   else
     if [[ -f "${EXAMPLE_ENV_FILE}" ]]; then
-      report_warn "${stage}" "Env source" "No env file found; interactive prompts will show examples from ${EXAMPLE_ENV_FILE} and prefill common participant-registry defaults"
+      report_warn "${stage}" "Env source" "No env file found; interactive prompts will show examples from ${EXAMPLE_ENV_FILE} and prefill common satellite defaults"
     else
-      report_warn "${stage}" "Env source" "No env file found; interactive prompts will require manual input except built-in defaults for common participant-registry values"
+      report_warn "${stage}" "Env source" "No env file found; interactive prompts will require manual input except built-in common satellite defaults"
     fi
     set_defaults
     set_derived_defaults
@@ -1283,6 +1304,8 @@ stage_env() {
       die "Non-interactive mode requires env file: ${ENV_FILE}"
     fi
     load_env_file
+    set_defaults
+    set_derived_defaults
     validate_required_env
     write_env_file
   else
@@ -1370,6 +1393,7 @@ stage_org_artifact() {
   local gate_note
 
   load_env_file
+
   run_script_with_report "${stage}" "orgDefinition.sh"
   org_definition_file="${REPO_ROOT}/hlf/${ENVIRONMENT}/${ORG_NAME}/${ORG_NAME}.json"
   report_assert_nonempty_file "${stage}" "${org_definition_file}" "Org definition artifact"
@@ -1399,6 +1423,7 @@ stage_join_network() {
   local foundation_note
 
   load_env_file
+
   orderer_ca="$(resolve_path "${REPO_ROOT}" "${ORDERER_TLS_CA_CERT}")"
   genesis_block="${REPO_ROOT}/middleware/genesis.block"
   channel_tx="${REPO_ROOT}/middleware/isharechannel.tx"
@@ -1521,6 +1546,7 @@ stage_app_deploy() {
     set_external_gate "EXT_ACME_READY" "skipped" "Skipped (TLS_MODE=manual)"
   else
     report_pass "${stage}" "TLS files" "Skipped (TLS_MODE=acme)"
+    report_pass "${stage}" "TLS certificate source" "Public HTTPS certs are issued by ACME edge proxy (Caddy)"
     set_external_gate "EXT_TLS_MATERIAL" "skipped" "Skipped (TLS_MODE=acme)"
   fi
 
@@ -1528,15 +1554,15 @@ stage_app_deploy() {
     "${stage}" \
     "EXT_JWT_MATERIAL" \
     "${jwt_pub}" \
-    "JWT public certificate" \
-    "Middleware token signing requires jwtRSA256-public.pem." \
+    "JWT/eIDAS public certificate" \
+    "Middleware token signing requires jwtRSA256-public.pem (used for JWT signing/verification, not HTTPS TLS termination)." \
     "Copy JWT public cert to ${jwt_pub}"
   require_external_file_or_die \
     "${stage}" \
     "EXT_JWT_MATERIAL" \
     "${jwt_priv}" \
-    "JWT private key" \
-    "Middleware token signing requires jwtRSA256-private.pem." \
+    "JWT/eIDAS private key" \
+    "Middleware token signing requires jwtRSA256-private.pem (used for JWT signing/verification, not HTTPS TLS termination)." \
     "Copy JWT private key to ${jwt_priv}"
   set_external_gate "EXT_JWT_MATERIAL" "validated" "JWT key pair present"
 
@@ -1713,6 +1739,10 @@ main() {
   if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
     return 0
   fi
+
+  load_env_file
+  set_defaults
+  set_derived_defaults
   run_stage "org-artifact" "Org Registration Artifact" stage_org_artifact
   if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
     return 0
@@ -1730,6 +1760,7 @@ main() {
   if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
     return 0
   fi
+
   run_stage "app-deploy" "App Layer Deploy" stage_app_deploy
   if [[ "${INSTALLER_PAUSED}" == "true" ]]; then
     return 0

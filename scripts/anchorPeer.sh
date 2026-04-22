@@ -13,6 +13,8 @@ export CORE_PEER_MSPCONFIGPATH=${PEER_ADMIN_MSP_DIR}
 export CORE_PEER_TLS_ROOTCERT_FILE=${fabricCACert}
 local ORDERER_TLS_CA_FILE=${ORDERER_TLS_CA_CERT}
 local ORDERER_ENDPOINT=${ORDERER_ADDRESS}
+local ORDERER_TLS_HOSTNAME=${ORDERER_TLS_HOSTNAME_OVERRIDE}
+local ORDERER_TLS_HOSTNAME_ARGS=()
 local CH_NAME=${CHANNEL_NAME}
 local PEER_ID=${ANCHOR_PEER_HOSTNAME}
 local PORT=${ANCHOR_PEER_PORT_NUMBER}
@@ -50,12 +52,16 @@ fi
 
 export CORE_PEER_ADDRESS=peer0.${orgDomain}:7051
 
+if [[ -n "${ORDERER_TLS_HOSTNAME}" ]]; then
+   ORDERER_TLS_HOSTNAME_ARGS=(--ordererTLSHostnameOverride "${ORDERER_TLS_HOSTNAME}")
+fi
+
 
 infoln "Fetching the config block of the channel ${CH_NAME}"
 
 mkdir -p ../channelops
 set -x
-peer channel fetch config ../channelops/config_block.pb  -o $ORDERER_ENDPOINT --tls --cafile $ORDERER_TLS_CA_FILE -c ${CH_NAME}
+peer channel fetch config ../channelops/config_block.pb  -o $ORDERER_ENDPOINT --tls --cafile $ORDERER_TLS_CA_FILE "${ORDERER_TLS_HOSTNAME_ARGS[@]}" -c ${CH_NAME}
 res=$?
 set +x
 
@@ -99,7 +105,7 @@ set +x
 set +e
 
 set -x
-peer channel update -f ../channelops/config_update_in_envelope.pb  -c $CH_NAME  -o $ORDERER_ENDPOINT --tls --cafile $ORDERER_TLS_CA_FILE
+peer channel update -f ../channelops/config_update_in_envelope.pb  -c $CH_NAME  -o $ORDERER_ENDPOINT --tls --cafile $ORDERER_TLS_CA_FILE "${ORDERER_TLS_HOSTNAME_ARGS[@]}"
 res=$?
 set +x
 
