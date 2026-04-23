@@ -101,6 +101,36 @@ function ParseCompose(){
    sudo chown -R 1001:1001 ../middleware/postgresdata
 }
 
+function EnsureJWTSigningMaterialPermissions(){
+    local jwt_dir="../jwt-rsa"
+    local jwt_priv="${jwt_dir}/jwtRSA256-private.pem"
+    local jwt_pub="${jwt_dir}/jwtRSA256-public.pem"
+    local jwt_priv_header
+    local jwt_priv_tmp
+
+    if [[ -f "${jwt_priv}" ]]; then
+      jwt_priv_header="$(head -n 1 "${jwt_priv}" 2>/dev/null || true)"
+      if [[ "${jwt_priv_header}" == "-----BEGIN PRIVATE KEY-----" ]]; then
+        # Some middleware builds expect a traditional RSA PEM key; normalize PKCS#8 input.
+        jwt_priv_tmp="${jwt_priv}.tmp"
+        sudo openssl rsa -in "${jwt_priv}" -traditional -out "${jwt_priv_tmp}" >/dev/null 2>&1 || {
+          rm -f "${jwt_priv_tmp}"
+          errorln "Failed to normalize JWT private key at ${jwt_priv}"
+          exit 1
+        }
+        sudo mv "${jwt_priv_tmp}" "${jwt_priv}"
+      fi
+
+      # App middleware runs as appuser(1000) and needs read access to the mounted signing key.
+      sudo chown 1000:1000 "${jwt_priv}" || true
+      sudo chmod 600 "${jwt_priv}" || true
+    fi
+
+    if [[ -f "${jwt_pub}" ]]; then
+      sudo chmod 644 "${jwt_pub}" || true
+    fi
+}
+
 function composeUp(){
     set -e
     run_compose -f ../middleware/docker-compose-mw.yaml up -d
@@ -136,5 +166,6 @@ fi
 ParseHLFMiddlewareConfig
 ParseAPPMiddlewareConfig
 ParseCompose
+EnsureJWTSigningMaterialPermissions
 infoln "Bringing middleware up"
 composeUp

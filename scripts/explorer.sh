@@ -7,6 +7,8 @@
 function parseExplorerConfigAndUP(){
 
 set -e
+# Seed Explorer from peer0 only. Discovery expands the topology after connect,
+# and this avoids fresh multi-peer installs getting stuck before projection starts.
 cp ../templates/profile-template.json ../explorer/profile.json
 adminCertFile=/tmp/crypto/users/Admin@${orgName}/msp/signcerts/$(ls -t ../hlf/${RUNNER_MODE}/${orgName}/crypto/users/Admin@${orgName}/msp/signcerts | grep pem | head -n 1)
 adminKeyFile=/tmp/crypto/users/Admin@${orgName}/msp/keystore/$(ls -t ../hlf/${RUNNER_MODE}/${orgName}/crypto/users/Admin@${orgName}/msp/keystore | grep sk | head -n 1)

@@ -1622,7 +1622,6 @@ stage_app_deploy() {
   local edge_compose
   local app_mw_config
   local keycloak_domain
-
   load_env_file
   tls_mode="${TLS_MODE,,}"
 
@@ -1698,7 +1697,6 @@ stage_app_deploy() {
 
   run_script_with_report "${stage}" "keycloak.sh"
   run_script_with_report "${stage}" "middleware.sh"
-  run_script_with_report "${stage}" "bootstrapRegistryIdentity.sh"
   app_mw_config="${REPO_ROOT}/middleware/app-mw-config.yaml"
   report_assert_file "${stage}" "${app_mw_config}" "Rendered middleware app config"
   keycloak_domain="$(awk -F': ' '/^[[:space:]]*domain:[[:space:]]*/ {print $2; exit}' "${app_mw_config}" | tr -d '\r')"
