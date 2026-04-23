@@ -16,20 +16,37 @@ function resolve_path_local() {
 
 function probe_https_host() {
   local host="$1"
-  local attempts=30
   local status_code=""
-  local i
+  local curl_stderr=""
+  local attempt=0
+  local interval_seconds="${ACME_PROBE_INTERVAL_SECONDS:-5}"
+  local timeout_seconds="${ACME_PROBE_TIMEOUT_SECONDS:-420}"
+  local deadline
+  local stderr_file=""
 
-  for i in $(seq 1 "${attempts}"); do
-    status_code="$(curl -sS -o /dev/null -w "%{http_code}" "https://${host}/" || true)"
+  deadline=$(( $(date +%s) + timeout_seconds ))
+
+  while [[ $(date +%s) -lt ${deadline} ]]; do
+    attempt=$((attempt + 1))
+    stderr_file="$(mktemp)"
+    status_code="$(curl --connect-timeout 5 --max-time 15 -sS -o /dev/null -w "%{http_code}" "https://${host}/" 2>"${stderr_file}" || true)"
+    curl_stderr="$(tr '\n' ' ' <"${stderr_file}" | sed 's/[[:space:]]\+/ /g; s/^ //; s/ $//')"
+    rm -f "${stderr_file}"
+    stderr_file=""
+
     if [[ "${status_code}" =~ ^[1-5][0-9][0-9]$ ]]; then
-      infoln "HTTPS probe succeeded for ${host} (HTTP ${status_code})"
+      infoln "HTTPS probe succeeded for ${host} (HTTP ${status_code}) after ${attempt} attempt(s)"
       return 0
     fi
-    sleep 5
+
+    if (( attempt == 1 || attempt % 6 == 0 )); then
+      warnln "HTTPS probe still waiting for ${host}; last curl result: HTTP ${status_code:-000}${curl_stderr:+, ${curl_stderr}}"
+    fi
+
+    sleep "${interval_seconds}"
   done
 
-  errorln "HTTPS probe failed for ${host}. Last status code: ${status_code:-n/a}"
+  errorln "HTTPS probe failed for ${host} after ${timeout_seconds}s. Last curl result: HTTP ${status_code:-000}${curl_stderr:+, ${curl_stderr}}"
   return 1
 }
 

@@ -4,6 +4,8 @@ networks:
     external: true
 
 services:
+  <ORDERER_PROXY_SERVICE>
+
   couchdb.peer0.<orgDomain>:
 #    image: hyperledger/fabric-couchdb:0.4.21
     # image: couchdb:3.3.2
@@ -91,6 +93,7 @@ services:
     - ../crypto/peers/peer0.<orgDomain>/tls:/etc/hyperledger/tls
     - ./peerConfig:/etc/hyperledger/fabric
     - ./docker_data/peer0.<orgDomain>:/var/hyperledger
+    <PEER_EXTRA_HOSTS>
     networks:
     - net 
 
@@ -149,6 +152,7 @@ services:
     - ../crypto/peers/peer1.<orgDomain>/tls:/etc/hyperledger/tls
     - ./peerConfig:/etc/hyperledger/fabric
     - ./docker_data/peer1.<orgDomain>:/var/hyperledger
+    <PEER_EXTRA_HOSTS>
     networks:
     - net 
   

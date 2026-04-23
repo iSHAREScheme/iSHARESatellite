@@ -51,3 +51,16 @@ if [[ -d "${BIN_DIR}" ]]; then
       *) export PATH="${BIN_DIR}:${PATH}" ;;
    esac
 fi
+
+resolve_repo_path() {
+   local path="$1"
+   if [[ -z "${path}" ]]; then
+      printf ""
+      return
+   fi
+   if [[ "${path}" = /* ]]; then
+      printf "%s" "${path}"
+      return
+   fi
+   printf "%s/%s" "${REPO_ROOT}" "${path}"
+}

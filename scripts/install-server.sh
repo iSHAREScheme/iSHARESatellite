@@ -515,6 +515,53 @@ report_smtp_connectivity_warning() {
   fi
 }
 
+ufw_is_active() {
+  command -v ufw >/dev/null 2>&1 || return 1
+  ufw status 2>/dev/null | grep -q "^Status: active"
+}
+
+ufw_allows_tcp_port() {
+  local port="$1"
+  local status_output
+
+  status_output="$(ufw status 2>/dev/null || true)"
+  printf "%s\n" "${status_output}" | awk -v port="${port}/tcp" '
+    $1 == port && $2 == "ALLOW" && $3 == "IN" { found=1 }
+    END { exit found ? 0 : 1 }
+  '
+}
+
+assert_acme_firewall_readiness() {
+  local stage="$1"
+  local http_port="$2"
+  local https_port="$3"
+  local missing_ports=()
+
+  if ! ufw_is_active; then
+    if command -v ufw >/dev/null 2>&1; then
+      report_pass "${stage}" "ACME firewall readiness" "ufw inactive or not enforcing inbound policy"
+    else
+      report_warn "${stage}" "ACME firewall readiness" "ufw not installed; verify inbound ${http_port}/${https_port} reachability in cloud or host firewall"
+    fi
+    return 0
+  fi
+
+  if ! ufw_allows_tcp_port "${http_port}"; then
+    missing_ports+=("${http_port}/tcp")
+  fi
+  if ! ufw_allows_tcp_port "${https_port}"; then
+    missing_ports+=("${https_port}/tcp")
+  fi
+
+  if [[ ${#missing_ports[@]} -eq 0 ]]; then
+    report_pass "${stage}" "ACME firewall readiness" "ufw allows inbound ${http_port}/tcp and ${https_port}/tcp"
+    return 0
+  fi
+
+  report_fail "${stage}" "ACME firewall readiness" "ufw is active and blocks ${missing_ports[*]}"
+  die "ACME mode requires inbound ${http_port}/tcp and ${https_port}/tcp. Open them in ufw (for example: 'ufw allow ${http_port}/tcp' and 'ufw allow ${https_port}/tcp') and rerun."
+}
+
 handle_join_network_script_failure() {
   local stage="$1"
   local script_name="$2"
@@ -1315,6 +1362,8 @@ stage_preflight() {
       else
         report_warn "${stage}" "ACME port availability" "ss command not available; skipped port conflict check"
       fi
+
+      assert_acme_firewall_readiness "${stage}" "${preflight_http_port}" "${preflight_https_port}"
     else
       report_pass "${stage}" "ACME preflight checks" "Skipped (TLS_MODE=${preflight_tls_mode:-manual})"
     fi
@@ -1388,6 +1437,10 @@ stage_env() {
     else
       report_pass "${stage}" "ACME port readiness" "Ports ${ACME_HTTP_PORT}/${ACME_HTTPS_PORT} available"
     fi
+    assert_acme_firewall_readiness "${stage}" "${ACME_HTTP_PORT}" "${ACME_HTTPS_PORT}"
+  elif [[ "${tls_mode_normalized}" == "acme" ]]; then
+    report_warn "${stage}" "ACME port readiness" "ss command not available; skipped port conflict check"
+    assert_acme_firewall_readiness "${stage}" "${ACME_HTTP_PORT}" "${ACME_HTTPS_PORT}"
   fi
 
   for required_key in "${REQUIRED_ENV_VARS[@]}"; do
@@ -1645,6 +1698,7 @@ stage_app_deploy() {
 
   run_script_with_report "${stage}" "keycloak.sh"
   run_script_with_report "${stage}" "middleware.sh"
+  run_script_with_report "${stage}" "bootstrapRegistryIdentity.sh"
   app_mw_config="${REPO_ROOT}/middleware/app-mw-config.yaml"
   report_assert_file "${stage}" "${app_mw_config}" "Rendered middleware app config"
   keycloak_domain="$(awk -F': ' '/^[[:space:]]*domain:[[:space:]]*/ {print $2; exit}' "${app_mw_config}" | tr -d '\r')"

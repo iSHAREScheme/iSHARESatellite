@@ -8,8 +8,9 @@ function anchorPeerInChannel(){
 
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_LOCALMSPID=${orgName}
-PEER_ADMIN_MSP_DIR=$(cd ../app/${RUNNER_MODE}/${orgName}/crypto/peerOrganizations/${orgDomain}/users/Admin@${orgDomain}/msp && echo $(pwd))
-export CORE_PEER_MSPCONFIGPATH=${PEER_ADMIN_MSP_DIR}
+local peer_admin_msp_dir="${PEER_ADMIN_MSP_DIR:-}"
+peer_admin_msp_dir="$(resolve_repo_path "${peer_admin_msp_dir}")"
+export CORE_PEER_MSPCONFIGPATH=${peer_admin_msp_dir}
 export CORE_PEER_TLS_ROOTCERT_FILE=${fabricCACert}
 local ORDERER_TLS_CA_FILE=${ORDERER_TLS_CA_CERT}
 local ORDERER_ENDPOINT=${ORDERER_ADDRESS}
@@ -39,7 +40,7 @@ if [[ ${CORE_PEER_TLS_ROOTCERT_FILE} = " " || ${CORE_PEER_TLS_ROOTCERT_FILE} = "
    exit 1
 fi
 
-if [[ ${PEER_ADMIN_MSP_DIR} = " " || ${PEER_ADMIN_MSP_DIR} = "" ]]; then 
+if [[ ${peer_admin_msp_dir} = " " || ${peer_admin_msp_dir} = "" ]]; then 
    errorln " PEER_ADMIN_MSP_DIR is not specified "
    exit 1
 fi
