@@ -65,6 +65,11 @@ channels:
         chaincodeQuery: true
         ledgerQuery: true
         eventSource: true
+      peer1.<orgDomain>:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
     policies:
       discovery:
         maxTargets: 2
@@ -91,6 +96,7 @@ organizations:
     cryptoPath: peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp
     peers:
     - peer0.<orgDomain>
+    - peer1.<orgDomain>
     certificateAuthorities:
     - ca.<orgDomain>
 peers:
@@ -99,6 +105,18 @@ peers:
     eventUrl: peer0.<orgDomain>:7051
     grpcOptions:
       ssl-target-name-override: peer0.<orgDomain>
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+    tlsCACerts:
+      path: /var/hyperledger/crypto/peerOrganizations/<orgDomain>/users/Admin@<orgDomain>/msp/tlscacerts/tlscacert.pem
+  peer1.<orgDomain>:
+    url: peer1.<orgDomain>:8051
+    eventUrl: peer1.<orgDomain>:8051
+    grpcOptions:
+      ssl-target-name-override: peer1.<orgDomain>
       keep-alive-time: 0s
       keep-alive-timeout: 20s
       keep-alive-permit: false

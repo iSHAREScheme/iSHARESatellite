@@ -914,6 +914,60 @@ prompt_optional_with_context() {
   fi
 }
 
+prompt_pem_file() {
+  local label="$1"
+  local path="$2"
+  local mode="$3"
+  local content=""
+  local line
+
+  if [[ -s "${path}" ]]; then
+    report_pass "env" "${label}" "Already present at ${path}"
+    return
+  fi
+
+  if [[ "${NON_INTERACTIVE:-false}" == "true" ]]; then
+    report_warn "env" "${label}" "Missing ${path}; non-interactive install expects this file to be copied before app-deploy"
+    return
+  fi
+
+  log_info "${label}: ${path} is missing. Paste the PEM content now, then enter a single '.' line to finish." >&2
+  log_info "${label}: press Enter immediately to skip and copy the file manually before app-deploy." >&2
+
+  while IFS= read -r line; do
+    if [[ "${line}" == "." ]]; then
+      break
+    fi
+    if [[ -z "${line}" && -z "${content}" ]]; then
+      report_warn "env" "${label}" "Skipped; copy ${path} before app-deploy"
+      return
+    fi
+    content+="${line}"$'\n'
+  done
+
+  if [[ -z "${content}" ]]; then
+    report_warn "env" "${label}" "Skipped; copy ${path} before app-deploy"
+    return
+  fi
+  if [[ "${content}" != *"-----BEGIN "* || "${content}" != *"-----END "* ]]; then
+    report_fail "env" "${label}" "Pasted content does not look like PEM"
+    die "${label} must be PEM encoded and include BEGIN/END markers"
+  fi
+
+  mkdir -p "$(dirname "${path}")"
+  printf "%s" "${content}" >"${path}"
+  chmod "${mode}" "${path}" || true
+  report_pass "env" "${label}" "Wrote ${path}"
+}
+
+materialize_guided_file_inputs() {
+  local jwt_pub="${REPO_ROOT}/jwt-rsa/jwtRSA256-public.pem"
+  local jwt_priv="${REPO_ROOT}/jwt-rsa/jwtRSA256-private.pem"
+
+  prompt_pem_file "JWT/eIDAS public certificate" "${jwt_pub}" "644"
+  prompt_pem_file "JWT/eIDAS private key" "${jwt_priv}" "640"
+}
+
 validate_env_format_with_report() {
   local stage="$1"
   local tls_mode_normalized
@@ -1218,6 +1272,8 @@ stage_preflight() {
   local preflight_tls_mode
   local preflight_http_port
   local preflight_https_port
+  local jwt_pub="${REPO_ROOT}/jwt-rsa/jwtRSA256-public.pem"
+  local jwt_priv="${REPO_ROOT}/jwt-rsa/jwtRSA256-private.pem"
 
   if is_debian_like; then
     report_pass "${stage}" "OS check" "Debian-like distribution detected"
@@ -1317,6 +1373,35 @@ stage_preflight() {
     set_defaults
     set_derived_defaults
     preflight_tls_mode="${TLS_MODE,,}"
+
+    if [[ -f "${jwt_pub}" ]]; then
+      report_pass "${stage}" "JWT/eIDAS public certificate" "${jwt_pub}"
+    elif [[ "${NON_INTERACTIVE}" == "true" || -n "${FORCE_STAGE}" || -n "${TARGET_STAGE}" ]]; then
+      require_external_file_or_die \
+        "${stage}" \
+        "EXT_JWT_MATERIAL" \
+        "${jwt_pub}" \
+        "JWT/eIDAS public certificate" \
+        "Middleware token signing requires jwtRSA256-public.pem (used for JWT signing/verification, not HTTPS TLS termination)." \
+        "Copy JWT public cert to ${jwt_pub}"
+    else
+      report_warn "${stage}" "JWT/eIDAS public certificate" "Missing ${jwt_pub}; guided env stage can prompt for PEM content before deployment"
+    fi
+
+    if [[ -f "${jwt_priv}" ]]; then
+      report_pass "${stage}" "JWT/eIDAS private key" "${jwt_priv}"
+    elif [[ "${NON_INTERACTIVE}" == "true" || -n "${FORCE_STAGE}" || -n "${TARGET_STAGE}" ]]; then
+      require_external_file_or_die \
+        "${stage}" \
+        "EXT_JWT_MATERIAL" \
+        "${jwt_priv}" \
+        "JWT/eIDAS private key" \
+        "Middleware token signing requires jwtRSA256-private.pem (used for JWT signing/verification, not HTTPS TLS termination)." \
+        "Copy JWT private key to ${jwt_priv}"
+    else
+      report_warn "${stage}" "JWT/eIDAS private key" "Missing ${jwt_priv}; guided env stage can prompt for PEM content before deployment"
+    fi
+
     if [[ "${preflight_tls_mode}" == "acme" ]]; then
       preflight_http_port="${ACME_HTTP_PORT:-80}"
       preflight_https_port="${ACME_HTTPS_PORT:-443}"
@@ -1418,6 +1503,7 @@ stage_env() {
 
   validate_required_env
   validate_env_format_with_report "${stage}"
+  materialize_guided_file_inputs
 
   tls_mode_normalized="${TLS_MODE,,}"
   if [[ "${tls_mode_normalized}" == "acme" ]] && command -v ss >/dev/null 2>&1; then
@@ -1664,6 +1750,10 @@ stage_app_deploy() {
     "JWT/eIDAS private key" \
     "Middleware token signing requires jwtRSA256-private.pem (used for JWT signing/verification, not HTTPS TLS termination)." \
     "Copy JWT private key to ${jwt_priv}"
+  chown 1000:1000 "${jwt_priv}" || true
+  chmod 640 "${jwt_priv}" || true
+  chown 1000:1000 "${jwt_pub}" || true
+  chmod 644 "${jwt_pub}" || true
   set_external_gate "EXT_JWT_MATERIAL" "validated" "JWT key pair present"
 
   require_external_file_or_die \

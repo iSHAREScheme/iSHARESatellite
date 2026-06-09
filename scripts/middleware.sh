@@ -123,10 +123,11 @@ function EnsureJWTSigningMaterialPermissions(){
 
       # App middleware runs as appuser(1000) and needs read access to the mounted signing key.
       sudo chown 1000:1000 "${jwt_priv}" || true
-      sudo chmod 600 "${jwt_priv}" || true
+      sudo chmod 640 "${jwt_priv}" || true
     fi
 
     if [[ -f "${jwt_pub}" ]]; then
+      sudo chown 1000:1000 "${jwt_pub}" || true
       sudo chmod 644 "${jwt_pub}" || true
     fi
 }

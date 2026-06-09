@@ -122,5 +122,21 @@ set +x
 set +e
 }
 
+function ensurePeerHostAliases(){
+    local aliases=("peer0.${orgDomain}")
+    local peer_alias
+
+    if [[ "${PEER_COUNT:-2}" != "1" ]]; then
+        aliases+=("peer1.${orgDomain}")
+    fi
+
+    for peer_alias in "${aliases[@]}"; do
+        if ! grep -Eq "(^|[[:space:]])${peer_alias}([[:space:]]|$)" /etc/hosts; then
+            echo "127.0.0.1 ${peer_alias}" | sudo tee -a /etc/hosts >/dev/null
+        fi
+    done
+}
+
 peerTemplateParse
+ensurePeerHostAliases
 peersUp
