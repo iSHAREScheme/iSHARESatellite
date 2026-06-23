@@ -68,18 +68,18 @@ if [[ "${KEYCLOAK_BASE_URL}${KEYCLOAK_PATH_PREFIX}" != "${KEYCLOAK_BASE_URL}" ]]
   keycloak_candidates+=("${KEYCLOAK_BASE_URL}")
 fi
 
-for candidate in "${keycloak_candidates[@]}"; do
-  for _ in $(seq 1 20); do
+for _ in $(seq 1 120); do
+  for candidate in "${keycloak_candidates[@]}"; do
     status_code="$(curl -ksS -o /dev/null -w "%{http_code}" "${candidate}/realms/master" || true)"
     if [[ "${status_code}" =~ ^[23][0-9][0-9]$ ]]; then
       KEYCLOAK_API_BASE="${candidate}"
       break
     fi
-    sleep 2
   done
   if [[ -n "${KEYCLOAK_API_BASE}" ]]; then
     break
   fi
+  sleep 2
 done
 
 if [[ -z "${KEYCLOAK_API_BASE}" ]]; then

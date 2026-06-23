@@ -19,7 +19,7 @@ services:
       timeout: 10s
       retries: 5
     ports:
-      - 4432:5432
+      - 127.0.0.1:4432:5432
     restart: always      
     volumes:
       - ./docker_data/explorer_ishare:/var/lib/postgresql/data
@@ -49,7 +49,7 @@ services:
       - ./docker_data/walletstore_ishare:/opt/explorer/wallet
     restart: always      
     ports:
-      - 8081:8080
+      - 127.0.0.1:8081:8080
     depends_on:
       explorerdb:
         condition: service_healthy

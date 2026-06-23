@@ -1,0 +1,62 @@
+networks:
+  net:
+    name: fabric_network
+
+services:
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: satellite-loki
+    command: -config.file=/etc/loki/loki.yaml
+    ports:
+      - "<GRAFANA_LOKI_PORT>:3100"
+    volumes:
+      - ./configs/loki.yaml:/etc/loki/loki.yaml:ro
+      - ./loki-data:/loki
+    restart: always
+    networks:
+      - net
+
+  alloy:
+    image: grafana/alloy:v1.5.1
+    container_name: satellite-alloy
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+    volumes:
+      - ./configs/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    restart: always
+    depends_on:
+      - loki
+    networks:
+      - net
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: satellite-grafana
+    ports:
+      - "<GRAFANA_PORT>:3000"
+    environment:
+      - GF_SERVER_DOMAIN=<UIHostName>
+      - GF_SERVER_ROOT_URL=https://<UIHostName><GRAFANA_PUBLIC_PATH>/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_AUTH_GENERIC_OAUTH_ENABLED=true
+      - GF_AUTH_GENERIC_OAUTH_NAME=Keycloak
+      - GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP=true
+      - GF_AUTH_GENERIC_OAUTH_SCOPES=openid email profile
+      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=https://<KeycloakHostName>/auth/realms/<ORG_NAME>/protocol/openid-connect/auth
+      - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=<GRAFANA_KEYCLOAK_TOKEN_URL>
+      - GF_AUTH_GENERIC_OAUTH_API_URL=<GRAFANA_KEYCLOAK_API_URL>
+      - GF_AUTH_GENERIC_OAUTH_TLS_SKIP_VERIFY_INSECURE=true
+    env_file:
+      - ./.grafana.env
+    volumes:
+      - ./configs/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./grafana-data:/var/lib/grafana
+    restart: always
+    depends_on:
+      - loki
+    networks:
+      - net

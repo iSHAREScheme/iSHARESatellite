@@ -16,10 +16,13 @@ sed -i -e "s/<orgDomain>/${orgDomain}/g" -e "s/<ENROLLMENT_SECRET>/${ENROLLMENT_
 
 
 sudo mkdir -p ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data/ca.${orgDomain}
-sudo chmod -R 777 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data/ca.${orgDomain}
-sudo chown -R 1001:1001 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data/ca.${orgDomain}
-sudo chmod -R 777 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/certs
-sudo chmod -R 777 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data
+# Restrict CA key material to the fabric-ca container user (uid 1001) rather than
+# the world-writable 0777 previously used (finding 4.1.9 / compartmentalization).
+sudo chown -R 1001:1001 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data
+sudo chown -R 1001:1001 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/certs
+sudo chmod -R 750 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker_data
+# The certs directory holds the CA TLS private key (priv_sk); keep it owner-only.
+sudo chmod -R 700 ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/certs
 
 infoln "Bringing Fabric CA UP ...."
     run_compose -f ../hlf/${RUNNER_MODE}/${orgName}/fabric-ca/docker-compose-fabric-ca.yaml up -d --force-recreate 2>&1

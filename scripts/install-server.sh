@@ -139,6 +139,15 @@ ALL_ENV_VARS=(
   ACME_STORAGE_PATH
   ACME_HTTP_PORT
   ACME_HTTPS_PORT
+  DEPLOY_GRAFANA
+  GRAFANA_PUBLIC_PATH
+  GRAFANA_PORT
+  GRAFANA_ADMIN_USER
+  GRAFANA_ADMIN_PASSWORD
+  GRAFANA_KEYCLOAK_CLIENT_ID
+  GRAFANA_KEYCLOAK_CLIENT_SECRET
+  GRAFANA_LOKI_PORT
+  GRAFANA_ALLOY_CONFIG
   UIHostName
   MiddlewareHostName
   KeycloakHostName
@@ -770,6 +779,15 @@ set_defaults() {
   : "${ACME_STORAGE_PATH:=.local-state/acme}"
   : "${ACME_HTTP_PORT:=80}"
   : "${ACME_HTTPS_PORT:=443}"
+  : "${DEPLOY_GRAFANA:=false}"
+  : "${GRAFANA_PUBLIC_PATH:=/logs}"
+  : "${GRAFANA_PORT:=3200}"
+  : "${GRAFANA_ADMIN_USER:=admin}"
+  : "${GRAFANA_ADMIN_PASSWORD:=}"
+  : "${GRAFANA_KEYCLOAK_CLIENT_ID:=grafana}"
+  : "${GRAFANA_KEYCLOAK_CLIENT_SECRET:=}"
+  : "${GRAFANA_LOKI_PORT:=3100}"
+  : "${GRAFANA_ALLOY_CONFIG:=observability/configs/config.alloy}"
   : "${SATELLITE_ADMIN_USERNAME:=satelliteadmin}"
   : "${SATELLITE_ADMIN_ROLE_NAME:=}"
   : "${SATELLITE_ADMIN_PASSWORD:=}"
@@ -1121,6 +1139,42 @@ validate_env_format_with_report() {
     fi
   else
     report_pass "${stage}" "ORDERER_TLS_HOSTNAME_OVERRIDE format" "not set (optional)"
+  fi
+
+  if is_boolean_string "${DEPLOY_GRAFANA}"; then
+    report_pass "${stage}" "DEPLOY_GRAFANA format" "${DEPLOY_GRAFANA,,}"
+  else
+    report_fail "${stage}" "DEPLOY_GRAFANA format" "Expected true/false, got '${DEPLOY_GRAFANA}'"
+    die "DEPLOY_GRAFANA must be true or false"
+  fi
+
+  if [[ "${DEPLOY_GRAFANA,,}" == "true" ]]; then
+    if [[ "${GRAFANA_PUBLIC_PATH}" == /* && "${GRAFANA_PUBLIC_PATH}" != "/" && "${GRAFANA_PUBLIC_PATH}" != *"//"* && "${GRAFANA_PUBLIC_PATH}" != *$'\n'* ]]; then
+      report_pass "${stage}" "GRAFANA_PUBLIC_PATH format" "${GRAFANA_PUBLIC_PATH}"
+    else
+      report_fail "${stage}" "GRAFANA_PUBLIC_PATH format" "Expected an absolute subpath like /logs, got '${GRAFANA_PUBLIC_PATH}'"
+      die "GRAFANA_PUBLIC_PATH must be an absolute subpath like /logs"
+    fi
+    if is_valid_port "${GRAFANA_PORT}"; then
+      report_pass "${stage}" "GRAFANA_PORT format" "${GRAFANA_PORT}"
+    else
+      report_fail "${stage}" "GRAFANA_PORT format" "Invalid port '${GRAFANA_PORT}'"
+      die "GRAFANA_PORT must be an integer between 1 and 65535"
+    fi
+    if is_valid_port "${GRAFANA_LOKI_PORT}"; then
+      report_pass "${stage}" "GRAFANA_LOKI_PORT format" "${GRAFANA_LOKI_PORT}"
+    else
+      report_fail "${stage}" "GRAFANA_LOKI_PORT format" "Invalid port '${GRAFANA_LOKI_PORT}'"
+      die "GRAFANA_LOKI_PORT must be an integer between 1 and 65535"
+    fi
+    if [[ -n "${GRAFANA_KEYCLOAK_CLIENT_ID}" && "${GRAFANA_KEYCLOAK_CLIENT_ID}" != *$'\n'* ]]; then
+      report_pass "${stage}" "GRAFANA_KEYCLOAK_CLIENT_ID format" "${GRAFANA_KEYCLOAK_CLIENT_ID}"
+    else
+      report_fail "${stage}" "GRAFANA_KEYCLOAK_CLIENT_ID format" "Missing or invalid client id"
+      die "GRAFANA_KEYCLOAK_CLIENT_ID must be set when DEPLOY_GRAFANA=true"
+    fi
+  else
+    report_pass "${stage}" "Grafana config checks" "Skipped (DEPLOY_GRAFANA=false)"
   fi
 }
 
@@ -1706,6 +1760,7 @@ stage_app_deploy() {
   local middleware_compose
   local ui_compose
   local edge_compose
+  local grafana_compose
   local app_mw_config
   local keycloak_domain
   load_env_file
@@ -1800,6 +1855,11 @@ stage_app_deploy() {
   fi
   report_pass "${stage}" "Middleware Keycloak domain" "${keycloak_domain}"
   run_script_with_report "${stage}" "deployUI.sh"
+  if [[ "${DEPLOY_GRAFANA,,}" == "true" ]]; then
+    run_script_with_report "${stage}" "deployGrafana.sh"
+  else
+    report_skip "${stage}" "Grafana stack" "Skipped (DEPLOY_GRAFANA=false)"
+  fi
   if [[ "${tls_mode}" == "acme" ]]; then
     run_script_with_report "${stage}" "deployEdgeAcme.sh"
     set_external_gate "EXT_ACME_READY" "validated" "ACME edge stack deployed"
@@ -1810,6 +1870,7 @@ stage_app_deploy() {
   middleware_compose="${REPO_ROOT}/middleware/docker-compose-mw.yaml"
   ui_compose="${REPO_ROOT}/ui/docker-compose-ui.yaml"
   edge_compose="${REPO_ROOT}/edge/docker-compose-edge-acme.yaml"
+  grafana_compose="${REPO_ROOT}/observability/docker-compose.yaml"
 
   report_assert_file "${stage}" "${keycloak_compose}" "Rendered keycloak compose"
   report_assert_file "${stage}" "${middleware_compose}" "Rendered middleware compose"
@@ -1820,6 +1881,10 @@ stage_app_deploy() {
   if [[ "${tls_mode}" == "acme" ]]; then
     report_assert_file "${stage}" "${edge_compose}" "Rendered edge ACME compose"
     report_assert_compose_running "${stage}" "${edge_compose}" "Edge ACME stack running"
+  fi
+  if [[ "${DEPLOY_GRAFANA,,}" == "true" ]]; then
+    report_assert_file "${stage}" "${grafana_compose}" "Rendered Grafana compose"
+    report_assert_compose_running "${stage}" "${grafana_compose}" "Grafana/Loki/Alloy stack running"
   fi
 
   report_pass "${stage}" "Endpoint summary" "https://${UIHostName} | https://${MiddlewareHostName} | https://${KeycloakHostName}/auth"

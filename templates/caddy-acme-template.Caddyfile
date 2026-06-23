@@ -16,6 +16,8 @@ https://<UIHostName> {
     reverse_proxy 127.0.0.1:5001
   }
 
+<GRAFANA_CADDY_ROUTES>
+
   handle {
     reverse_proxy 127.0.0.1:4200
   }

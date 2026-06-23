@@ -7,8 +7,11 @@ services:
 #    image: postgres:15.0-alpine    
     container_name: offchain_sat
     restart: always
+    # Defense-in-depth: block in-container privilege escalation (finding 4.1.9).
+    security_opt:
+      - "no-new-privileges:true"
     ports:
-      - 6432:5432    
+      - 127.0.0.1:6432:5432
     environment:
       - DATABASE_DATABASE=offchaindata
       - POSTGRES_USER=postgres
@@ -23,7 +26,8 @@ services:
  ishare_mw:
     # image: isharefoundation/ishare-satellite-app-mw:v4.4
     image: isharefoundation/ishare-satellite-app-mw:v4.18
-
+    security_opt:
+      - "no-new-privileges:true"
     ports:
       - 5001:21001
     volumes:
@@ -43,6 +47,8 @@ services:
  ishare_hlf:
     # image: isharefoundation/ishare-satellite-hlf-mw:v1.8
     image: isharefoundation/ishare-satellite-hlf-mw:v1.9
+    security_opt:
+      - "no-new-privileges:true"
     ports:
       - 4001:21001
     volumes:

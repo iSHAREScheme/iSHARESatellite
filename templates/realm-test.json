@@ -4,6 +4,14 @@
   "enabled": true,
   "loginWithEmailAllowed": true,
   "resetPasswordAllowed": true,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 3,
+  "maxFailureWaitSeconds": 86400,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
   "loginTheme": "myTheme",
   "roles": {
   "client": {

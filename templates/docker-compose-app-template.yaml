@@ -14,7 +14,7 @@ services:
     container_name: offchain_sat
     restart: always
     ports:
-      - 6432:5432
+      - 127.0.0.1:6432:5432
     environment:
       - DATABASE_DATABASE=offchaindata
       - POSTGRES_USER=postgres
@@ -31,7 +31,7 @@ services:
     image: <POSTGRES_IMAGE>
     container_name: keycloakpostgres
     ports:
-      - 1432:5432
+      - 127.0.0.1:1432:5432
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -91,7 +91,7 @@ services:
       timeout: 10s
       retries: 5
     ports:
-      - 4432:5432
+      - 127.0.0.1:4432:5432
     restart: always
     volumes:
       - ./explorer/docker_data/explorer_ishare:/var/lib/postgresql/data
@@ -121,7 +121,7 @@ services:
       - ./explorer/docker_data/walletstore_ishare:/opt/explorer/wallet
     restart: always
     ports:
-      - <EXPLORER_PORT>:8080
+      - 127.0.0.1:<EXPLORER_PORT>:8080
     depends_on:
       explorerdb:
         condition: service_healthy
@@ -131,6 +131,9 @@ services:
   ishare_hlf:
     image: <HLF_MIDDLEWARE_IMAGE>
     container_name: middleware-ishare_hlf-1
+    # Defense-in-depth: block in-container privilege escalation (finding 4.1.9).
+    security_opt:
+      - "no-new-privileges:true"
     ports:
       - 4001:21001
     volumes:
@@ -148,6 +151,8 @@ services:
   ishare_mw:
     image: <MIDDLEWARE_IMAGE>
     container_name: middleware-ishare_mw-1
+    security_opt:
+      - "no-new-privileges:true"
     ports:
       - 5001:21001
     volumes:
@@ -167,6 +172,8 @@ services:
   ishare_ui:
     image: <UI_IMAGE>
     container_name: ishare_ui
+    security_opt:
+      - "no-new-privileges:true"
     ports:
       - 4200:80
     environment:
@@ -182,6 +189,8 @@ services:
   nginx-proxy:
     image: <NGINX_IMAGE>
     container_name: ui-nginx-proxy-1
+    security_opt:
+      - "no-new-privileges:true"
     ports:
       - 443:443
     volumes:

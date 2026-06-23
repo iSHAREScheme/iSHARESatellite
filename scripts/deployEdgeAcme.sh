@@ -61,8 +61,13 @@ function deploy_edge_acme() {
   local acme_state_dir
   local acme_ca_line=""
   local escaped_ca_line
+  local grafana_public_path="${GRAFANA_PUBLIC_PATH:-/logs}"
+  local grafana_port="${GRAFANA_PORT:-3200}"
+  local grafana_caddy_routes=""
 
   tls_mode_normalized="${tls_mode_normalized,,}"
+  grafana_public_path="/${grafana_public_path#/}"
+  grafana_public_path="${grafana_public_path%/}"
   if [[ "${tls_mode_normalized}" != "acme" ]]; then
     infoln "TLS_MODE is not acme; skipping deployEdgeAcme.sh"
     exit 0
@@ -95,6 +100,21 @@ function deploy_edge_acme() {
     ../edge/docker-compose-edge-acme.yaml
 
   cp ../templates/caddy-acme-template.Caddyfile ../edge/Caddyfile
+  if [[ "${DEPLOY_GRAFANA:-false}" == "true" ]]; then
+    grafana_caddy_routes="$(cat <<EOF
+  @grafana_root path ${grafana_public_path}
+  redir @grafana_root ${grafana_public_path}/ 308
+
+  handle ${grafana_public_path}/api/live/* {
+    reverse_proxy 127.0.0.1:${grafana_port}
+  }
+
+  handle ${grafana_public_path}/* {
+    reverse_proxy 127.0.0.1:${grafana_port}
+  }
+EOF
+)"
+  fi
   escaped_ca_line="$(printf "%s" "${acme_ca_line}" | sed 's/[\\/&]/\\&/g')"
   sed -i \
     -e "s/<ACME_EMAIL>/${acme_email}/g" \
@@ -103,6 +123,17 @@ function deploy_edge_acme() {
     -e "s/<KeycloakHostName>/${KeycloakHostName}/g" \
     -e "s/<ACME_CA_LINE>/${escaped_ca_line}/g" \
     ../edge/Caddyfile
+  awk -v routes="${grafana_caddy_routes}" '
+    {
+      if ($0 ~ /<GRAFANA_CADDY_ROUTES>/) {
+        if (length(routes) > 0) {
+          printf "%s\n", routes
+        }
+        next
+      }
+      print
+    }' ../edge/Caddyfile > ../edge/Caddyfile.tmp
+  mv ../edge/Caddyfile.tmp ../edge/Caddyfile
 
   run_compose -f ../edge/docker-compose-edge-acme.yaml up -d --force-recreate --remove-orphans
 
