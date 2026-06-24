@@ -31,7 +31,7 @@ AGPL-3.0 applies solely to the iSHARE core software itself and to derivative wor
 
 ## 4. Explicit Legal Assurance for Independent and Commercial Software
 
-The Foundation hereby expressly confirms and provides legal assurance that software systems which interact with iSHARE reference software exclusively via documented and published APIs, without linking against, embedding, or incorporating AGPL-licensed code, do not constitute derivative works of the iSHARE core software.
+The Foundation hereby expressly confirms and provides legal assurance that software systems which interact with iSHARE reference software exclusively via documented and published APIs, without linking against, embedding, or incorporating AGPL-licensed code, do not constitute derivative works of the iSHARE core software and thus are not considered to be “modified versions” and/or “covered works” as defined in the AGPL-3.0 license. 
 
 Accordingly, such software systems:
 
@@ -48,7 +48,7 @@ The Foundation confirms that Apache-2.0 licensed components do not become subjec
 
 ## 6. Mandatory AGPL-3.0 Coverage
 
-For the avoidance of doubt, the following activities constitute the creation of derivative works of AGPL-licensed iSHARE software and therefore fall mandatorily within the scope of AGPL-3.0:
+For the avoidance of doubt, the following activities constitute the creation of derivative works of AGPL-licensed iSHARE software and are thus considered “modified versions” and/or “covered works” as defined under AGPL-3.0 and therefore fall mandatorily within the scope of AGPL-3.0:
 
 - Any modification of AGPL-licensed source code;
 - Addition of functionality within the same codebase or runtime environment;
