@@ -58,7 +58,7 @@ fi
 
 # Log Rotation for Docker
 if [[ ${IsDockerInstalledAlready} = false ]]; then 
-sudo mv ./templates/daemon.json /etc/docker/
+sudo cp ./templates/daemon.json /etc/docker/
 fi
 
 # Function to install OpenSSL
