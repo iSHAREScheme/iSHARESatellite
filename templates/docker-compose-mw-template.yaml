@@ -25,6 +25,11 @@ services:
  ishare_mw:
     # image: isharefoundation/ishare-satellite-app-mw:v4.4
     image: isharefoundation/ishare-satellite-app-mw:v4.18
+    # Bound the middleware so a leak is OOM-killed and restarted (restart: always)
+    # instead of freezing the host (isharesat1, 2026-09-24). Override per box with
+    # SAT_APP_MW_MEM_LIMIT in the environment / .env (e.g. 1536m for large ledgers).
+    mem_limit: ${SAT_APP_MW_MEM_LIMIT:-768m}
+    memswap_limit: ${SAT_APP_MW_MEM_LIMIT:-768m}
 
     ports:
       - 5001:21001
