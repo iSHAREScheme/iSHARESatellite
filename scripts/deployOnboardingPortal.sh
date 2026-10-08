@@ -20,7 +20,9 @@ function deployOnboardingPortal(){
   local dst=../onboarding-portal
   local tls_mode="${TLS_MODE:-manual}"
 
-  if [[ -z "${ONBOARDING_GHCR_OWNER:-}" ]]; then errorln "ONBOARDING_GHCR_OWNER is required"; exit 1; fi
+  if [[ -z "${ONBOARDING_IMAGE_REGISTRY:-}" && -z "${ONBOARDING_GHCR_OWNER:-}" ]]; then
+    errorln "ONBOARDING_IMAGE_REGISTRY or ONBOARDING_GHCR_OWNER is required"; exit 1
+  fi
   if [[ -z "${ONBOARDING_UI_HOSTNAME:-}" ]]; then errorln "ONBOARDING_UI_HOSTNAME is required"; exit 1; fi
   if [[ "${kc_mode}" == "own" && -z "${ONBOARDING_KC_HOSTNAME:-}" ]]; then
     errorln "ONBOARDING_KC_HOSTNAME is required when ONBOARDING_KEYCLOAK_MODE=own"; exit 1

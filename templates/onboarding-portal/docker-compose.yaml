@@ -23,7 +23,7 @@ networks:
 
 services:
   obp-backend:
-    image: ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-backend:${ONBOARDING_IMAGE_TAG:-latest}
+    image: ${ONBOARDING_IMAGE_REGISTRY:-ghcr.io/${ONBOARDING_GHCR_OWNER}}/onboarding-portal-backend:${ONBOARDING_IMAGE_TAG:-latest}
     container_name: obp-backend
     env_file:
       - ./.env
@@ -40,7 +40,7 @@ services:
     restart: unless-stopped
 
   obp-frontend:
-    image: ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-frontend:${ONBOARDING_IMAGE_TAG:-latest}
+    image: ${ONBOARDING_IMAGE_REGISTRY:-ghcr.io/${ONBOARDING_GHCR_OWNER}}/onboarding-portal-frontend:${ONBOARDING_IMAGE_TAG:-latest}
     container_name: obp-frontend
     env_file:
       - ./.env

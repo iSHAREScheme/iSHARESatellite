@@ -166,6 +166,7 @@ ALL_ENV_VARS=(
   ONBOARDING_UI_HOSTNAME
   ONBOARDING_KC_HOSTNAME
   ONBOARDING_GHCR_OWNER
+  ONBOARDING_IMAGE_REGISTRY
   ONBOARDING_IMAGE_TAG
   ONBOARDING_GHCR_USERNAME
   ONBOARDING_GHCR_TOKEN
@@ -814,7 +815,8 @@ set_defaults() {
   : "${SATELLITE_ADMIN_FORCE_OTP_SETUP:=true}"
   : "${DEPLOY_ONBOARDING_PORTAL:=false}"
   : "${ONBOARDING_GHCR_OWNER:=isharescheme}"
-  : "${ONBOARDING_IMAGE_TAG:=v1.2-rc.6}"
+  : "${ONBOARDING_IMAGE_REGISTRY:=registry.gitlab.com/ishare-foundation/reference-implementations/participant-registry/satellite-ui}"
+  : "${ONBOARDING_IMAGE_TAG:=v1.2-rc.55}"
   : "${ONBOARDING_GHCR_USERNAME:=}"
   : "${ONBOARDING_GHCR_TOKEN:=}"
   : "${ONBOARDING_SATELLITE_VERSION:=3.0}"
@@ -1410,7 +1412,8 @@ interactive_capture_env() {
       ONBOARDING_KC_HOSTNAME="${ONBOARDING_KC_HOSTNAME:-}"
     fi
     ONBOARDING_GHCR_OWNER="$(prompt_required_with_context "ONBOARDING_GHCR_OWNER" "${ONBOARDING_GHCR_OWNER:-isharescheme}" "isharescheme" "GHCR owner for onboarding-portal images.")"
-    ONBOARDING_IMAGE_TAG="$(prompt_required_with_context "ONBOARDING_IMAGE_TAG" "${ONBOARDING_IMAGE_TAG:-v1.2-rc.6}" "v1.2-rc.6" "Exact onboarding portal image tag to deploy.")"
+    ONBOARDING_IMAGE_REGISTRY="$(prompt_required_with_context "ONBOARDING_IMAGE_REGISTRY" "${ONBOARDING_IMAGE_REGISTRY:-registry.gitlab.com/ishare-foundation/reference-implementations/participant-registry/satellite-ui}" "registry.gitlab.com/ishare-foundation/reference-implementations/participant-registry/satellite-ui" "Registry that holds the onboarding-portal images (releases from v1.2-rc.52 on live in the portal project's GitLab registry; ghcr.io/<owner> for older tags).")"
+    ONBOARDING_IMAGE_TAG="$(prompt_required_with_context "ONBOARDING_IMAGE_TAG" "${ONBOARDING_IMAGE_TAG:-v1.2-rc.55}" "v1.2-rc.55" "Exact onboarding portal image tag to deploy.")"
     ONBOARDING_GHCR_USERNAME="$(prompt_optional_with_context "ONBOARDING_GHCR_USERNAME" "${ONBOARDING_GHCR_USERNAME:-}" "github-user-or-email" "GHCR username for private onboarding images.")"
     ONBOARDING_GHCR_TOKEN="$(prompt_optional_with_context "ONBOARDING_GHCR_TOKEN" "${ONBOARDING_GHCR_TOKEN:-}" "ghp_xxx" "GHCR token with read:packages for private onboarding images.")"
     ONBOARDING_SATELLITE_VERSION="$(prompt_required_with_context "ONBOARDING_SATELLITE_VERSION" "${ONBOARDING_SATELLITE_VERSION:-3.0}" "3.0" "iSHARE API version the portal should use when talking to the satellite.")"

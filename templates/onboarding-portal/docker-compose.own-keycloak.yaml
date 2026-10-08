@@ -10,7 +10,7 @@ version: "3.7"
 
 services:
   obp-keycloak:
-    image: ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-keycloak:${ONBOARDING_IMAGE_TAG:-latest}
+    image: ${ONBOARDING_IMAGE_REGISTRY:-ghcr.io/${ONBOARDING_GHCR_OWNER}}/onboarding-portal-keycloak:${ONBOARDING_IMAGE_TAG:-latest}
     container_name: obp-keycloak
     env_file:
       - ./.env

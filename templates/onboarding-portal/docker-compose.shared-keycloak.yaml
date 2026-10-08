@@ -16,7 +16,7 @@ services:
     build:
       context: ./shared-build
       args:
-        PORTAL_KC_IMAGE: "ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-keycloak:${ONBOARDING_IMAGE_TAG:-latest}"
+        PORTAL_KC_IMAGE: "${ONBOARDING_IMAGE_REGISTRY:-ghcr.io/${ONBOARDING_GHCR_OWNER}}/onboarding-portal-keycloak:${ONBOARDING_IMAGE_TAG:-latest}"
         KEYCLOAK_SMTP_FROM: "${KEYCLOAK_SMTP_FROM:-noreply@example.com}"
     image: ishare-shared-keycloak:local
     container_name: obp-keycloak

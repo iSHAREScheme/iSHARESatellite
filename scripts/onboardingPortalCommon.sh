@@ -146,11 +146,12 @@ obp_render_env() {
   # otherwise leave it blank so the registry-admin features stay hidden.
   local pr_api_base_url=""
   if [[ "${ONBOARDING_KEYCLOAK_MODE:-own}" == "shared" ]]; then
-    pr_api_base_url="http://middleware-ishare_mw-1:21001"
+    pr_api_base_url="http://ishare_mw:21001"
   fi
   cp ../templates/onboarding-portal/onboarding-portal.env.template "${dst}/.env"
   sed -i \
     -e "s|<ONBOARDING_GHCR_OWNER>|${ONBOARDING_GHCR_OWNER}|g" \
+    -e "s|<ONBOARDING_IMAGE_REGISTRY>|${ONBOARDING_IMAGE_REGISTRY:-ghcr.io/${ONBOARDING_GHCR_OWNER}}|g" \
     -e "s|<ONBOARDING_IMAGE_TAG>|${ONBOARDING_IMAGE_TAG:-latest}|g" \
     -e "s|<SATELLITE_VERSION>|${ONBOARDING_SATELLITE_VERSION:-3.0}|g" \
     -e "s|<SATELLITE_EORI>|${satellite_did}|g" \

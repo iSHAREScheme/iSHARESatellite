@@ -101,7 +101,7 @@ Some steps depend on actions outside the VM. This is the expected order:
 - `ONBOARDING_KEYCLOAK_MODE=own` runs a separate onboarding Keycloak on `ONBOARDING_KC_HOSTNAME`.
 - `ONBOARDING_KEYCLOAK_MODE=shared` skips the satellite Keycloak script and deploys one Keycloak that serves both the satellite realm and the onboarding realm at `KeycloakHostName/auth`.
 - Add DNS for `ONBOARDING_UI_HOSTNAME` to this VM. In `own` mode, also add DNS for `ONBOARDING_KC_HOSTNAME`; in `shared` mode, no extra Keycloak hostname is used.
-- Onboarding images are pulled from `ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-{backend,frontend,keycloak}:${ONBOARDING_IMAGE_TAG}`. Provide `ONBOARDING_GHCR_USERNAME` and `ONBOARDING_GHCR_TOKEN` when the packages are private.
+- Onboarding images are pulled from `${ONBOARDING_IMAGE_REGISTRY}/onboarding-portal-{backend,frontend,keycloak}:${ONBOARDING_IMAGE_TAG}`; the default registry is the portal project's public GitLab registry (releases from v1.2-rc.52 on), `ghcr.io/${ONBOARDING_GHCR_OWNER}` holds the older tags and needs `ONBOARDING_GHCR_USERNAME`/`ONBOARDING_GHCR_TOKEN` when private.
 - By default, the portal reuses the satellite owner signing material from `jwt-rsa/jwtRSA256-private.pem` and `jwt-rsa/jwtRSA256-public.pem`. Set `ONBOARDING_OWNER_CERT_DIR` only when you need to override this with a directory containing `key.pem` and `cert-chain.pem`.
 
 It also writes a stage-by-stage validation report under:
