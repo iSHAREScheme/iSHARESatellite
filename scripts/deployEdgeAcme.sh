@@ -115,12 +115,17 @@ function deploy_edge_acme() {
 EOF
 )"
   fi
+  local onboarding_admin_realm="__no_onboarding_admin_realm__"
+  if [[ "${DEPLOY_ONBOARDING_PORTAL:-false}" == "true" && "${ONBOARDING_KEYCLOAK_MODE:-own}" == "shared" ]]; then
+    onboarding_admin_realm="${ORG_NAME}"
+  fi
   escaped_ca_line="$(printf "%s" "${acme_ca_line}" | sed 's/[\\/&]/\\&/g')"
   sed -i \
     -e "s/<ACME_EMAIL>/${acme_email}/g" \
     -e "s/<UIHostName>/${UIHostName}/g" \
     -e "s/<MiddlewareHostName>/${MiddlewareHostName}/g" \
     -e "s/<KeycloakHostName>/${KeycloakHostName}/g" \
+    -e "s/<ONBOARDING_ADMIN_REALM>/${onboarding_admin_realm}/g" \
     -e "s/<ACME_CA_LINE>/${escaped_ca_line}/g" \
     ../edge/Caddyfile
   awk -v routes="${grafana_caddy_routes}" '

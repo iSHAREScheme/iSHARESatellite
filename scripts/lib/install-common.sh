@@ -133,6 +133,9 @@ run_repo_script() {
   (
     set -euo pipefail
     export REPO_ROOT="$repo_root"
+    if [[ -d "${repo_root}/bin" ]]; then
+      export PATH="${repo_root}/bin:${PATH}"
+    fi
     set -a
     # shellcheck disable=SC1090
     source "$env_file"

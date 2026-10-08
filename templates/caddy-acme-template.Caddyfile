@@ -28,12 +28,18 @@ https://<MiddlewareHostName> {
 }
 
 https://<KeycloakHostName> {
+  @legacy_keycloak_paths path /realms* /resources* /admin*
+  redir @legacy_keycloak_paths /auth{uri} 308
+
   @master_token path /auth/realms/master/protocol/openid-connect/token
   handle @master_token {
     reverse_proxy 127.0.0.1:8080
   }
 
-  @keycloak_admin_or_master path /auth/admin* /auth/realms/master*
+  @keycloak_admin_or_master {
+    path /auth/admin* /auth/realms/master*
+    not path /auth/admin/realms/<ONBOARDING_ADMIN_REALM>*
+  }
   respond @keycloak_admin_or_master 403
 
   reverse_proxy 127.0.0.1:8080

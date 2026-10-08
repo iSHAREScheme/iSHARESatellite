@@ -26,11 +26,11 @@ ishareConfig:
     partyName: <PartyName>
   platformURL: ""
   keyCloakConfig:
-    domain: http://keycloak:8080/auth
+    domain: <KEYCLOAK_INTERNAL_URL>
     clientId: frontend
     clientSecret: ""
-    adminId: admin
-    adminSecret: "admin"
+    adminId: <KEYCLOAK_ADMIN_USER>
+    adminSecret: "<KEYCLOAK_ADMIN_PASSWORD>"
     adminRealmName: master
     realmName: <orgName>
   versionConfig:

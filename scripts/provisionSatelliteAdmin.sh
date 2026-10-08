@@ -149,6 +149,14 @@ if [[ -z "${client_internal_id}" ]]; then
 fi
 
 ui_origin="https://${UIHostName}"
+extra_client_origins=()
+if [[ "${DEPLOY_ONBOARDING_PORTAL:-false}" == "true" && "${ONBOARDING_KEYCLOAK_MODE:-own}" == "shared" ]]; then
+  extra_client_origins+=("https://${ONBOARDING_UI_HOSTNAME}")
+fi
+extra_client_origins_csv="$(
+  IFS=,
+  printf "%s" "${extra_client_origins[*]}"
+)"
 client_config_json="$(
   curl -ksS \
     -H "${auth_header[0]}" \
@@ -158,11 +166,18 @@ client_config_json="$(
 client_update_payload="$(
   printf "%s" "${client_config_json}" | jq \
     --arg ui_origin "${ui_origin}" \
+    --arg extra_origins "${extra_client_origins_csv}" \
     '
+      def origin_entries($origin):
+        if $origin == "" then []
+        else [$origin, ($origin + "/"), ($origin + "/*")]
+        end;
+      ($extra_origins | split(",") | map(select(length > 0))) as $extra
+      | ($extra | map(origin_entries(.)) | add // []) as $extraRedirects
       .rootUrl = $ui_origin
       | .baseUrl = "/"
-      | .redirectUris = [$ui_origin, ($ui_origin + "/"), ($ui_origin + "/*")]
-      | .webOrigins = [$ui_origin]
+      | .redirectUris = ((origin_entries($ui_origin) + $extraRedirects) | unique)
+      | .webOrigins = (([$ui_origin] + $extra) | unique)
     '
 )"
 

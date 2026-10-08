@@ -4,13 +4,19 @@
 . ./global.sh
 . ./fabric-var.sh
 
+FABRIC_CA_CLIENT_BIN="$(command -v fabric-ca-client || true)"
+if [[ -z "${FABRIC_CA_CLIENT_BIN}" ]]; then
+  errorln "fabric-ca-client not found. Run ./prerequsites.sh from the repository root, then rerun the installer."
+  exit 127
+fi
+
 
 function enrollRegisterarAdmin(){
 
 mkdir -p $CA_CRYPTO_PATH/ca-admin
 infoln "Enrollment URL for registerar admin https://${REGISTERAR_NAME}:${ENROLLMENT_SECRET}@${caAddress}"
 set -x
-fabric-ca-client enroll -u https://${REGISTERAR_NAME}:${ENROLLMENT_SECRET}@${caAddress}
+"${FABRIC_CA_CLIENT_BIN}" enroll -u https://${REGISTERAR_NAME}:${ENROLLMENT_SECRET}@${caAddress}
 set +x
 if [ $? -ne 0 ]; then 
  errorln "Error while  performing admin enrollment "
@@ -24,7 +30,7 @@ function enrollRegisterarAdminTLS() {
 
 mkdir -p $CA_CRYPTO_PATH/ca-admin/tls
 set -x
-fabric-ca-client enroll -u https://admin:${ENROLLMENT_SECRET}@${caAddress} --csr.hosts "admin" --enrollment.profile tls
+"${FABRIC_CA_CLIENT_BIN}" enroll -u https://admin:${ENROLLMENT_SECRET}@${caAddress} --csr.hosts "admin" --enrollment.profile tls
 
 res=$?
 set +x
@@ -41,7 +47,7 @@ function registerOrgAdmin(){
 local output
 
 set -x 
-output=$(fabric-ca-client register --id.name Admin --id.secret ${ENROLLMENT_SECRET} --id.type admin \
+output=$("${FABRIC_CA_CLIENT_BIN}" register --id.name Admin --id.secret ${ENROLLMENT_SECRET} --id.type admin \
 --id.attrs "hf.Registrar.Roles=*,hf.Registrar.Attributes=*,hf.Revoker=true,hf.GenCRL=true,admin=true:ecert,abac.init=true:ecert" \
 -u https://${caAddress} 2>&1)
 
@@ -68,7 +74,7 @@ mkdir -p $CRYPTO_PATH/users/Admin@${orgName}/msp/{admincerts,cacerts,keystore,si
 export FABRIC_CA_CLIENT_HOME=$CRYPTO_PATH/users/Admin@${orgName}
 export FABRIC_CA_CLIENT_MSPDIR=$CRYPTO_PATH/users/Admin@${orgName}/msp
 set -x
-fabric-ca-client enroll -u https://Admin:${ENROLLMENT_SECRET}@${caAddress} 
+"${FABRIC_CA_CLIENT_BIN}" enroll -u https://Admin:${ENROLLMENT_SECRET}@${caAddress} 
 
 res=$?
 set +x
@@ -87,7 +93,7 @@ mkdir -p $CRYPTO_PATH/users/Admin@${orgName}/tls/{admincerts,cacerts,keystore,si
 export FABRIC_CA_CLIENT_HOME=$CRYPTO_PATH/users/Admin@${orgName}
 export FABRIC_CA_CLIENT_MSPDIR=$CRYPTO_PATH/users/Admin@${orgName}/tls
 set -x
-fabric-ca-client enroll -u https://Admin:${ENROLLMENT_SECRET}@${caAddress} --csr.hosts "Admin" --enrollment.profile tls
+"${FABRIC_CA_CLIENT_BIN}" enroll -u https://Admin:${ENROLLMENT_SECRET}@${caAddress} --csr.hosts "Admin" --enrollment.profile tls
 
 res=$?
 set +x
@@ -108,7 +114,7 @@ local peerID=${peerNum}.${orgName}.${domainName}
 local caAddress=$2
 local output
 set -x 
-output=$(fabric-ca-client register --id.name ${peerID} --id.secret ${ENROLLMENT_SECRET} --id.type peer \
+output=$("${FABRIC_CA_CLIENT_BIN}" register --id.name ${peerID} --id.secret ${ENROLLMENT_SECRET} --id.type peer \
 --id.affiliation org1.department1 -u https://${caAddress} 2>&1)
 
 res=$?
@@ -137,7 +143,7 @@ mkdir -p $CRYPTO_PATH/peers/${peerID}/msp/{admincerts,cacerts,keystore,signcerts
 export FABRIC_CA_CLIENT_HOME=$CRYPTO_PATH/peers/${peerID}
 export FABRIC_CA_CLIENT_MSPDIR=$CRYPTO_PATH/peers/${peerID}/msp
 set -x
-fabric-ca-client enroll -u https://${peerID}:${ENROLLMENT_SECRET}@${caAddress} 
+"${FABRIC_CA_CLIENT_BIN}" enroll -u https://${peerID}:${ENROLLMENT_SECRET}@${caAddress} 
 
 res=$?
 set +x
@@ -162,7 +168,7 @@ mkdir -p $CRYPTO_PATH/peers/${peerID}/tls/{admincerts,cacerts,keystore,signcerts
 export FABRIC_CA_CLIENT_HOME=$CRYPTO_PATH/peers/${peerID}
 export FABRIC_CA_CLIENT_MSPDIR=$CRYPTO_PATH/peers/${peerID}/tls
 set -x
-fabric-ca-client enroll -u https://${peerID}:${ENROLLMENT_SECRET}@${caAddress} --csr.hosts "peer.${orgName},${peerID}" --enrollment.profile tls
+"${FABRIC_CA_CLIENT_BIN}" enroll -u https://${peerID}:${ENROLLMENT_SECRET}@${caAddress} --csr.hosts "peer.${orgName},${peerID}" --enrollment.profile tls
 
 res=$?
 set +x
@@ -192,7 +198,7 @@ local ordererID=${ordererNum}.${orgName}.${domainName}
 local caAddress=$2
 local output
 set -x 
-output=$(fabric-ca-client register --id.name ${ordererID} --id.secret ${ENROLLMENT_SECRET} --id.type orderer \
+output=$("${FABRIC_CA_CLIENT_BIN}" register --id.name ${ordererID} --id.secret ${ENROLLMENT_SECRET} --id.type orderer \
 --id.affiliation org1.department1 -u https://${caAddress} 2>&1)
 
 res=$?
@@ -221,7 +227,7 @@ mkdir -p $CRYPTO_PATH/orderers/${ordererID}/msp/{admincerts,cacerts,keystore,sig
 export FABRIC_CA_CLIENT_HOME=$CRYPTO_PATH/orderers/${ordererID}
 export FABRIC_CA_CLIENT_MSPDIR=$CRYPTO_PATH/orderers/${ordererID}/msp
 set -x
-fabric-ca-client enroll -u https://${ordererID}:${ENROLLMENT_SECRET}@${caAddress} 
+"${FABRIC_CA_CLIENT_BIN}" enroll -u https://${ordererID}:${ENROLLMENT_SECRET}@${caAddress} 
 
 res=$?
 set +x
@@ -246,7 +252,7 @@ mkdir -p $CRYPTO_PATH/orderers/${ordererID}/tls/{admincerts,cacerts,keystore,sig
 export FABRIC_CA_CLIENT_HOME=$CRYPTO_PATH/orderers/${ordererID}
 export FABRIC_CA_CLIENT_MSPDIR=$CRYPTO_PATH/orderers/${ordererID}/tls
 set -x
-fabric-ca-client enroll -u https://${ordererID}:${ENROLLMENT_SECRET}@${caAddress} --csr.hosts "orderer.${orgName},${ordererID}" --enrollment.profile tls
+"${FABRIC_CA_CLIENT_BIN}" enroll -u https://${ordererID}:${ENROLLMENT_SECRET}@${caAddress} --csr.hosts "orderer.${orgName},${ordererID}" --enrollment.profile tls
 
 res=$?
 set +x

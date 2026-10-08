@@ -44,6 +44,35 @@
   }
   },
   "groups": [],
+  "users": [
+  {
+  "username": "<OBP_ADMIN_EMAIL>",
+  "email": "<OBP_ADMIN_EMAIL>",
+  "firstName": "Onboarding",
+  "lastName": "Admin",
+  "enabled": true,
+  "emailVerified": true,
+  "credentials": [
+  {
+  "type": "password",
+  "value": "<OBP_ADMIN_PASSWORD>",
+  "temporary": false
+  }
+  ],
+  "realmRoles": [
+  "onboarding-admin"
+  ],
+  "clientRoles": {
+  "realm-management": [
+  "realm-admin"
+  ],
+  "account": [
+  "view-profile",
+  "manage-account"
+  ]
+  }
+  }
+  ],
   "requiredCredentials": [
   "password"
   ],
@@ -72,10 +101,14 @@
   "redirectUris": [
   "https://<UI_HOST_NAME>",
   "https://<UI_HOST_NAME>/",
-  "https://<UI_HOST_NAME>/*"
+  "https://<UI_HOST_NAME>/*",
+  "https://<ONBOARDING_UI_HOST_NAME>",
+  "https://<ONBOARDING_UI_HOST_NAME>/",
+  "https://<ONBOARDING_UI_HOST_NAME>/*"
   ],
   "webOrigins": [
-  "https://<UI_HOST_NAME>"
+  "https://<UI_HOST_NAME>",
+  "https://<ONBOARDING_UI_HOST_NAME>"
   ],
   "notBefore": 0,
   "standardFlowEnabled": true,

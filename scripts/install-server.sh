@@ -162,6 +162,25 @@ ALL_ENV_VARS=(
   SATELLITE_ADMIN_PASSWORD
   SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE
   SATELLITE_ADMIN_FORCE_OTP_SETUP
+  DEPLOY_ONBOARDING_PORTAL
+  ONBOARDING_UI_HOSTNAME
+  ONBOARDING_KC_HOSTNAME
+  ONBOARDING_GHCR_OWNER
+  ONBOARDING_IMAGE_TAG
+  ONBOARDING_GHCR_USERNAME
+  ONBOARDING_GHCR_TOKEN
+  ONBOARDING_SATELLITE_VERSION
+  ONBOARDING_OWNER_CERT_DIR
+  ONBOARDING_SATELLITE_EORI
+  ONBOARDING_SATELLITE_X5C
+  ONBOARDING_KEYCLOAK_MODE
+  ONBOARDING_ADMIN_EMAIL
+  ONBOARDING_ADMIN_PASSWORD
+  ONBOARDING_KC_ADMIN_USERNAME
+  ONBOARDING_KC_ADMIN_PASSWORD
+  ONBOARDING_DB_PASSWORD
+  ONBOARDING_VC_ISSUER_BASE_URL
+  ONBOARDING_VC_ISSUER_API_KEY
 )
 
 init_report() {
@@ -793,6 +812,22 @@ set_defaults() {
   : "${SATELLITE_ADMIN_PASSWORD:=}"
   : "${SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE:=true}"
   : "${SATELLITE_ADMIN_FORCE_OTP_SETUP:=true}"
+  : "${DEPLOY_ONBOARDING_PORTAL:=false}"
+  : "${ONBOARDING_GHCR_OWNER:=isharescheme}"
+  : "${ONBOARDING_IMAGE_TAG:=v1.2-rc.6}"
+  : "${ONBOARDING_GHCR_USERNAME:=}"
+  : "${ONBOARDING_GHCR_TOKEN:=}"
+  : "${ONBOARDING_SATELLITE_VERSION:=3.0}"
+  : "${ONBOARDING_OWNER_CERT_DIR:=}"
+  : "${ONBOARDING_SATELLITE_X5C:=}"
+  : "${ONBOARDING_KEYCLOAK_MODE:=own}"
+  : "${ONBOARDING_ADMIN_EMAIL:=}"
+  : "${ONBOARDING_ADMIN_PASSWORD:=}"
+  : "${ONBOARDING_KC_ADMIN_USERNAME:=admin}"
+  : "${ONBOARDING_KC_ADMIN_PASSWORD:=}"
+  : "${ONBOARDING_DB_PASSWORD:=}"
+  : "${ONBOARDING_VC_ISSUER_BASE_URL:=}"
+  : "${ONBOARDING_VC_ISSUER_API_KEY:=}"
 }
 
 set_derived_defaults() {
@@ -800,9 +835,12 @@ set_derived_defaults() {
 
   if [[ -n "${SUB_DOMAIN:-}" ]]; then
     : "${SATELLITE_ADMIN_EMAIL:=satelliteadmin@${SUB_DOMAIN}}"
+    : "${ONBOARDING_UI_HOSTNAME:=onboarding.${SUB_DOMAIN}}"
+    : "${ONBOARDING_KC_HOSTNAME:=onboarding-kc.${SUB_DOMAIN}}"
   else
     : "${SATELLITE_ADMIN_EMAIL:=satelliteadmin@example.com}"
   fi
+  : "${ONBOARDING_SATELLITE_EORI:=${PARTY_ID:-}}"
 }
 
 validate_org_name() {
@@ -984,6 +1022,44 @@ materialize_guided_file_inputs() {
 
   prompt_pem_file "JWT/eIDAS public certificate" "${jwt_pub}" "644"
   prompt_pem_file "JWT/eIDAS private key" "${jwt_priv}" "640"
+}
+
+validate_onboarding_portal_env() {
+  local stage="$1"
+  local mode="${ONBOARDING_KEYCLOAK_MODE:-own}"
+  local jwt_pub="${REPO_ROOT}/jwt-rsa/jwtRSA256-public.pem"
+  local jwt_priv="${REPO_ROOT}/jwt-rsa/jwtRSA256-private.pem"
+  local missing=()
+
+  mode="${mode,,}"
+  ONBOARDING_KEYCLOAK_MODE="${mode}"
+
+  [[ -z "${ONBOARDING_GHCR_OWNER:-}" ]] && missing+=("ONBOARDING_GHCR_OWNER")
+  [[ -z "${ONBOARDING_UI_HOSTNAME:-}" ]] && missing+=("ONBOARDING_UI_HOSTNAME")
+  [[ "${mode}" == "own" && -z "${ONBOARDING_KC_HOSTNAME:-}" ]] && missing+=("ONBOARDING_KC_HOSTNAME")
+  [[ "${mode}" == "shared" && -z "${KeycloakHostName:-}" ]] && missing+=("KeycloakHostName")
+  if [[ "${mode}" != "shared" && "${mode}" != "own" ]]; then
+    report_fail "${stage}" "Onboarding portal Keycloak mode" "Expected 'shared' or 'own', got '${ONBOARDING_KEYCLOAK_MODE}'"
+    die "ONBOARDING_KEYCLOAK_MODE must be 'shared' or 'own'"
+  fi
+  if (( ${#missing[@]} > 0 )); then
+    report_fail "${stage}" "Onboarding portal env" "Missing required: ${missing[*]}"
+    die "DEPLOY_ONBOARDING_PORTAL=true requires: ${missing[*]}"
+  fi
+
+  if [[ -n "${ONBOARDING_OWNER_CERT_DIR:-}" ]]; then
+    if [[ ! -f "${ONBOARDING_OWNER_CERT_DIR}/key.pem" || ! -f "${ONBOARDING_OWNER_CERT_DIR}/cert-chain.pem" ]]; then
+      report_fail "${stage}" "Onboarding portal owner identity" "Expected key.pem + cert-chain.pem in ${ONBOARDING_OWNER_CERT_DIR}"
+      die "ONBOARDING_OWNER_CERT_DIR must contain key.pem and cert-chain.pem when set"
+    fi
+    report_pass "${stage}" "Onboarding portal owner identity" "${ONBOARDING_OWNER_CERT_DIR}"
+  elif [[ -f "${jwt_priv}" && -f "${jwt_pub}" ]]; then
+    report_pass "${stage}" "Onboarding portal owner identity" "Reusing satellite JWT identity from jwt-rsa/"
+  else
+    report_fail "${stage}" "Onboarding portal owner identity" "Expected ONBOARDING_OWNER_CERT_DIR or jwt-rsa/jwtRSA256-private.pem + jwtRSA256-public.pem"
+    die "Onboarding portal needs the satellite owner key/certificate: set ONBOARDING_OWNER_CERT_DIR or provide jwt-rsa/jwtRSA256-private.pem and jwtRSA256-public.pem"
+  fi
+  report_pass "${stage}" "Onboarding portal env" "validated (keycloak mode: ${mode})"
 }
 
 validate_env_format_with_report() {
@@ -1240,6 +1316,14 @@ interactive_capture_env() {
   local acme_http_port_default
   local acme_https_port_default
   local acme_storage_path_default
+  local deploy_onboarding_default
+  local onboarding_ui_hostname_example
+  local onboarding_kc_hostname_example
+  local onboarding_owner_cert_dir_example
+  local onboarding_admin_email_example
+  local onboarding_admin_password_example="change-me"
+  local onboarding_kc_admin_password_example="change-me"
+  local onboarding_db_password_example="change-me"
 
   log_info "Collecting server deployment inputs"
   log_info "For prompts with a default value, press Enter to accept it."
@@ -1305,6 +1389,45 @@ interactive_capture_env() {
   SATELLITE_ADMIN_EMAIL="$(prompt_required_with_context "SATELLITE_ADMIN_EMAIL" "${satellite_admin_email_default}" "${satellite_admin_email_example}" "Email address for the initial portal admin user.")"
   SATELLITE_ADMIN_ROLE_NAME="$(prompt_required_with_context "SATELLITE_ADMIN_ROLE_NAME" "${satellite_admin_role_default}" "${satellite_admin_role_example}" "Role assigned to the initial portal admin user in the Keycloak frontend client.")"
   SATELLITE_ADMIN_PASSWORD="$(prompt_required_secret_with_context "SATELLITE_ADMIN_PASSWORD" "${SATELLITE_ADMIN_PASSWORD:-}" "${satellite_admin_password_example}" "Password for the initial portal admin user. Change it after first login.")"
+
+  deploy_onboarding_default="${DEPLOY_ONBOARDING_PORTAL:-false}"
+  DEPLOY_ONBOARDING_PORTAL="$(prompt_boolean_with_context "DEPLOY_ONBOARDING_PORTAL" "${deploy_onboarding_default}" "Deploy the optional onboarding portal alongside this satellite.")"
+  if [[ "${DEPLOY_ONBOARDING_PORTAL}" == "true" ]]; then
+    onboarding_ui_hostname_example="onboarding.${SUB_DOMAIN}"
+    onboarding_kc_hostname_example="onboarding-kc.${SUB_DOMAIN}"
+    onboarding_owner_cert_dir_example="${REPO_ROOT}/../participant_registry/local-test-cert-tools/certs/issued/${ORG_NAME}-owner"
+    onboarding_admin_email_example="onboarding-admin@${SUB_DOMAIN}"
+
+    ONBOARDING_UI_HOSTNAME="$(prompt_required_with_context "ONBOARDING_UI_HOSTNAME" "${ONBOARDING_UI_HOSTNAME:-}" "${onboarding_ui_hostname_example}" "Public hostname for the onboarding portal UI.")"
+    ONBOARDING_KEYCLOAK_MODE="$(prompt_required_with_context "ONBOARDING_KEYCLOAK_MODE" "${ONBOARDING_KEYCLOAK_MODE:-shared}" "shared" "Keycloak topology for the portal: 'shared' reuses the satellite Keycloak host; 'own' deploys a separate portal Keycloak.")"
+    ONBOARDING_KEYCLOAK_MODE="${ONBOARDING_KEYCLOAK_MODE,,}"
+    if [[ "${ONBOARDING_KEYCLOAK_MODE}" != "shared" && "${ONBOARDING_KEYCLOAK_MODE}" != "own" ]]; then
+      die "ONBOARDING_KEYCLOAK_MODE must be 'shared' or 'own'"
+    fi
+    if [[ "${ONBOARDING_KEYCLOAK_MODE}" == "own" ]]; then
+      ONBOARDING_KC_HOSTNAME="$(prompt_required_with_context "ONBOARDING_KC_HOSTNAME" "${ONBOARDING_KC_HOSTNAME:-}" "${onboarding_kc_hostname_example}" "Public hostname for the onboarding portal Keycloak.")"
+    else
+      ONBOARDING_KC_HOSTNAME="${ONBOARDING_KC_HOSTNAME:-}"
+    fi
+    ONBOARDING_GHCR_OWNER="$(prompt_required_with_context "ONBOARDING_GHCR_OWNER" "${ONBOARDING_GHCR_OWNER:-isharescheme}" "isharescheme" "GHCR owner for onboarding-portal images.")"
+    ONBOARDING_IMAGE_TAG="$(prompt_required_with_context "ONBOARDING_IMAGE_TAG" "${ONBOARDING_IMAGE_TAG:-v1.2-rc.6}" "v1.2-rc.6" "Exact onboarding portal image tag to deploy.")"
+    ONBOARDING_GHCR_USERNAME="$(prompt_optional_with_context "ONBOARDING_GHCR_USERNAME" "${ONBOARDING_GHCR_USERNAME:-}" "github-user-or-email" "GHCR username for private onboarding images.")"
+    ONBOARDING_GHCR_TOKEN="$(prompt_optional_with_context "ONBOARDING_GHCR_TOKEN" "${ONBOARDING_GHCR_TOKEN:-}" "ghp_xxx" "GHCR token with read:packages for private onboarding images.")"
+    ONBOARDING_SATELLITE_VERSION="$(prompt_required_with_context "ONBOARDING_SATELLITE_VERSION" "${ONBOARDING_SATELLITE_VERSION:-3.0}" "3.0" "iSHARE API version the portal should use when talking to the satellite.")"
+    ONBOARDING_OWNER_CERT_DIR="$(prompt_optional_with_context "ONBOARDING_OWNER_CERT_DIR" "${ONBOARDING_OWNER_CERT_DIR:-}" "${onboarding_owner_cert_dir_example}" "Optional override directory containing key.pem and cert-chain.pem. Leave blank to reuse jwt-rsa/jwtRSA256-private.pem and jwtRSA256-public.pem from the satellite deployment.")"
+    ONBOARDING_SATELLITE_EORI="$(prompt_required_with_context "ONBOARDING_SATELLITE_EORI" "${ONBOARDING_SATELLITE_EORI:-${PARTY_ID}}" "${PARTY_ID}" "Satellite owner party identifier used as iss/aud for portal-to-satellite token exchange.")"
+    ONBOARDING_SATELLITE_X5C="${ONBOARDING_SATELLITE_X5C:-}"
+    ONBOARDING_ADMIN_EMAIL="$(prompt_required_with_context "ONBOARDING_ADMIN_EMAIL" "${ONBOARDING_ADMIN_EMAIL:-${onboarding_admin_email_example}}" "${onboarding_admin_email_example}" "Initial onboarding portal admin email.")"
+    ONBOARDING_ADMIN_PASSWORD="$(prompt_required_secret_with_context "ONBOARDING_ADMIN_PASSWORD" "${ONBOARDING_ADMIN_PASSWORD:-}" "${onboarding_admin_password_example}" "Initial onboarding portal admin password.")"
+    ONBOARDING_KC_ADMIN_USERNAME="$(prompt_required_with_context "ONBOARDING_KC_ADMIN_USERNAME" "${ONBOARDING_KC_ADMIN_USERNAME:-admin}" "admin" "Admin username for the onboarding Keycloak realm setup.")"
+    ONBOARDING_KC_ADMIN_PASSWORD="$(prompt_required_secret_with_context "ONBOARDING_KC_ADMIN_PASSWORD" "${ONBOARDING_KC_ADMIN_PASSWORD:-}" "${onboarding_kc_admin_password_example}" "Admin password for the onboarding Keycloak setup.")"
+    ONBOARDING_DB_PASSWORD="$(prompt_required_secret_with_context "ONBOARDING_DB_PASSWORD" "${ONBOARDING_DB_PASSWORD:-}" "${onboarding_db_password_example}" "Database password used by the onboarding portal stack.")"
+    ONBOARDING_VC_ISSUER_BASE_URL="$(prompt_optional_with_context "ONBOARDING_VC_ISSUER_BASE_URL" "${ONBOARDING_VC_ISSUER_BASE_URL:-}" "https://issuer.example.com" "Optional VC issuer ObP API base URL for wallet credential offers.")"
+    ONBOARDING_VC_ISSUER_API_KEY="$(prompt_optional_with_context "ONBOARDING_VC_ISSUER_API_KEY" "${ONBOARDING_VC_ISSUER_API_KEY:-}" "issuer-obp-api-key" "Optional bearer API key for the VC issuer ObP API.")"
+  else
+    ONBOARDING_UI_HOSTNAME="${ONBOARDING_UI_HOSTNAME:-}"
+    ONBOARDING_KC_HOSTNAME="${ONBOARDING_KC_HOSTNAME:-}"
+  fi
 
   validate_required_env
   write_env_file
@@ -1840,7 +1963,19 @@ stage_app_deploy() {
   report_smtp_connectivity_warning "${stage}" "${SMTP_HOST}" "${SMTP_PORT}"
   set_external_gate "EXT_SMTP" "warned" "SMTP connectivity is warning-only"
 
-  run_script_with_report "${stage}" "keycloak.sh"
+  if [[ "${DEPLOY_ONBOARDING_PORTAL:-false}" == "true" ]]; then
+    validate_onboarding_portal_env "${stage}"
+    report_dns_resolution_warning "${stage}" "${ONBOARDING_UI_HOSTNAME}" "DNS resolution ONBOARDING_UI_HOSTNAME"
+    if [[ "${ONBOARDING_KEYCLOAK_MODE:-own}" == "own" ]]; then
+      report_dns_resolution_warning "${stage}" "${ONBOARDING_KC_HOSTNAME}" "DNS resolution ONBOARDING_KC_HOSTNAME"
+    fi
+  fi
+
+  if [[ "${DEPLOY_ONBOARDING_PORTAL:-false}" == "true" && "${ONBOARDING_KEYCLOAK_MODE:-own}" == "shared" ]]; then
+    run_script_with_report "${stage}" "deployOnboardingPortalKeycloak.sh"
+  else
+    run_script_with_report "${stage}" "keycloak.sh"
+  fi
   run_script_with_report "${stage}" "middleware.sh"
   app_mw_config="${REPO_ROOT}/middleware/app-mw-config.yaml"
   report_assert_file "${stage}" "${app_mw_config}" "Rendered middleware app config"
@@ -1865,6 +2000,10 @@ stage_app_deploy() {
     set_external_gate "EXT_ACME_READY" "validated" "ACME edge stack deployed"
   fi
   run_script_with_report "${stage}" "provisionSatelliteAdmin.sh"
+
+  if [[ "${DEPLOY_ONBOARDING_PORTAL:-false}" == "true" ]]; then
+    run_script_with_report "${stage}" "deployOnboardingPortal.sh"
+  fi
 
   keycloak_compose="${REPO_ROOT}/keycloak/keycloak-docker-compose.yaml"
   middleware_compose="${REPO_ROOT}/middleware/docker-compose-mw.yaml"

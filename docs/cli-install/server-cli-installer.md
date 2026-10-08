@@ -60,6 +60,7 @@ Some steps depend on actions outside the VM. This is the expected order:
 
 - Receive and place required onboarding artifacts: `<repo>/ca-ishareord.pem`, `<repo>/middleware/genesis.block`, `<repo>/middleware/isharechannel.tx`.
 - Confirm onboarding values from Foundation are set correctly in `.env.server`: `ORDERER_ADDRESS`, `CHANNEL_NAME`, `CHAINCODE_*`, `PARTY_ID`, `PARTY_NAME`.
+- Org admission and any required participant registration must already be completed outside this installer before `join-network` can succeed.
 
 ### Before `app-deploy`
 
@@ -73,19 +74,35 @@ Some steps depend on actions outside the VM. This is the expected order:
   - ensure inbound `80/tcp` and `443/tcp` are open and not occupied by another reverse proxy.
 - Provide `jwt-rsa/jwtRSA256-public.pem` and `jwt-rsa/jwtRSA256-private.pem`.
 - In production, this should come from your qualified eIDAS seal signing material.
+- Important: `jwt-rsa/*` is JWT signing identity material, not your HTTPS certificate for UI/Middleware/Keycloak.
+- HTTPS is controlled only by `TLS_MODE`:
+  - `manual`: `ssl/tls.crt` + `ssl/tls.key`
+  - `acme`: certificates are issued/renewed by the Caddy ACME edge
 - App DNS records should resolve for `UIHostName`, `MiddlewareHostName`, and `KeycloakHostName`.
 - SMTP values should be valid: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`.
-- The installer will also create/update one initial Keycloak portal user and assign the `SatelliteAdmin` role in your org realm.
+- The installer will also create/update one initial Keycloak portal user and assign `SATELLITE_ADMIN_ROLE_NAME` in your org realm.
 - Public proxy templates block Keycloak admin console and master-realm login URLs (`/auth/admin*`, `/auth/realms/master*`) by default.
 - Configure this via `.env.server`:
   - `SATELLITE_ADMIN_USERNAME`
   - `SATELLITE_ADMIN_EMAIL`
+  - `SATELLITE_ADMIN_ROLE_NAME`
   - `SATELLITE_ADMIN_PASSWORD`
   - `SATELLITE_ADMIN_FORCE_PASSWORD_CHANGE` (`true` by default)
   - `SATELLITE_ADMIN_FORCE_OTP_SETUP` (`true` by default)
 - If `SATELLITE_ADMIN_PASSWORD` is left empty, the installer generates a temporary password and writes it to `.env.server`.
 - By default, the provisioned SatelliteAdmin account is forced to change password on first login.
 - By default, the provisioned SatelliteAdmin account is also forced to configure OTP/TOTP on first login.
+
+### Optional: Onboarding Portal (`DEPLOY_ONBOARDING_PORTAL`)
+
+- In guided mode, answer `true` when prompted for `DEPLOY_ONBOARDING_PORTAL`; the installer then asks for the required `ONBOARDING_*` values and writes them to `.env.server`.
+- In non-interactive mode, set `DEPLOY_ONBOARDING_PORTAL=true` and fill the `ONBOARDING_*` values before running the installer.
+- The portal is deployed after the satellite UI, middleware, Keycloak, and initial admin bootstrap.
+- `ONBOARDING_KEYCLOAK_MODE=own` runs a separate onboarding Keycloak on `ONBOARDING_KC_HOSTNAME`.
+- `ONBOARDING_KEYCLOAK_MODE=shared` skips the satellite Keycloak script and deploys one Keycloak that serves both the satellite realm and the onboarding realm at `KeycloakHostName/auth`.
+- Add DNS for `ONBOARDING_UI_HOSTNAME` to this VM. In `own` mode, also add DNS for `ONBOARDING_KC_HOSTNAME`; in `shared` mode, no extra Keycloak hostname is used.
+- Onboarding images are pulled from `ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-{backend,frontend,keycloak}:${ONBOARDING_IMAGE_TAG}`. Provide `ONBOARDING_GHCR_USERNAME` and `ONBOARDING_GHCR_TOKEN` when the packages are private.
+- By default, the portal reuses the satellite owner signing material from `jwt-rsa/jwtRSA256-private.pem` and `jwt-rsa/jwtRSA256-public.pem`. Set `ONBOARDING_OWNER_CERT_DIR` only when you need to override this with a directory containing `key.pem` and `cert-chain.pem`.
 
 It also writes a stage-by-stage validation report under:
 

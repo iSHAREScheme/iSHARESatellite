@@ -2,6 +2,10 @@
 . ./global.sh
 . ./fabric-var.sh
 
+function sed_replacement_escape(){
+    printf '%s' "$1" | sed -e 's/[&|]/\\&/g'
+}
+
 function ParseHLFMiddlewareConfig(){
     set -e
     cp ../templates/hlf-mw-config-template.yaml ../middleware/hlf-mw-config.yaml
@@ -49,12 +53,32 @@ function ParseAPPMiddlewareConfig(){
     local PartyId=${PARTY_ID}
     local PartyName=${PARTY_NAME}
     local DisplayName="${DISPLAY_NAME}"
+    local keycloak_internal_url="http://keycloak:8080/auth"
+    local escaped_smtp_password
+    local escaped_smtp_host
+    local escaped_smtp_user
+    local escaped_display_name
+    local escaped_keycloak_admin_user
+    local escaped_keycloak_admin_password
     set -e
+    if [[ -n "${PartyId}" && "${PartyId}" != did:ishare:* ]]; then
+      PartyId="did:ishare:${PartyId}"
+    fi
+    if [[ "${DEPLOY_ONBOARDING_PORTAL:-false}" == "true" && "${ONBOARDING_KEYCLOAK_MODE:-own}" == "shared" ]]; then
+      keycloak_internal_url="http://obp-keycloak:8080/auth"
+    fi
     cp ../templates/app-mw-config-template.yaml ../middleware/app-mw-config.yaml
     sed -i -e "s/<orgDomain>/${orgDomain}/g" -e "s/<orgName>/${orgName}/g" -e "s/<CHANNEL_NAME>/${CHANNEL_NAME}/g" -e "s/<CHAINCODE_NAME>/${CHAINCODE_NAME}/g" \
--e "s/<KeycloakHostName>/${KeycloakHostName}/g" -e "s/<UIHostName>/${UIHostName}/g" -e "s/<PartyId>/${PartyId}/g" -e "s/<PartyName>/${PartyName}/g" ../middleware/app-mw-config.yaml
-    sed -i -e "s/<SMTP_PASSWORD>/${SMTP_PASSWORD}/g" -e "s/<SMTP_PORT>/${SMTP_PORT}/g" -e "s/<SMTP_HOST>/${SMTP_HOST}/g" -e "s/<SMTP_USER>/${SMTP_USER}/g" \
--e "s/<DISPLAY_NAME>/${DisplayName}/g" ../middleware/app-mw-config.yaml
+-e "s|<KeycloakHostName>|${KeycloakHostName}|g" -e "s|<UIHostName>|${UIHostName}|g" -e "s|<PartyId>|${PartyId}|g" -e "s|<PartyName>|${PartyName}|g" \
+-e "s|<KEYCLOAK_INTERNAL_URL>|${keycloak_internal_url}|g" ../middleware/app-mw-config.yaml
+    escaped_smtp_password="$(sed_replacement_escape "${SMTP_PASSWORD}")"
+    escaped_smtp_host="$(sed_replacement_escape "${SMTP_HOST}")"
+    escaped_smtp_user="$(sed_replacement_escape "${SMTP_USER}")"
+    escaped_display_name="$(sed_replacement_escape "${DisplayName}")"
+    escaped_keycloak_admin_user="$(sed_replacement_escape "${KEYCLOAK_ADMIN_USERNAME:-${KEYCLOAK_ADMIN:-admin}}")"
+    escaped_keycloak_admin_password="$(sed_replacement_escape "${KEYCLOAK_ADMIN_PASSWORD:-${KC_BOOTSTRAP_ADMIN_PASSWORD:-admin}}")"
+    sed -i -e "s|<SMTP_PASSWORD>|${escaped_smtp_password}|g" -e "s|<SMTP_PORT>|${SMTP_PORT}|g" -e "s|<SMTP_HOST>|${escaped_smtp_host}|g" -e "s|<SMTP_USER>|${escaped_smtp_user}|g" \
+-e "s|<DISPLAY_NAME>|${escaped_display_name}|g" -e "s|<KEYCLOAK_ADMIN_USER>|${escaped_keycloak_admin_user}|g" -e "s|<KEYCLOAK_ADMIN_PASSWORD>|${escaped_keycloak_admin_password}|g" ../middleware/app-mw-config.yaml
    if [[ "$ENVIRONMENT" == "uat" || "$ENVIRONMENT" == "test" || "$ENVIRONMENT" == "prod" ]]; then
         if [[ "$ENVIRONMENT" == "test" ]]; then
             ENVIRONMENT="uat"

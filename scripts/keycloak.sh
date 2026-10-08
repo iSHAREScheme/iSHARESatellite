@@ -31,6 +31,29 @@ function createKeyCloakInstance(){
     -e "s/<UI_HOST_NAME>/${uihost}/g" \
     -e "s/<ORG_NAME>/${orgname}/g" \
     ../keycloak/realm-test.json
+
+  # The realm template carries onboarding-portal placeholders for the shared
+  # Keycloak path. Strip them from the standalone satellite Keycloak import.
+  if command -v jq >/dev/null 2>&1; then
+    local realm_file="../keycloak/realm-test.json"
+    local realm_tmp
+    realm_tmp="$(mktemp)"
+    if jq '
+      (.clients) |= map(
+        if .clientId == "frontend" then
+          .redirectUris |= map(select(contains("<ONBOARDING_UI_HOST_NAME>") | not))
+          | .webOrigins |= map(select(contains("<ONBOARDING_UI_HOST_NAME>") | not))
+        else . end)
+      | (.users) |= map(select((((.username // "") + (.email // "")) | contains("<OBP_ADMIN_EMAIL>")) | not))
+    ' "${realm_file}" > "${realm_tmp}"; then
+      mv "${realm_tmp}" "${realm_file}"
+      chmod 644 "${realm_file}"
+    else
+      rm -f "${realm_tmp}"
+      errorln "Failed to strip onboarding entries from registry realm import"
+      exit 1
+    fi
+  fi
   run_compose -f ../keycloak/keycloak-docker-compose.yaml up -d 
   set +e
 }

@@ -31,6 +31,10 @@ See [INSTALL.md](docs/INSTALL.md) for fresh installations on Ubuntu Linux machin
 
 See [FullBackupRestore.md](docs/FullBackupRestore.md) for Ubuntu Linux machine using docker and docker-compose installations.
 
+## Compatibility Matrix
+
+See [COMPATIBILITY_MATRIX.md](docs/COMPATIBILITY_MATRIX.md) for known-compatible component image sets and release pinning policy.
+
 ## Upgrade to version 2.x of satellite from 1.x
 
 See [migration.md](docs/migration.md) for Ubuntu Linux machine using docker and docker-compose installations.
