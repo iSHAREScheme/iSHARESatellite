@@ -1,0 +1,59 @@
+version: "3.7"
+
+# Onboarding portal, co-deployed with the participant registry.
+# Rendered/started by scripts/deployOnboardingPortal.sh from prebuilt GHCR images.
+#
+# - obp-backend joins the registry's `fabric_network` so it reaches the satellite
+#   middleware INTERNALLY at http://middleware-ishare_mw-1:21001 (no public hop, no TLS).
+# - The browser only ever talks to obp-frontend; the frontend's /api/backend route
+#   proxies to obp-backend over the private `obpnet` (NEXT_PUBLIC_BASE_SERVER_URL).
+# - Keycloak (+ its postgres) is added by docker-compose.own-keycloak.yaml ONLY when
+#   ONBOARDING_KEYCLOAK_MODE=own. In `shared` mode the portal uses the registry Keycloak.
+#
+# Host ports are chosen to avoid the registry's (8080=registry KC/ACME, 5001/4001=mw,
+# 4200=ui, 8443=kc-manual, 1432/6432=pg). The ACME edge (Caddy) routes the portal
+# hostnames to these ports.
+
+networks:
+  obpnet:
+    name: obpnet
+  fabric_network:
+    external: true
+    name: fabric_network
+
+services:
+  obp-backend:
+    image: ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-backend:${ONBOARDING_IMAGE_TAG:-latest}
+    container_name: obp-backend
+    env_file:
+      - ./.env
+    volumes:
+      - obp_sqlite:/app/db
+      - obp_uploads:/app/uploads
+      - ./backend/keys:/app/keys
+    # No host port: the frontend's /api/backend route reaches it over obpnet
+    # (NEXT_PUBLIC_BASE_SERVER_URL=http://obp-backend:8081). It still joins
+    # fabric_network to call the satellite middleware.
+    networks:
+      - obpnet
+      - fabric_network
+    restart: unless-stopped
+
+  obp-frontend:
+    image: ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-frontend:${ONBOARDING_IMAGE_TAG:-latest}
+    container_name: obp-frontend
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    networks:
+      - obpnet
+    depends_on:
+      - obp-backend
+    restart: unless-stopped
+
+volumes:
+  obp_sqlite:
+  obp_uploads:

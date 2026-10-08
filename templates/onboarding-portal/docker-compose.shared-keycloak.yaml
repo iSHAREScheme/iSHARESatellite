@@ -1,0 +1,69 @@
+version: "3.7"
+
+# Shared Keycloak (onboarding-portal image + registry realm/theme), serving BOTH the
+# registry realm (<ORG_NAME>) and the portal realm (onboarding-portal) at the registry
+# KC hostname, /auth. Replaces the registry's own Keycloak in shared mode.
+# Rendered to ../keycloak/keycloak-docker-compose.yaml by deployOnboardingPortalKeycloak.sh.
+
+networks:
+  net:
+    name: fabric_network
+  obpnet:
+    name: obpnet
+
+services:
+  obp-keycloak:
+    build:
+      context: ./shared-build
+      args:
+        PORTAL_KC_IMAGE: "ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-keycloak:${ONBOARDING_IMAGE_TAG:-latest}"
+        KEYCLOAK_SMTP_FROM: "${KEYCLOAK_SMTP_FROM:-noreply@example.com}"
+    image: ishare-shared-keycloak:local
+    container_name: obp-keycloak
+    env_file:
+      - ../onboarding-portal/.env
+    environment:
+      # Origin URL (the /auth relative path is baked into the image).
+      KC_HOSTNAME: "https://<KEY_CLOAK_HOST_NAME>"
+      KC_BOOTSTRAP_ADMIN_USERNAME: "${KEYCLOAK_ADMIN_USERNAME}"
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
+      KC_DB: postgres
+      KC_DB_URL: "jdbc:postgresql://obp-postgres:5432/${KEYCLOAK_DB_DATABASE}"
+      KC_DB_USERNAME: "${KEYCLOAK_DB_USERNAME}"
+      KC_DB_PASSWORD: "${KEYCLOAK_DB_PASSWORD}"
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: xforwarded
+    command: >
+      start
+    # Same host port the registry edge already routes <KeycloakHostName> to.
+    ports:
+      - "8080:8080"
+    networks:
+      - net
+      - obpnet
+    depends_on:
+      obp-postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  obp-postgres:
+    image: postgres:16-alpine
+    container_name: obp-postgres
+    environment:
+      POSTGRES_USER: "${KEYCLOAK_DB_USERNAME}"
+      POSTGRES_PASSWORD: "${KEYCLOAK_DB_PASSWORD}"
+      POSTGRES_DB: "${KEYCLOAK_DB_DATABASE}"
+    volumes:
+      - obp_keycloak_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KEYCLOAK_DB_USERNAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - obpnet
+    restart: unless-stopped
+
+volumes:
+  obp_keycloak_pg:

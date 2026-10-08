@@ -1,0 +1,59 @@
+version: "3.7"
+
+# Override applied (only) when ONBOARDING_KEYCLOAK_MODE=own: the portal brings its
+# own Keycloak (+ postgres), separate from the registry's. Combined at deploy time:
+#   docker compose -f docker-compose.yaml -f docker-compose.own-keycloak.yaml up -d
+#
+# The portal Keycloak GHCR image bundles the custom provider (proposal-email-provider),
+# the keycloakCustom theme and the onboarding-portal realm import. Its host port is 8088
+# to avoid the registry Keycloak's 8080 (ACME mode). Caddy routes auth.<portal> -> :8088.
+
+services:
+  obp-keycloak:
+    image: ghcr.io/${ONBOARDING_GHCR_OWNER}/onboarding-portal-keycloak:${ONBOARDING_IMAGE_TAG:-latest}
+    container_name: obp-keycloak
+    env_file:
+      - ./.env
+    environment:
+      KC_HOSTNAME: ${NEXT_PUBLIC_KEYCLOAK_BASE_URL}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://obp-postgres:5432/${KEYCLOAK_DB_DATABASE}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USERNAME}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_FEATURES: scripts,preview
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: xforwarded
+    command: >
+      start
+    ports:
+      - "8088:8080"
+    networks:
+      - obpnet
+    depends_on:
+      obp-postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  obp-postgres:
+    image: postgres:16-alpine
+    container_name: obp-postgres
+    environment:
+      POSTGRES_USER: ${KEYCLOAK_DB_USERNAME}
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      POSTGRES_DB: ${KEYCLOAK_DB_DATABASE}
+    volumes:
+      - obp_keycloak_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KEYCLOAK_DB_USERNAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - obpnet
+    restart: unless-stopped
+
+volumes:
+  obp_keycloak_pg:
