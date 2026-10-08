@@ -1,1 +1,10 @@
 .DS_Store
+observability/
+
+# local test material and run artefacts (never commit)
+postman/
+psnc_logs
+deployment-validation-*/
+hlf/test/
+templates/grafana.zip
+*.pdf
