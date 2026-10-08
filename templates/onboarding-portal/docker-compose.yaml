@@ -4,7 +4,7 @@ version: "3.7"
 # Rendered/started by scripts/deployOnboardingPortal.sh from prebuilt GHCR images.
 #
 # - obp-backend joins the registry's `fabric_network` so it reaches the satellite
-#   middleware INTERNALLY at http://middleware-ishare_mw-1:21001 (no public hop, no TLS).
+#   middleware INTERNALLY at http://ishare_mw:21001 (its compose service alias; no public hop, no TLS).
 # - The browser only ever talks to obp-frontend; the frontend's /api/backend route
 #   proxies to obp-backend over the private `obpnet` (NEXT_PUBLIC_BASE_SERVER_URL).
 # - Keycloak (+ its postgres) is added by docker-compose.own-keycloak.yaml ONLY when
