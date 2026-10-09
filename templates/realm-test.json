@@ -116,7 +116,7 @@
   "publicClient": true,
   "protocol": "openid-connect",
   "attributes": {
-  "access.token.lifespan": "1800",
+  "access.token.lifespan": "300",
   "login_theme": "myTheme"
   },
   "fullScopeAllowed": true,
