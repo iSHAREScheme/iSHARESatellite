@@ -949,3 +949,15 @@ cd /<full-path-project>/iSHARESatellite/hlf/<env>/<satellite>/peers
 ```sh
 docker-compose -f docker-compose-hlf.yaml up -d
 ```
+
+# Middleware enforcement switches (since 2026-10-12)
+
+The middleware configuration carries four switches for the cross-satellite user endpoints (create user by script, delete, deactivate, the user listing and the list of users per party). They render from environment variables when `scripts/middleware.sh` runs; all four default to `false` on a satellite:
+
+- `ENFORCE_M2M_AUTH=true`: those endpoints need a peer token signed with the calling registry's registered certificate, or a Keycloak administrator session. Off, the user listing is public and users can be deleted without credentials. The scheme owners run with it on.
+- `REQUIRE_M2M_AUDIENCE=true`: refuse peer tokens that are not bound to this registry. Every v3 middleware since rc.142 binds the audience.
+- `ENFORCE_RBAC=true` with `RBAC_AUDIT_ONLY=true`: role checks on the `/api` admin routes run and log `rbac(audit): would deny` without refusing; `RBAC_AUDIT_ONLY=false` then enforces.
+
+The signing material is always configured: the `jwt-rsa/jwtRSA256-*.pem` pair the installer mounts is this registry's registered iSHARE certificate, and the middleware signs its own peer calls with it. Leave `ENFORCE_M2M_AUTH` off on a satellite while the legacy UI's revoke page still reads a satellite's users from the browser without a bearer; the scheme owners enforce since 2026-10-12.
+
+Example: `ENFORCE_M2M_AUTH=true REQUIRE_M2M_AUDIENCE=true ENFORCE_RBAC=true RBAC_AUDIT_ONLY=true ./scripts/install-server.sh` (or export them before `scripts/middleware.sh`). An existing box takes the same keys under `ishareConfig.middlewareConfig` in `middleware/app-mw-config.yaml` followed by a recreate of the `ishare_mw` service.

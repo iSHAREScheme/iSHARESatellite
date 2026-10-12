@@ -23,6 +23,16 @@ ishareConfig:
       orgName: <orgName>
     forgotPasswordLink: "https://<UIHostName>/account/reset-password"
     partyId: <PartyId>
+    # Cross-satellite user endpoints (PR-MW !25-!33). The jwtRSA256 pair the installer mounts is this
+    # registry's registered certificate; it signs the peer calls this box makes. The enforcement
+    # switches render from ENFORCE_M2M_AUTH / REQUIRE_M2M_AUDIENCE / ENFORCE_RBAC / RBAC_AUDIT_ONLY
+    # (default off on a satellite: the old UI's revoke page still reads a satellite's users without a bearer).
+    enforceM2MAuth: <ENFORCE_M2M_AUTH>
+    requireM2MAudience: <REQUIRE_M2M_AUDIENCE>
+    m2mSigningCertPath: /home/appuser/ishare-middleware/jwtRSA256-public.pem
+    m2mSigningKeyPath: /home/appuser/ishare-middleware/jwtRSA256-private.pem
+    enforceRBAC: <ENFORCE_RBAC>
+    rbacAuditOnly: <RBAC_AUDIT_ONLY>
     partyName: <PartyName>
   platformURL: ""
   keyCloakConfig:

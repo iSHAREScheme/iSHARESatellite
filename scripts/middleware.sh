@@ -60,6 +60,10 @@ function ParseAPPMiddlewareConfig(){
     local escaped_display_name
     local escaped_keycloak_admin_user
     local escaped_keycloak_admin_password
+    local enforce_m2m_auth="${ENFORCE_M2M_AUTH:-false}"
+    local require_m2m_audience="${REQUIRE_M2M_AUDIENCE:-false}"
+    local enforce_rbac="${ENFORCE_RBAC:-false}"
+    local rbac_audit_only="${RBAC_AUDIT_ONLY:-false}"
     set -e
     if [[ -n "${PartyId}" && "${PartyId}" != did:ishare:* ]]; then
       PartyId="did:ishare:${PartyId}"
@@ -71,6 +75,8 @@ function ParseAPPMiddlewareConfig(){
     sed -i -e "s/<orgDomain>/${orgDomain}/g" -e "s/<orgName>/${orgName}/g" -e "s/<CHANNEL_NAME>/${CHANNEL_NAME}/g" -e "s/<CHAINCODE_NAME>/${CHAINCODE_NAME}/g" \
 -e "s|<KeycloakHostName>|${KeycloakHostName}|g" -e "s|<UIHostName>|${UIHostName}|g" -e "s|<PartyId>|${PartyId}|g" -e "s|<PartyName>|${PartyName}|g" \
 -e "s|<KEYCLOAK_INTERNAL_URL>|${keycloak_internal_url}|g" ../middleware/app-mw-config.yaml
+    sed -i -e "s|<ENFORCE_M2M_AUTH>|${enforce_m2m_auth}|g" -e "s|<REQUIRE_M2M_AUDIENCE>|${require_m2m_audience}|g" \
+-e "s|<ENFORCE_RBAC>|${enforce_rbac}|g" -e "s|<RBAC_AUDIT_ONLY>|${rbac_audit_only}|g" ../middleware/app-mw-config.yaml
     escaped_smtp_password="$(sed_replacement_escape "${SMTP_PASSWORD}")"
     escaped_smtp_host="$(sed_replacement_escape "${SMTP_HOST}")"
     escaped_smtp_user="$(sed_replacement_escape "${SMTP_USER}")"

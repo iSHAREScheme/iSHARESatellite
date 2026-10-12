@@ -12,7 +12,7 @@
   "waitIncrementSeconds": 60,
   "quickLoginCheckMilliSeconds": 1000,
   "maxDeltaTimeSeconds": 43200,
-  "loginTheme": "myTheme",
+  "loginTheme": "myThemeV3",
   "roles": {
   "client": {
   "frontend": [
@@ -117,7 +117,7 @@
   "protocol": "openid-connect",
   "attributes": {
   "access.token.lifespan": "300",
-  "login_theme": "myTheme"
+  "login_theme": "myThemeV3"
   },
   "fullScopeAllowed": true,
   "nodeReRegistrationTimeout": -1,
